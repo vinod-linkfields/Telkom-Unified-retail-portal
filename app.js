@@ -4319,6 +4319,31 @@ function viewStockRequestDetails(reqId) {
 }
 
 window.viewStockRequestDetails = viewStockRequestDetails;
+window.handleLoginSubmit = handleLoginSubmit;
+window.handleCustomerSearch = handleCustomerSearch;
+window.handleCreateCustomerSubmit = handleCreateCustomerSubmit;
+window.handleEditCustomerSubmit = handleEditCustomerSubmit;
+window.handleStockRequestSubmit = handleStockRequestSubmit;
+window.handleApprovalSubmit = handleApprovalSubmit;
+window.handleStepperBack = handleStepperBack;
+window.handleStepperNext = handleStepperNext;
+window.handlePOSPaymentTrigger = handlePOSPaymentTrigger;
+window.renderOrderTracking = renderOrderTracking;
+window.openExportModal = openExportModal;
+window.resetLogFilters = resetLogFilters;
+window.toggleNotificationsDrawer = toggleNotificationsDrawer;
+window.toggleUatPanel = toggleUatPanel;
+window.triggerSessionTimeoutSimulation = triggerSessionTimeoutSimulation;
+window.handleTimeoutLogout = handleTimeoutLogout;
+window.extendSessionLife = extendSessionLife;
+window.closeCustomerSession = closeCustomerSession;
+window.initiateStockRequest = initiateStockRequest;
+window.handleUatRoleChange = handleUatRoleChange;
+window.triggerReportDownload = triggerReportDownload;
+window.switchRoute = switchRoute;
+window.handleLogout = handleLogout;
+window.renderScreen = renderScreen;
+window.closeModal = closeModal;
 window.toggleLoginPassword = toggleLoginPassword;
 
 // Auto-fill hint chip click
