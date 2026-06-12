@@ -118,6 +118,15 @@ const MOCK_DB = {
   }
 };
 
+const AUTH_STORAGE_KEY = "telkom_auth_session";
+
+const DEMO_LOGIN_CREDENTIALS = {
+  "AGT-101": { password: "password", name: "Piet van Zyl", role: "agent", branch: "PTA-001" },
+  "MGR-002": { password: "password", name: "Store Manager", role: "manager", branch: "PTA-001" },
+  "AM-909": { password: "password", name: "Area Director", role: "area_manager", branch: "PTA-001" },
+  "ADMIN-001": { password: "password", name: "IT Operations", role: "admin", branch: "PTA-001" }
+};
+
 // ==========================================
 // 2. STATE CONFIGURATION
 // ==========================================
@@ -131,6 +140,8 @@ let APP_STATE = {
     branch: "PTA-001",
     assignedStores: ["PTA-001", "JHB-002", "DBN-003"]
   },
+
+  isAuthenticated: false,
 
   // Navigation
   activeRoute: "login",
@@ -347,6 +358,8 @@ function loadStateFromStorage() {
     ];
     saveNotifications();
   }
+
+  restoreAuthSession();
 }
 
 function saveStockRequests() {
@@ -361,11 +374,57 @@ function saveNotifications() {
   localStorage.setItem("telkom_notifications", JSON.stringify(APP_STATE.notifications));
 }
 
+function saveAuthSession() {
+  localStorage.setItem(
+    AUTH_STORAGE_KEY,
+    JSON.stringify({
+      currentUser: APP_STATE.currentUser,
+      activeRoute: APP_STATE.activeRoute,
+      isAuthenticated: APP_STATE.isAuthenticated
+    })
+  );
+}
+
+function clearAuthSession() {
+  localStorage.removeItem(AUTH_STORAGE_KEY);
+}
+
+function restoreAuthSession() {
+  const savedSession = localStorage.getItem(AUTH_STORAGE_KEY);
+
+  if (!savedSession) {
+    return false;
+  }
+
+  try {
+    const parsedSession = JSON.parse(savedSession);
+
+    if (!parsedSession?.currentUser) {
+      return false;
+    }
+
+    APP_STATE.currentUser = {
+      ...APP_STATE.currentUser,
+      ...parsedSession.currentUser
+    };
+    APP_STATE.isAuthenticated = true;
+    APP_STATE.activeRoute = parsedSession.activeRoute || 'agent-dashboard';
+    return true;
+  } catch (error) {
+    clearAuthSession();
+    return false;
+  }
+}
+
 // ==========================================
 // 4. ROUTING & VIEWS CONTROLLER
 // ==========================================
 
 function switchRoute(route) {
+  if (!APP_STATE.isAuthenticated && route !== 'login') {
+    route = 'login';
+  }
+
   // Role Access Control Checks
   if (route !== 'login') {
     if (APP_STATE.currentUser.role === 'agent' && (route === 'area-dashboard' || route === 'reports' || route === 'record-logs' || route === 'admin-dashboard')) {
@@ -418,6 +477,13 @@ function switchRoute(route) {
     targetView.style.display = 'block';
     // Trigger screen-specific rendering
     renderScreen(route);
+  }
+
+  if (route === 'login') {
+    clearAuthSession();
+    APP_STATE.isAuthenticated = false;
+  } else if (APP_STATE.isAuthenticated) {
+    saveAuthSession();
   }
 }
 
@@ -4014,6 +4080,8 @@ function viewOrderDetails(orderRef) {
 function handleLogout() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isAuthenticated = false;
+  clearAuthSession();
   switchRoute('login');
   showToast("User logged out.", "neutral");
 }
@@ -4063,9 +4131,17 @@ function doLogin() {
     return;
   }
 
+  const demoCredential = DEMO_LOGIN_CREDENTIALS[idInput.toUpperCase()];
+
   // Simulate authentication validation
   if (password === 'error') {
     loginError.innerText = "Locked account. Please contact Telkom Identity Support.";
+    loginError.style.display = 'block';
+    return;
+  }
+
+  if (!demoCredential || password !== demoCredential.password) {
+    loginError.innerText = "Use one of the demo credentials shown on the login screen.";
     loginError.style.display = 'block';
     return;
   }
@@ -4089,22 +4165,27 @@ function doLogin() {
   }
 
   APP_STATE.currentUser.id = idInput;
-  APP_STATE.currentUser.name = name;
-  APP_STATE.currentUser.role = derivedRole;
+  APP_STATE.currentUser.name = demoCredential.name || name;
+  APP_STATE.currentUser.role = demoCredential.role || derivedRole;
   APP_STATE.currentUser.branch = branch;
+  APP_STATE.isAuthenticated = true;
 
   // Set UAT controller select value to match
-  document.getElementById('uat-role').value = derivedRole;
+  const uatRoleSelect = document.getElementById('uat-role');
+  if (uatRoleSelect) {
+    uatRoleSelect.value = APP_STATE.currentUser.role;
+  }
 
   updateSidebarMenuOptions();
+  saveAuthSession();
   
-  showToast(`Welcome back, ${name}! Logged into ${branch}.`, "success");
+  showToast(`Welcome back, ${APP_STATE.currentUser.name}! Logged into ${branch}.`, "success");
   
   // Navigate to corresponding dashboard
-  if (derivedRole === 'agent') switchRoute('agent-dashboard');
-  else if (derivedRole === 'manager') switchRoute('manager-dashboard');
-  else if (derivedRole === 'area_manager') switchRoute('area-dashboard');
-  else if (derivedRole === 'admin') switchRoute('admin-dashboard');
+  if (APP_STATE.currentUser.role === 'agent') switchRoute('agent-dashboard');
+  else if (APP_STATE.currentUser.role === 'manager') switchRoute('manager-dashboard');
+  else if (APP_STATE.currentUser.role === 'area_manager') switchRoute('area-dashboard');
+  else if (APP_STATE.currentUser.role === 'admin') switchRoute('admin-dashboard');
 }
 
 // Old export simulation removed. Multi-format popup modal is now used instead.
@@ -4119,7 +4200,7 @@ window.addEventListener('DOMContentLoaded', () => {
   
   // Set navbar and route
   updateSidebarMenuOptions();
-  switchRoute('login');
+  switchRoute(APP_STATE.isAuthenticated ? APP_STATE.activeRoute : 'login');
   
   // Update badge notifications count
   updateNotificationsBadge();
