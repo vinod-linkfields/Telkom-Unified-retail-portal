@@ -4346,6 +4346,31 @@ window.renderScreen = renderScreen;
 window.closeModal = closeModal;
 window.toggleLoginPassword = toggleLoginPassword;
 
+// Bind all missing handlers called from inline HTML attributes to the window object
+window.identifyCustomer = identifyCustomer;
+window.selectProductForStepper = selectProductForStepper;
+window.openEditCustomerModal = openEditCustomerModal;
+window.openCreateCustomerModal = openCreateCustomerModal;
+window.openApprovalModal = openApprovalModal;
+window.toggleSelectAllExportFormats = toggleSelectAllExportFormats;
+window.downloadOrderReceipt = downloadOrderReceipt;
+window.markNotificationRead = markNotificationRead;
+window.simulateGisAddressCheck = simulateGisAddressCheck;
+window.forceCoverageAcceptance = forceCoverageAcceptance;
+window.simulateGisApiRetry = simulateGisApiRetry;
+window.simulateStockCheckAction = simulateStockCheckAction;
+window.simulateStockApiRetry = simulateStockApiRetry;
+window.notifyStoreManagerForStock = notifyStoreManagerForStock;
+window.updateCIMState = updateCIMState;
+window.updateContractDetailsState = updateContractDetailsState;
+window.toggleConsent = toggleConsent;
+window.handleUatOutageToggle = handleUatOutageToggle;
+window.toggleDeclineReasonArea = toggleDeclineReasonArea;
+window.renderCatalogue = renderCatalogue;
+window.handleReportFilterChange = handleReportFilterChange;
+window.handleLogFilterChange = handleLogFilterChange;
+
+
 // Auto-fill hint chip click
 document.addEventListener('click', function(e) {
   if (e.target.classList.contains('login-hint-chip')) {
