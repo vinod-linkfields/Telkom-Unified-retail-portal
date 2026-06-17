@@ -5582,17 +5582,15 @@ function doLogin() {
 // 12. INITIALIZATION
 // ==========================================
 
-window.addEventListener('DOMContentLoaded', () => {
-  // Load local mock database states
-  loadStateFromStorage();
-  
-  // Set navbar and route
-  updateSidebarMenuOptions();
-  switchRoute(APP_STATE.isAuthenticated ? APP_STATE.activeRoute : 'login');
-  
-  // Update badge notifications count
-  updateNotificationsBadge();
-});
+// Load local mock database states
+loadStateFromStorage();
+
+// Set navbar and route
+updateSidebarMenuOptions();
+switchRoute(APP_STATE.isAuthenticated ? APP_STATE.activeRoute : 'login');
+
+// Update badge notifications count
+updateNotificationsBadge();
 
 // ==========================================
 // 13. SESSION TIMEOUT SIMULATION
@@ -7279,6 +7277,7 @@ window.handlePasswordResetSubmit = handlePasswordResetSubmit;
 window.runRicaValidation = runRicaValidation;
 window.updateSimActivationNumber = updateSimActivationNumber;
 window.updateProductColor = updateProductColor;
+window.clearCatalogueSearch = clearCatalogueSearch;
 
 // Draft Orders & Tabbed Order Tracking Implementation
 function handleSaveDraft() {
