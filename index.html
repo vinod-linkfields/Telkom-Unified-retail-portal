@@ -1096,36 +1096,62 @@
         <!-- VIEW: STOCK REQUESTS -->
         <!-- ========================================== -->
         <div id="view-stock-requests" class="view-container" style="display: none;">
-          <div class="screen-header">
+          <div class="screen-header" style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <h2>Store Stock Request Workflow</h2>
-              <p class="screen-title-desc">Initiate out-of-stock handset requests and monitor Area Manager decisions.</p>
+              <p class="screen-title-desc">Initiate handset/device stock requests and monitor Area Manager decisions.</p>
+            </div>
+            <div>
+              <button class="btn btn-primary" onclick="initiateStockRequest('', '')">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 6px; display: inline-block; vertical-align: middle; width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                Raise Stock Request
+              </button>
             </div>
           </div>
 
-          <div class="panel">
-            <div class="panel-header">
-              <span class="panel-title">Stock Requests Records</span>
-            </div>
-            <div class="panel-body">
-              <div class="table-container">
-                <table class="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Request ID</th>
-                      <th>Branch Store</th>
-                      <th>Product</th>
-                      <th>Quantity</th>
-                      <th>Priority</th>
-                      <th>Date Raised</th>
-                      <th>Decision Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="stock-requests-tbody">
-                    <!-- Populated dynamically -->
-                  </tbody>
-                </table>
+          <!-- Tabs Navigation -->
+          <div class="tab-navigation" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; padding-bottom: 0;">
+            <button class="tab-btn active" id="stock-tab-btn-inventory" onclick="switchStockTab('inventory')" style="padding: 10px 16px; border: none; background: none; font-weight: 700; cursor: pointer; border-bottom: 3px solid var(--telkom-blue); color: var(--telkom-blue-dark);">Store Inventory</button>
+            <button class="tab-btn" id="stock-tab-btn-lowstock" onclick="switchStockTab('lowstock')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary);">Low & Out of Stock</button>
+            <button class="tab-btn" id="stock-tab-btn-requests" onclick="switchStockTab('requests')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary);">My Stock Requests</button>
+          </div>
+
+          <!-- TAB 1 CONTENT: Store Inventory -->
+          <div id="stock-panel-inventory" class="stock-tab-panel">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- TAB 2 CONTENT: Low & Out of Stock -->
+          <div id="stock-panel-lowstock" class="stock-tab-panel" style="display: none;">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- TAB 3 CONTENT: My Stock Requests -->
+          <div id="stock-panel-requests" class="stock-tab-panel" style="display: none;">
+            <div class="panel">
+              <div class="panel-header">
+                <span class="panel-title">Stock Requests Records</span>
+              </div>
+              <div class="panel-body">
+                <div class="table-container">
+                  <table class="custom-table">
+                    <thead>
+                      <tr>
+                        <th>Request ID</th>
+                        <th>Branch Store</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Priority</th>
+                        <th>Date Raised</th>
+                        <th>Decision Status</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="stock-requests-tbody">
+                      <!-- Populated dynamically -->
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -1577,7 +1603,20 @@
       </div>
       <form onsubmit="handleStockRequestSubmit(event)">
         <div class="modal-body">
-          <div class="form-row">
+          <div class="form-group" id="stock-req-select-container" style="display: none; margin-bottom: 12px;">
+            <label class="form-label">Select Device <span class="required">*</span></label>
+            <select id="stock-req-device-select" class="form-control" onchange="handleStockReqDeviceSelectChange(this.value)">
+              <option value="">-- Select Device --</option>
+              <option value="SKU-S24-128|Samsung Galaxy S24">Samsung Galaxy S24 (SKU-S24-128)</option>
+              <option value="SKU-IP15-256|iPhone 15 Pro Max">iPhone 15 Pro Max (SKU-IP15-256)</option>
+              <option value="SKU-A54-128|Samsung Galaxy A54">Samsung Galaxy A54 (SKU-A54-128)</option>
+              <option value="SKU-TAB-S9|Samsung Galaxy Tab S9">Samsung Galaxy Tab S9 (SKU-TAB-S9)</option>
+              <option value="SKU-IPAD-10|iPad 10th Gen">iPad 10th Gen (SKU-IPAD-10)</option>
+              <option value="SKU-MAC-AIR|MacBook Air M2">MacBook Air M2 (SKU-MAC-AIR)</option>
+              <option value="SKU-HP-PRO|HP ProBook 450">HP ProBook 450 (SKU-HP-PRO)</option>
+            </select>
+          </div>
+          <div class="form-row" id="stock-req-readonly-row">
             <div class="form-group">
               <label class="form-label">Device SKU</label>
               <input type="text" id="stock-req-sku" class="form-control" readonly>

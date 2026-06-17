@@ -109,13 +109,45 @@ const MOCK_DB = {
   stock: {
     "PTA-001": {
       "SKU-S24-128": { onHand: 5, reserved: 1, available: 4 },
-      "SKU-IP15-256": { onHand: 0, reserved: 0, available: 0 } // Out of Stock
+      "SKU-IP15-256": { onHand: 0, reserved: 0, available: 0 },
+      "SKU-A54-128": { onHand: 8, reserved: 2, available: 6 },
+      "SKU-TAB-S9": { onHand: 2, reserved: 0, available: 2 },
+      "SKU-IPAD-10": { onHand: 1, reserved: 0, available: 1 },
+      "SKU-MAC-AIR": { onHand: 0, reserved: 0, available: 0 },
+      "SKU-HP-PRO": { onHand: 6, reserved: 1, available: 5 }
     },
     "JHB-002": {
       "SKU-S24-128": { onHand: 0, reserved: 0, available: 0 },
-      "SKU-IP15-256": { onHand: 4, reserved: 2, available: 2 }
+      "SKU-IP15-256": { onHand: 4, reserved: 2, available: 2 },
+      "SKU-A54-128": { onHand: 5, reserved: 1, available: 4 },
+      "SKU-TAB-S9": { onHand: 0, reserved: 0, available: 0 },
+      "SKU-IPAD-10": { onHand: 3, reserved: 0, available: 3 },
+      "SKU-MAC-AIR": { onHand: 4, reserved: 0, available: 4 },
+      "SKU-HP-PRO": { onHand: 1, reserved: 0, available: 1 }
+    },
+    "DBN-003": {
+      "SKU-S24-128": { onHand: 3, reserved: 0, available: 3 },
+      "SKU-IP15-256": { onHand: 2, reserved: 0, available: 2 },
+      "SKU-A54-128": { onHand: 4, reserved: 0, available: 4 },
+      "SKU-TAB-S9": { onHand: 5, reserved: 0, available: 5 },
+      "SKU-IPAD-10": { onHand: 6, reserved: 0, available: 6 },
+      "SKU-MAC-AIR": { onHand: 1, reserved: 0, available: 1 },
+      "SKU-HP-PRO": { onHand: 4, reserved: 0, available: 4 }
     }
   }
+};
+
+const DEVICE_CATALOGUE = {
+  // Phones
+  "SKU-S24-128": { category: "Phones", name: "Samsung Galaxy S24", make: "Samsung", model: "Galaxy S24 128GB", colour: "Phantom Black" },
+  "SKU-IP15-256": { category: "Phones", name: "iPhone 15 Pro Max", make: "Apple", model: "iPhone 15 Pro Max 256GB", colour: "Natural Titanium" },
+  "SKU-A54-128": { category: "Phones", name: "Samsung Galaxy A54", make: "Samsung", model: "Galaxy A54 128GB", colour: "Awesome Graphite" },
+  // Tablets
+  "SKU-TAB-S9": { category: "Tablets", name: "Samsung Galaxy Tab S9", make: "Samsung", model: "Galaxy Tab S9 128GB", colour: "Graphite" },
+  "SKU-IPAD-10": { category: "Tablets", name: "iPad 10th Gen", make: "Apple", model: "iPad 10.9-inch 64GB", colour: "Space Grey" },
+  // Laptops
+  "SKU-MAC-AIR": { category: "Laptops", name: "MacBook Air M2", make: "Apple", model: "MacBook Air 13\" 256GB", colour: "Midnight" },
+  "SKU-HP-PRO": { category: "Laptops", name: "HP ProBook 450", make: "HP", model: "HP ProBook 450 G10", colour: "Pike Silver" }
 };
 
 const AUTH_STORAGE_KEY = "telkom_auth_session";
@@ -537,7 +569,7 @@ function renderScreen(route) {
       renderOrderTracking();
       break;
     case "stock-requests":
-      renderStockRequests();
+      switchStockTab('inventory');
       break;
     case "reports":
       renderReports();
@@ -4491,9 +4523,35 @@ function renderConfirmationReceipt() {
 // ==========================================
 
 function initiateStockRequest(sku, productName) {
-  // Setup modal
-  document.getElementById('stock-req-sku').value = sku;
-  document.getElementById('stock-req-product').value = productName;
+  const selectContainer = document.getElementById('stock-req-select-container');
+  const readonlyRow = document.getElementById('stock-req-readonly-row');
+  
+  if (!sku) {
+    if (selectContainer) selectContainer.style.display = 'block';
+    if (readonlyRow) readonlyRow.style.display = 'none';
+    
+    // Dynamically populate device selection dropdown from DEVICE_CATALOGUE
+    const selectEl = document.getElementById('stock-req-device-select');
+    if (selectEl) {
+      let optionsHtml = '<option value="">-- Select Device --</option>';
+      Object.keys(DEVICE_CATALOGUE).forEach(key => {
+        const item = DEVICE_CATALOGUE[key];
+        optionsHtml += `<option value="${key}|${item.name}">${item.name} (${key})</option>`;
+      });
+      selectEl.innerHTML = optionsHtml;
+      selectEl.value = "";
+    }
+    
+    document.getElementById('stock-req-sku').value = "";
+    document.getElementById('stock-req-product').value = "";
+  } else {
+    if (selectContainer) selectContainer.style.display = 'none';
+    if (readonlyRow) readonlyRow.style.display = 'flex';
+    
+    document.getElementById('stock-req-sku').value = sku;
+    document.getElementById('stock-req-product').value = productName;
+  }
+
   document.getElementById('stock-req-qty').value = "5";
   document.getElementById('stock-req-reason').value = "Customer Order";
   document.getElementById('stock-req-priority').value = "Urgent";
@@ -4507,6 +4565,12 @@ function handleStockRequestSubmit(e) {
   
   const sku = document.getElementById('stock-req-sku').value;
   const prod = document.getElementById('stock-req-product').value;
+  
+  if (!sku || !prod) {
+    showToast("Please select a valid device.", "error");
+    return;
+  }
+
   const qty = parseInt(document.getElementById('stock-req-qty').value);
   const reason = document.getElementById('stock-req-reason').value;
   const priority = document.getElementById('stock-req-priority').value;
@@ -4541,7 +4605,7 @@ function handleStockRequestSubmit(e) {
   showToast(`Stock request ${newReq.id} submitted for Area approval.`, "success");
   
   if (APP_STATE.activeRoute === 'stock-requests') {
-    renderStockRequests();
+    switchStockTab('requests');
   } else if (APP_STATE.activeRoute === 'agent-dashboard') {
     renderAgentDashboard();
   }
@@ -6393,6 +6457,180 @@ function updateTempAddress(val) {
   APP_STATE.cart.tempCoverageAddress = val;
 }
 
+function handleStockReqDeviceSelectChange(val) {
+  if (!val) {
+    document.getElementById('stock-req-sku').value = "";
+    document.getElementById('stock-req-product').value = "";
+    return;
+  }
+  
+  const [sku, productName] = val.split('|');
+  document.getElementById('stock-req-sku').value = sku;
+  document.getElementById('stock-req-product').value = productName;
+}
+
+function switchStockTab(tabName) {
+  document.querySelectorAll('.stock-tab-panel').forEach(p => p.style.display = 'none');
+  const targetPanel = document.getElementById(`stock-panel-${tabName}`);
+  if (targetPanel) {
+    targetPanel.style.display = 'block';
+  }
+
+  document.querySelectorAll('.tab-navigation .tab-btn').forEach(btn => {
+    btn.style.borderBottom = '3px solid transparent';
+    btn.style.color = 'var(--text-secondary)';
+    btn.style.fontWeight = '600';
+    btn.classList.remove('active');
+  });
+
+  const activeBtn = document.getElementById(`stock-tab-btn-${tabName}`);
+  if (activeBtn) {
+    activeBtn.style.borderBottom = '3px solid var(--telkom-blue)';
+    activeBtn.style.color = 'var(--telkom-blue-dark)';
+    activeBtn.style.fontWeight = '700';
+    activeBtn.classList.add('active');
+  }
+
+  if (tabName === 'inventory') {
+    renderStoreInventoryTab();
+  } else if (tabName === 'lowstock') {
+    renderLowStockTab();
+  } else if (tabName === 'requests') {
+    renderStockRequests();
+  }
+}
+
+function renderStoreInventoryTab() {
+  const panel = document.getElementById('stock-panel-inventory');
+  if (!panel) return;
+
+  const branch = APP_STATE.currentUser.branch;
+  const categories = ["Phones", "Tablets", "Laptops"];
+
+  let html = '';
+
+  categories.forEach(cat => {
+    let devicesHtml = '';
+    
+    Object.keys(DEVICE_CATALOGUE).forEach(sku => {
+      const dev = DEVICE_CATALOGUE[sku];
+      if (dev.category === cat) {
+        const stockInfo = MOCK_DB.stock[branch]?.[sku] || { onHand: 0, reserved: 0, available: 0 };
+        const isLow = stockInfo.available < 3;
+        
+        devicesHtml += `
+          <tr>
+            <td><strong>${dev.name}</strong></td>
+            <td><code>${sku}</code></td>
+            <td>${dev.model}</td>
+            <td>${dev.colour}</td>
+            <td><span class="badge badge-neutral">${stockInfo.onHand} units</span></td>
+            <td><span class="badge ${stockInfo.available > 0 ? (isLow ? 'badge-warning' : 'badge-success') : 'badge-danger'}">
+              ${stockInfo.available > 0 ? (isLow ? `Low Stock (${stockInfo.available})` : `In Stock (${stockInfo.available})`) : 'Out of Stock'}
+            </span></td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="initiateStockRequest('${sku}', '${dev.name}')">Request Stock</button>
+            </td>
+          </tr>
+        `;
+      }
+    });
+
+    html += `
+      <div class="panel" style="margin-bottom: 24px;">
+        <div class="panel-header">
+          <span class="panel-title">${cat} Collection</span>
+        </div>
+        <div class="panel-body" style="padding: 0;">
+          <div class="table-container" style="margin: 0; border: none; border-radius: 0;">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Device Model</th>
+                  <th>SKU Code</th>
+                  <th>Specs</th>
+                  <th>Colour</th>
+                  <th>On Hand</th>
+                  <th>Available</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${devicesHtml || `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 16px;">No devices registered in this category.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  panel.innerHTML = html;
+}
+
+function renderLowStockTab() {
+  const panel = document.getElementById('stock-panel-lowstock');
+  if (!panel) return;
+
+  const branch = APP_STATE.currentUser.branch;
+  let lowStockHtml = '';
+
+  Object.keys(DEVICE_CATALOGUE).forEach(sku => {
+    const dev = DEVICE_CATALOGUE[sku];
+    const stockInfo = MOCK_DB.stock[branch]?.[sku] || { onHand: 0, reserved: 0, available: 0 };
+    
+    if (stockInfo.available < 3) {
+      const isOos = stockInfo.available === 0;
+      
+      lowStockHtml += `
+        <tr>
+          <td><span class="badge badge-info">${dev.category}</span></td>
+          <td><strong>${dev.name}</strong></td>
+          <td><code>${sku}</code></td>
+          <td>${dev.model}</td>
+          <td><span class="badge badge-neutral">${stockInfo.onHand} units</span></td>
+          <td><span class="badge ${isOos ? 'badge-danger' : 'badge-warning'}">
+            ${isOos ? 'Out of Stock' : `Low Stock (${stockInfo.available})`}
+          </span></td>
+          <td>
+            <button class="btn btn-sm ${isOos ? 'btn-danger' : 'btn-warning'}" onclick="initiateStockRequest('${sku}', '${dev.name}')">
+              ${isOos ? 'Request Stock' : 'Request Replenishment'}
+            </button>
+          </td>
+        </tr>
+      `;
+    }
+  });
+
+  panel.innerHTML = `
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title" style="color: var(--danger); font-weight: 700;">Critical Inventory Alert: Low & Out of Stock Items</span>
+      </div>
+      <div class="panel-body" style="padding: 0;">
+        <div class="table-container" style="margin: 0; border: none; border-radius: 0;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Device Model</th>
+                <th>SKU Code</th>
+                <th>Specs</th>
+                <th>On Hand</th>
+                <th>Available</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${lowStockHtml || `<tr><td colspan="7" style="text-align: center; color: var(--success); font-weight: 600; padding: 24px;">✓ Great news! All inventory models are well-stocked.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // Bind to window
 window.openNewCustomerWizard = openNewCustomerWizard;
 window.handleCustomerCreateBack = handleCustomerCreateBack;
@@ -6421,4 +6659,8 @@ window.unlinkCustomerInStepper = unlinkCustomerInStepper;
 window.openNewCustomerWizardFromStepper = openNewCustomerWizardFromStepper;
 window.linkCustomerAndReturnToStepper = linkCustomerAndReturnToStepper;
 window.updateTempAddress = updateTempAddress;
+window.switchStockTab = switchStockTab;
+window.handleStockReqDeviceSelectChange = handleStockReqDeviceSelectChange;
+window.renderStoreInventoryTab = renderStoreInventoryTab;
+window.renderLowStockTab = renderLowStockTab;
 
