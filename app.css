@@ -2382,3 +2382,372 @@ input[type="checkbox"], input[type="radio"] {
 
 /* Remove the orb / dark background animations — not needed in light theme */
 .login-bg, .login-bg-orb, .login-bg-grid { display: none; }
+
+/* ========================================== */
+/* NEW ENHANCEMENTS CSS RULES */
+/* ========================================== */
+
+/* File Upload Component Styles */
+.file-upload-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.file-upload-card:hover {
+  border-color: var(--telkom-blue-light);
+}
+
+.upload-drag-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  background-color: var(--bg-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.upload-drag-zone.dragover {
+  border-color: var(--telkom-blue);
+  background-color: var(--bg-dark);
+  box-shadow: 0 0 0 4px rgba(0, 163, 224, 0.1);
+}
+
+.upload-drag-zone svg {
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.upload-drag-zone.dragover svg {
+  color: var(--telkom-blue);
+}
+
+.upload-progress-container {
+  margin-top: 12px;
+  background-color: var(--bg-light);
+  border-radius: 10px;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  display: none;
+}
+
+.upload-progress-bar {
+  background: linear-gradient(90deg, var(--telkom-blue) 0%, var(--telkom-blue-dark) 100%);
+  height: 100%;
+  width: 0%;
+  border-radius: 10px;
+  transition: width 0.3s ease;
+}
+
+.uploaded-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--telkom-blue-light);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-top: 10px;
+}
+
+.uploaded-file-details {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--telkom-blue-dark);
+  font-weight: 600;
+}
+
+.uploaded-file-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Credit Vetting Styles */
+.vetting-panel {
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border-width: 1px;
+  border-style: solid;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: 16px;
+}
+
+.vetting-panel-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.vetting-success {
+  background-color: var(--success-light);
+  border-color: var(--success);
+  color: var(--success-dark);
+}
+.vetting-success .vetting-panel-icon {
+  background-color: var(--success);
+  color: white;
+}
+
+.vetting-danger {
+  background-color: var(--danger-light);
+  border-color: var(--danger);
+  color: var(--danger-dark);
+}
+.vetting-danger .vetting-panel-icon {
+  background-color: var(--danger);
+  color: white;
+}
+
+.vetting-warning {
+  background-color: var(--warning-light);
+  border-color: var(--warning);
+  color: var(--warning-dark);
+}
+.vetting-warning .vetting-panel-icon {
+  background-color: var(--warning);
+  color: white;
+}
+
+/* Accordion Component Styles */
+.accordion {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  background-color: var(--bg-card);
+}
+
+.accordion-header {
+  background-color: var(--bg-light);
+  padding: 16px 20px;
+  font-weight: 700;
+  color: var(--telkom-blue-dark);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.accordion-header:hover {
+  background-color: var(--bg-dark);
+}
+
+.accordion.open .accordion-header {
+  border-bottom-color: var(--border-color);
+}
+
+.accordion-body {
+  padding: 20px;
+  display: none;
+  background-color: var(--bg-card);
+}
+
+.accordion.open .accordion-body {
+  display: block;
+}
+
+.accordion-arrow {
+  transition: transform 0.2s ease;
+  font-weight: bold;
+  color: var(--text-muted);
+}
+
+.accordion.open .accordion-arrow {
+  transform: rotate(180deg);
+}
+
+/* Secure input masking toggle styles */
+.secure-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.secure-input-container input {
+  padding-right: 44px;
+}
+
+.secure-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s ease;
+}
+
+.secure-toggle-btn:hover {
+  color: var(--telkom-blue);
+}
+
+/* Searchable dropdown components */
+.searchable-dropdown-container {
+  position: relative;
+}
+
+.searchable-dropdown-input {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23718096' stroke-width='2' viewBox='0 0 24 24'%3E%3Cpath d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px;
+  padding-right: 32px;
+}
+
+.searchable-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  margin-top: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  display: none;
+}
+
+.searchable-dropdown-menu.show {
+  display: block;
+}
+
+.searchable-dropdown-search-box {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-card);
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+  z-index: 2;
+}
+
+.searchable-dropdown-option {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.searchable-dropdown-option:hover {
+  background-color: var(--bg-dark);
+  color: var(--telkom-blue-dark);
+}
+
+.searchable-dropdown-option.selected {
+  background-color: var(--telkom-blue-light);
+  color: var(--telkom-blue);
+  font-weight: 600;
+}
+
+/* Auto-completed field styling */
+.auto-populated-field {
+  background-color: var(--bg-light) !important;
+  border-color: var(--border-color) !important;
+  color: var(--telkom-blue-dark) !important;
+  font-weight: 600 !important;
+}
+
+/* Document grid styles for Customer 360 */
+.document-grid-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.document-item-box {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-light);
+}
+
+/* Product Catalogue Enhancements */
+.product-device-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+
+.product-device-spec-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-device-spec-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.product-device-spec-value {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.product-contract-term-selector {
+  margin-top: 12px;
+}
+
+.product-contract-term-selector select {
+  font-size: 12px;
+  padding: 6px 10px;
+  height: 32px;
+}
+
+.search-input-clear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 18px;
+  padding: 0 8px;
+}
+
+.search-input-clear-btn:hover {
+  color: var(--danger);
+}
+

@@ -556,6 +556,12 @@
               <h2>Identify Customer</h2>
               <p class="screen-title-desc">Locate consumer profiles in Clarify CRM using verified identifiers.</p>
             </div>
+            <div class="screen-header-actions">
+              <button class="btn btn-primary" onclick="openNewCustomerWizard()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 8px;"><path d="M12 4v16m8-8H4"></path></svg>
+                Add New Customer
+              </button>
+            </div>
           </div>
 
           <div class="panel">
@@ -606,6 +612,57 @@
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW: NEW CUSTOMER CREATION WIZARD -->
+        <!-- ========================================== -->
+        <div id="view-customer-create" class="view-container" style="display: none;">
+          <div class="screen-header">
+            <div>
+              <h2>Create New Customer Profile</h2>
+              <p class="screen-title-desc">Register new consumer accounts in Amdocs Clarify CRM and configure billing parameters.</p>
+            </div>
+          </div>
+
+          <!-- Customer Creation Stepper Header -->
+          <div class="stepper-container" id="cust-create-stepper">
+            <div class="stepper-step active" data-cust-step="1">
+              <div class="step-icon">1</div>
+              <span class="step-label">Personal Info</span>
+            </div>
+            <div class="stepper-step" data-cust-step="2">
+              <div class="step-icon">2</div>
+              <span class="step-label">Employment</span>
+            </div>
+            <div class="stepper-step" data-cust-step="3">
+              <div class="step-icon">3</div>
+              <span class="step-label">Employer Address</span>
+            </div>
+            <div class="stepper-step" data-cust-step="4">
+              <div class="step-icon">4</div>
+              <span class="step-label">Income & Expenses</span>
+            </div>
+            <div class="stepper-step" data-cust-step="5">
+              <div class="step-icon">5</div>
+              <span class="step-label">Banking Setup</span>
+            </div>
+            <div class="stepper-step" data-cust-step="6">
+              <div class="step-icon">6</div>
+              <span class="step-label">Review Summary</span>
+            </div>
+          </div>
+
+          <!-- Form Viewport -->
+          <div class="panel">
+            <div class="panel-body" id="customer-create-content" style="min-height: 300px;">
+              <!-- Captured dynamically in JS -->
+            </div>
+            <div class="panel-header" style="border-top:1px solid var(--border-color); border-bottom:none; display:flex; justify-content:space-between; padding: 16px 24px;">
+              <button class="btn btn-secondary" id="cust-back-btn" onclick="handleCustomerCreateBack()">Back</button>
+              <button class="btn btn-primary" id="cust-next-btn" onclick="handleCustomerCreateNext()">Continue</button>
             </div>
           </div>
         </div>
@@ -697,6 +754,13 @@
                     <!-- Populated dynamically -->
                   </div>
                 </div>
+
+                <div class="panel">
+                  <div class="panel-header"><span class="panel-title">Uploaded Supporting Documents</span></div>
+                  <div class="panel-body" id="c360-documents-panel">
+                    <!-- Populated dynamically in JS -->
+                  </div>
+                </div>
               </div>
 
               <!-- Right Col: Interactions Log -->
@@ -728,6 +792,14 @@
             
             <!-- Side Filters -->
             <aside class="filters-panel">
+              <div class="filter-section">
+                <div class="filter-title">Search Catalogue</div>
+                <div style="position: relative; display: flex; align-items: center; margin-bottom: 12px;">
+                  <input type="text" id="catalogue-search-input" class="form-control" placeholder="Search name, model, Deal ID..." oninput="renderCatalogue()" style="font-size: 12px; padding-right: 30px; height: 36px;">
+                  <button id="catalogue-search-clear" class="search-input-clear-btn" onclick="clearCatalogueSearch()" style="position: absolute; right: 4px; display: none; background: none; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer;">&times;</button>
+                </div>
+              </div>
+
               <div class="filter-section">
                 <div class="filter-title">Product Category</div>
                 <label class="filter-option">
@@ -804,14 +876,26 @@
             </div>
             <div class="stepper-step" data-step="5">
               <div class="step-icon">5</div>
-              <span class="step-label">Connection Form</span>
+              <span class="step-label">Billing Selection</span>
             </div>
             <div class="stepper-step" data-step="6">
               <div class="step-icon">6</div>
-              <span class="step-label">Consent Check</span>
+              <span class="step-label">Credit Vetting</span>
             </div>
             <div class="stepper-step" data-step="7">
               <div class="step-icon">7</div>
+              <span class="step-label">Connection Form</span>
+            </div>
+            <div class="stepper-step" data-step="8">
+              <div class="step-icon">8</div>
+              <span class="step-label">Consent Check</span>
+            </div>
+            <div class="stepper-step" data-step="9">
+              <div class="step-icon">9</div>
+              <span class="step-label">Supporting Docs</span>
+            </div>
+            <div class="stepper-step" data-step="10">
+              <div class="step-icon">10</div>
               <span class="step-label">Pre-Sub Review</span>
             </div>
           </div>
@@ -884,6 +968,10 @@
             <div style="width: 48px; height: 48px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px; font-weight: bold;">✓</div>
             <h2>Order Capture Finalized</h2>
             <p class="screen-title-desc">The postpaid subscription transaction has been written to OMS and POS databases.</p>
+          </div>
+
+          <div style="background-color: var(--success-light); border: 1px solid var(--success); color: var(--success-dark); padding: 14px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; text-align: center; max-width: 500px; margin: 0 auto 24px;">
+            Your order has been created successfully. You can upload any outstanding documents later from your Profile.
           </div>
 
           <div class="receipt-paper">
@@ -1859,6 +1947,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

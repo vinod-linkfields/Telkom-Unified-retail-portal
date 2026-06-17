@@ -89,12 +89,12 @@ const MOCK_DB = {
 
   // Products Catalogue
   products: [
-    { id: "p-sim-1", category: "SIM-only", name: "Infinite Pay-Month SIM Only", type: "Mobile", price: 199, onceOff: 99, term: 24, allocation: "Unlimited Data @ 10Mbps, 100 Mins", promo: false },
-    { id: "p-sim-2", category: "SIM-only", name: "Flexi SIM 10GB Promo", type: "Mobile", price: 99, onceOff: 99, term: 12, allocation: "10GB Data, 50 Mins, 100 SMSs", promo: true },
-    { id: "p-dev-1", category: "Handset contracts", name: "Samsung Galaxy S24 Contract", type: "Mobile", price: 699, onceOff: 199, term: 24, allocation: "Samsung S24, 10GB Data, 100 Mins", deviceSKU: "SKU-S24-128", promo: false },
-    { id: "p-dev-2", category: "Handset contracts", name: "iPhone 15 Pro Max Contract", type: "Mobile", price: 999, onceOff: 499, term: 24, allocation: "iPhone 15 Pro Max 256GB, 20GB Data, 200 Mins", deviceSKU: "SKU-IP15-256", promo: true },
-    { id: "p-broad-1", category: "Exlight broadband plans", name: "Exlight Broadband 50Mbps", type: "Fixed Line", price: 499, onceOff: 0, term: 24, allocation: "50/25 Mbps Unlimited Fiber, Free Router & Install", promo: false },
-    { id: "p-broad-2", category: "Exlight broadband plans", name: "Exlight Ultra 100Mbps", type: "Fixed Line", price: 699, onceOff: 0, term: 24, allocation: "100/50 Mbps Unlimited Fiber, Free Router & Install", promo: false }
+    { id: "p-sim-1", category: "SIM-only", name: "Infinite Pay-Month SIM Only", type: "Mobile", price: 199, onceOff: 99, term: 24, allocation: "Unlimited Data @ 10Mbps, 100 Mins", promo: false, dealId: "DEAL-SIM-01" },
+    { id: "p-sim-2", category: "SIM-only", name: "Flexi SIM 10GB Promo", type: "Mobile", price: 99, onceOff: 99, term: 12, allocation: "10GB Data, 50 Mins, 100 SMSs", promo: true, dealId: "DEAL-SIM-02" },
+    { id: "p-dev-1", category: "Handset contracts", name: "Samsung Galaxy S24 Contract", type: "Mobile", price: 699, onceOff: 199, term: 24, allocation: "Samsung S24, 10GB Data, 100 Mins", deviceSKU: "SKU-S24-128", promo: false, dealId: "DEAL-S24-24", deviceInfo: { name: "Samsung Galaxy S24", make: "Samsung", model: "Galaxy S24 128GB", colour: "Phantom Black" } },
+    { id: "p-dev-2", category: "Handset contracts", name: "iPhone 15 Pro Max Contract", type: "Mobile", price: 999, onceOff: 499, term: 24, allocation: "iPhone 15 Pro Max 256GB, 20GB Data, 200 Mins", deviceSKU: "SKU-IP15-256", promo: true, dealId: "DEAL-IP15-24", deviceInfo: { name: "iPhone 15 Pro Max", make: "Apple", model: "iPhone 15 Pro Max 256GB", colour: "Natural Titanium" } },
+    { id: "p-broad-1", category: "Exlight broadband plans", name: "Exlight Broadband 50Mbps", type: "Fixed Line", price: 499, onceOff: 0, term: 24, allocation: "50/25 Mbps Unlimited Fiber, Free Router & Install", promo: false, dealId: "DEAL-FIB-50" },
+    { id: "p-broad-2", category: "Exlight broadband plans", name: "Exlight Ultra 100Mbps", type: "Fixed Line", price: 699, onceOff: 0, term: 24, allocation: "100/50 Mbps Unlimited Fiber, Free Router & Install", promo: false, dealId: "DEAL-FIB-100" }
   ],
 
   // GIS Coverage Check Coordinates
@@ -178,6 +178,15 @@ let APP_STATE = {
 
   // Stepper Controller status
   currentStep: 1,
+  productTerms: {},
+  customerCreateStep: 1,
+  newCustomerData: {
+    personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
+    employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
+    address: { line1: "", street: "", suburb: "", city: "", postalCode: "" },
+    financial: { grossIncome: "", netIncome: "", expenses: "" },
+    banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: false, creditConsent: false }
+  },
 
   // Outage / System Status overrides
   systemHealth: {
@@ -512,6 +521,9 @@ function renderScreen(route) {
       // Reset customer search inputs
       document.getElementById('search-error').style.display = 'none';
       break;
+    case "customer-create":
+      renderCustomerCreateStep(APP_STATE.customerCreateStep);
+      break;
     case "customer-360":
       renderCustomer360();
       break;
@@ -798,14 +810,54 @@ function renderCustomer360() {
       </div>
     `;
   });
+
+  // Render documents panel
+  renderCustomer360Documents();
+}
+
+// Get selected term and calculated price for a product
+function getProductTermAndPrice(p) {
+  const defaultTerm = p.term || 24;
+  const term = APP_STATE.productTerms[p.id] || defaultTerm;
+  let price = p.price;
+  
+  if (term === 12) {
+    price = Math.round(p.price * 1.25);
+  } else if (term === 36) {
+    price = Math.round(p.price * 0.9);
+  }
+  return { term, price };
+}
+
+// Update term and recalculate catalogue values
+function updateProductTermPrice(productId, newTerm) {
+  APP_STATE.productTerms[productId] = parseInt(newTerm);
+  renderCatalogue();
+}
+
+// Clear catalogue search text input
+function clearCatalogueSearch() {
+  const searchInput = document.getElementById('catalogue-search-input');
+  if (searchInput) {
+    searchInput.value = '';
+  }
+  renderCatalogue();
 }
 
 // Render Catalogue
 function renderCatalogue() {
   const listEl = document.getElementById('catalogue-products-list');
+  if (!listEl) return;
   listEl.innerHTML = '';
 
-  // Get active filter values
+  // Get active search and filter values
+  const searchInput = document.getElementById('catalogue-search-input');
+  const searchVal = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const clearBtn = document.getElementById('catalogue-search-clear');
+  if (clearBtn) {
+    clearBtn.style.display = searchVal ? 'block' : 'none';
+  }
+
   const typeFilter = Array.from(document.querySelectorAll('.filter-type-checkbox:checked')).map(cb => cb.value);
   const priceFilter = document.querySelector('.filter-price-radio:checked').value; // all, 0-200, 200-500, 500+
 
@@ -823,16 +875,39 @@ function renderCatalogue() {
     else if (priceFilter === '500+') filtered = filtered.filter(p => p.price > 500);
   }
 
+  // Free text & Deal ID search
+  if (searchVal) {
+    filtered = filtered.filter(p => {
+      const matchName = p.name.toLowerCase().includes(searchVal);
+      const matchCategory = p.category.toLowerCase().includes(searchVal);
+      const matchDealId = p.dealId ? p.dealId.toLowerCase().includes(searchVal) : false;
+      const matchAllocation = p.allocation.toLowerCase().includes(searchVal);
+      const matchDeviceSKU = p.deviceSKU ? p.deviceSKU.toLowerCase().includes(searchVal) : false;
+      
+      const matchDeviceSpecs = p.deviceInfo ? (
+        p.deviceInfo.name.toLowerCase().includes(searchVal) ||
+        p.deviceInfo.make.toLowerCase().includes(searchVal) ||
+        p.deviceInfo.model.toLowerCase().includes(searchVal) ||
+        p.deviceInfo.colour.toLowerCase().includes(searchVal)
+      ) : false;
+      
+      return matchName || matchCategory || matchDealId || matchAllocation || matchDeviceSKU || matchDeviceSpecs;
+    });
+  }
+
   if (filtered.length === 0) {
     listEl.innerHTML = `
       <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background-color: var(--bg-card); border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-        <p style="color: var(--text-secondary); font-size: 14px;">No products match your selected filters.</p>
+        <p style="color: var(--text-secondary); font-size: 14px;">No products match your search or filters.</p>
       </div>
     `;
     return;
   }
 
   filtered.forEach(p => {
+    // Get custom term & price
+    const { term, price } = getProductTermAndPrice(p);
+
     // Check stock status if device SKU is attached
     let stockBadgeHtml = '';
     let isOos = false;
@@ -851,27 +926,60 @@ function renderCatalogue() {
       }
     }
 
+    // Render device specifications if it's a handset/device product
+    let deviceSpecsHtml = '';
+    if (p.deviceInfo) {
+      deviceSpecsHtml = `
+        <div class="product-device-specs-grid">
+          <div class="product-device-spec-item">
+            <span class="product-device-spec-label">Device Name</span>
+            <span class="product-device-spec-value">${p.deviceInfo.name}</span>
+          </div>
+          <div class="product-device-spec-item">
+            <span class="product-device-spec-label">Make</span>
+            <span class="product-device-spec-value">${p.deviceInfo.make}</span>
+          </div>
+          <div class="product-device-spec-item">
+            <span class="product-device-spec-label">Model</span>
+            <span class="product-device-spec-value">${p.deviceInfo.model}</span>
+          </div>
+          <div class="product-device-spec-item">
+            <span class="product-device-spec-label">Colour</span>
+            <span class="product-device-spec-value">${p.deviceInfo.colour}</span>
+          </div>
+        </div>
+      `;
+    }
+
     listEl.innerHTML += `
       <div class="product-card">
         ${p.promo ? `<div class="product-badge-promo">PROMO</div>` : ''}
         <div class="product-info-area">
           <div class="product-category">${p.category} ${stockBadgeHtml}</div>
-          <div class="product-name">${p.name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-top: 4px;">DEAL ID: ${p.dealId}</div>
+          <div class="product-name" style="margin-top: 4px;">${p.name}</div>
           
-          <div class="product-allocation">
+          ${deviceSpecsHtml}
+
+          <div class="product-contract-term-selector">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 4px; font-weight: 600;">Contract Term</label>
+            <select class="form-control" onchange="updateProductTermPrice('${p.id}', this.value)">
+              <option value="12" ${term === 12 ? 'selected' : ''}>12 Months</option>
+              <option value="24" ${term === 24 ? 'selected' : ''}>24 Months</option>
+              <option value="36" ${term === 36 ? 'selected' : ''}>36 Months</option>
+            </select>
+          </div>
+          
+          <div class="product-allocation" style="margin-top: 12px;">
             <div class="allocation-row">
               <span>Specs/Alloc:</span>
               <span class="allocation-val">${p.allocation}</span>
-            </div>
-            <div class="allocation-row">
-              <span>Term:</span>
-              <span class="allocation-val">${p.term} Months</span>
             </div>
           </div>
           
           <div class="product-pricing">
             <span class="price-currency">R</span>
-            <span class="price-amount">${p.price}</span>
+            <span class="price-amount">${price}</span>
             <span class="price-period">/mo</span>
           </div>
           <div class="price-onceoff">Once-off Connection Fee: R${p.onceOff}</div>
@@ -887,8 +995,8 @@ function renderCatalogue() {
 
 // Render Order Capture Wizard (Stepper steps)
 function renderStepper() {
-  // Update stepper buttons/headings
   const stepContainer = document.getElementById('stepper-form-content');
+  if (!stepContainer) return;
   stepContainer.innerHTML = '';
   
   // Render step navigation numbers in UI
@@ -902,6 +1010,15 @@ function renderStepper() {
   });
 
   const product = APP_STATE.cart.product;
+  const nextBtn = document.getElementById('stepper-next-btn');
+  if (nextBtn) {
+    if (APP_STATE.currentStep === 10) {
+      nextBtn.innerText = 'Complete Order';
+    } else {
+      nextBtn.innerText = 'Continue';
+    }
+    nextBtn.disabled = false; // default
+  }
 
   switch (APP_STATE.currentStep) {
     case 1: // Customer Summary
@@ -944,12 +1061,12 @@ function renderStepper() {
           </select>
         </div>
         
-        <div class="form-group">
+        <div class="form-group" style="margin-top:16px;">
           <label class="form-label">Channel Location</label>
           <input type="text" class="form-control" value="Retail Store Session" disabled>
         </div>
         
-        <div class="form-group">
+        <div class="form-group" style="margin-top:16px;">
           <label class="form-label">CIM Session Notes <span class="required">*</span></label>
           <textarea id="stepper-cim-notes" class="form-control" rows="3" placeholder="Enter session notes (minimum 10 characters)..." oninput="updateCIMState()">${APP_STATE.activeCIMInteraction.notes || ''}</textarea>
           <div class="input-helper">Characters entered: <span id="cim-char-count">0</span>/500 (Min 10)</div>
@@ -985,7 +1102,6 @@ function renderStepper() {
       } else if (product.deviceSKU) {
         renderStepperStockCheck(stepContainer);
       } else {
-        // Skip check for SIM-Only (nothing to check)
         stepContainer.innerHTML = `
           <h3 style="margin-bottom: 16px;">Step 4: Availability Verification</h3>
           <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
@@ -995,13 +1111,21 @@ function renderStepper() {
       }
       break;
 
-    case 5: // Contract details & forms
+    case 5: // Billing Account Selection [New]
+      renderStepperBillingSelection(stepContainer);
+      break;
+
+    case 6: // Credit Vetting Check [New]
+      renderStepperCreditVetting(stepContainer);
+      break;
+
+    case 7: // Connection details & forms
       renderStepperContractDetails(stepContainer, product);
       break;
 
-    case 6: // Customer Consent form
+    case 8: // Customer Consent form (was step 6)
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 6: Capture Customer Consent & Sign-Off</h3>
+        <h3 style="margin-bottom: 16px;">Step 8: Capture Customer Consent & Sign-Off</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Legally required declarations for SA NCA compliance.</p>
         
         <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius-lg); font-size: 13px; color: var(--text-secondary); max-height: 250px; overflow-y: scroll; margin-bottom: 24px;">
@@ -1016,18 +1140,560 @@ function renderStepper() {
           <span class="checkbox-label"><strong>Accept terms and conditions:</strong> Customer acknowledges and accepts terms of the ${product.term}-month contract plan.</span>
         </label>
 
-        <label class="checkbox-group">
+        <label class="checkbox-group" style="margin-top:12px;">
           <input type="checkbox" id="consent-marketing" checked>
           <span class="checkbox-label">Authorize marketing communications via SMS and Email (Optional).</span>
         </label>
       `;
       break;
 
-    case 7: // Review & Validation Checklist
+    case 9: // Supporting Documents [New]
+      renderStepperSupportingDocs(stepContainer);
+      break;
+
+    case 10: // Review & Validation Checklist (was step 7)
       renderStepperReviewChecklist(stepContainer);
       break;
   }
 }
+
+// -----------------------------------------
+// STEP 5 BILLING ACCOUNT SELECTION RENDERER
+// -----------------------------------------
+function renderStepperBillingSelection(container) {
+  const accounts = [
+    { id: "ACC-7019", type: "Cheque", bank: "ABSA", number: "••••1234" },
+    { id: "ACC-8891", type: "Savings", bank: "FNB", number: "••••5678" }
+  ];
+
+  if (!APP_STATE.cart.billingSelection) {
+    APP_STATE.cart.billingSelection = {
+      option: "existing",
+      selectedId: accounts[0].id,
+      newDebit: { bankName: "", branchCode: "", accountType: "", accountNumber: "", debiCheckConsent: false }
+    };
+  }
+
+  const bill = APP_STATE.cart.billingSelection;
+  const isNew = bill.option === 'new';
+
+  let existingHtml = '';
+  accounts.forEach(acc => {
+    existingHtml += `
+      <label class="radio-card" style="display:flex; align-items:center; gap:12px; padding:12px 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom:10px; cursor:pointer;">
+        <input type="radio" name="existing-billing-acc" value="${acc.id}" ${bill.selectedId === acc.id ? 'checked' : ''} onchange="updateBillingSelection('selectedId', '${acc.id}')">
+        <div>
+          <strong style="color:var(--telkom-blue-dark);">${acc.bank} (${acc.type})</strong>
+          <div style="font-size:12px; color:var(--text-secondary);">Account Code: ${acc.id} | Account No: ${acc.number}</div>
+        </div>
+      </label>
+    `;
+  });
+
+  container.innerHTML = `
+    <h3 style="margin-bottom: 16px;">Step 5: Billing Account Selection</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Choose whether to bill this postpaid subscription to an existing account or register new Debit Check details.</p>
+    
+    <div style="display:flex; gap:24px; margin-bottom:20px; background-color: var(--bg-light); padding: 12px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
+      <label class="checkbox-group" style="margin:0; align-items:center;">
+        <input type="radio" name="billing-opt" value="existing" ${!isNew ? 'checked' : ''} onchange="updateBillingSelection('option', 'existing')">
+        <span class="checkbox-label" style="font-weight:700;">Use Existing Billing Account</span>
+      </label>
+      <label class="checkbox-group" style="margin:0; align-items:center;">
+        <input type="radio" name="billing-opt" value="new" ${isNew ? 'checked' : ''} onchange="updateBillingSelection('option', 'new')">
+        <span class="checkbox-label" style="font-weight:700;">Add New Debit Check Details</span>
+      </label>
+    </div>
+
+    <div id="billing-existing-panel" style="display: ${!isNew ? 'block' : 'none'};">
+      <h5 style="margin-bottom: 12px; color: var(--telkom-blue-dark);">Active Customer Billing Profiles</h5>
+      ${existingHtml}
+    </div>
+
+    <div id="billing-new-panel" style="display: ${isNew ? 'block' : 'none'};">
+      <h5 style="margin-bottom: 16px; color: var(--telkom-blue-dark);">Register New DebiCheck Account</h5>
+      
+      <div class="form-row">
+        <div class="form-group searchable-dropdown-container">
+          <label class="form-label">Bank Name <span class="required">*</span></label>
+          <input type="text" id="billing-new-bankname" class="form-control searchable-dropdown-input" placeholder="Select bank name..." value="${bill.newDebit.bankName || ''}" onclick="toggleBillingBankMenu(event)" readonly>
+          <div id="billing-bank-dropdown-menu" class="searchable-dropdown-menu">
+            <div class="searchable-dropdown-search-box">
+              <input type="text" class="form-control" placeholder="Filter banks..." oninput="filterBillingBankOptions(this)" onclick="event.stopPropagation()">
+            </div>
+            <div id="billing-bank-dropdown-options-list">
+              <!-- Banks loaded dynamically -->
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Branch Code <span class="required">*</span></label>
+          <input type="text" id="billing-new-branchcode" class="form-control" placeholder="e.g. 632005" value="${bill.newDebit.branchCode || ''}" oninput="handleBillingNewInput('branchCode', this.value.replace(/[^0-9]/g, ''))">
+        </div>
+      </div>
+
+      <div class="form-row" style="margin-top:16px;">
+        <div class="form-group">
+          <label class="form-label">Account Type <span class="required">*</span></label>
+          <select id="billing-new-acctype" class="form-control" onchange="handleBillingNewInput('accountType', this.value)">
+            <option value="">-- Select Type --</option>
+            <option value="Cheque" ${bill.newDebit.accountType === 'Cheque' ? 'selected' : ''}>Cheque</option>
+            <option value="Savings" ${bill.newDebit.accountType === 'Savings' ? 'selected' : ''}>Savings</option>
+            <option value="Transmission" ${bill.newDebit.accountType === 'Transmission' ? 'selected' : ''}>Transmission</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Number <span class="required">*</span></label>
+          <input type="text" id="billing-new-accnum" class="form-control" placeholder="Enter account number..." value="${bill.newDebit.accountNumber || ''}" oninput="handleBillingNewInput('accountNumber', this.value.replace(/[^0-9]/g, ''))">
+        </div>
+      </div>
+
+      <label class="checkbox-group" style="margin-top:20px; align-items:flex-start;">
+        <input type="checkbox" id="billing-new-consent" ${bill.newDebit.debiCheckConsent ? 'checked' : ''} onchange="handleBillingNewInput('debiCheckConsent', this.checked)" style="margin-top: 3px;">
+        <span class="checkbox-label"><strong>Debit Collection Authorization (Required):</strong> I authorize Telkom and/or its approved debt collection partners to use DEBICHECK for collection of monthly fees.</span>
+      </label>
+    </div>
+  `;
+}
+
+function updateBillingSelection(field, val) {
+  if (!APP_STATE.cart.billingSelection) return;
+  APP_STATE.cart.billingSelection[field] = val;
+  renderStepper();
+}
+
+function handleBillingNewInput(field, val) {
+  if (!APP_STATE.cart.billingSelection) return;
+  APP_STATE.cart.billingSelection.newDebit[field] = val;
+}
+
+function saveBillingInputs() {
+  const bill = APP_STATE.cart.billingSelection;
+  if (!bill || bill.option === 'existing') return;
+  
+  const bank = document.getElementById('billing-new-bankname');
+  const branch = document.getElementById('billing-new-branchcode');
+  const type = document.getElementById('billing-new-acctype');
+  const accNum = document.getElementById('billing-new-accnum');
+  const consent = document.getElementById('billing-new-consent');
+
+  if (bank) bill.newDebit.bankName = bank.value;
+  if (branch) bill.newDebit.branchCode = branch.value.trim();
+  if (type) bill.newDebit.accountType = type.value;
+  if (accNum) bill.newDebit.accountNumber = accNum.value.trim();
+  if (consent) bill.newDebit.debiCheckConsent = consent.checked;
+}
+
+function toggleBillingBankMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('billing-bank-dropdown-menu');
+  if (menu) {
+    menu.classList.toggle('show');
+    filterBillingBankOptions(null);
+  }
+}
+
+function filterBillingBankOptions(searchEl) {
+  const listEl = document.getElementById('billing-bank-dropdown-options-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const searchVal = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const filtered = BANK_OPTIONS.filter(b => b.toLowerCase().includes(searchVal));
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div style="padding: 10px 14px; font-size: 13px; color: var(--text-muted);">No banks found</div>`;
+    return;
+  }
+
+  const selectedBank = APP_STATE.cart.billingSelection ? APP_STATE.cart.billingSelection.newDebit.bankName : '';
+
+  filtered.forEach(b => {
+    listEl.innerHTML += `
+      <div class="searchable-dropdown-option ${selectedBank === b ? 'selected' : ''}" onclick="selectBillingBankOption('${b}')">
+        ${b}
+      </div>
+    `;
+  });
+}
+
+function selectBillingBankOption(bank) {
+  if (APP_STATE.cart.billingSelection) {
+    APP_STATE.cart.billingSelection.newDebit.bankName = bank;
+  }
+  const input = document.getElementById('billing-new-bankname');
+  if (input) input.value = bank;
+
+  const menu = document.getElementById('billing-bank-dropdown-menu');
+  if (menu) menu.classList.remove('show');
+}
+
+// -----------------------------------------
+// STEP 6 CREDIT VETTING OUTCOMES RENDERER
+// -----------------------------------------
+function renderStepperCreditVetting(container) {
+  if (!APP_STATE.cart.creditVetting) {
+    APP_STATE.cart.creditVetting = {
+      outcome: "", 
+      ran: false,
+      depositPaid: false
+    };
+  }
+
+  const cv = APP_STATE.cart.creditVetting;
+
+  let outcomeHtml = '';
+  if (cv.ran) {
+    if (cv.outcome === 'Successful') {
+      outcomeHtml = `
+        <div class="vetting-panel vetting-success">
+          <div class="vetting-panel-icon">✓</div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-weight:700;">Credit Assessment Successful</h4>
+            <p style="margin: 0; font-size: 13px;">Credit vetting completed successfully. Postpaid provisioning is authorized.</p>
+          </div>
+        </div>
+      `;
+    } else if (cv.outcome === 'Declined') {
+      outcomeHtml = `
+        <div class="vetting-panel vetting-danger">
+          <div class="vetting-panel-icon">✗</div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-weight:700;">Credit Assessment Declined</h4>
+            <p style="margin: 0; font-size: 13px;">Credit vetting was unsuccessful. Postpaid deal cannot proceed.</p>
+          </div>
+        </div>
+      `;
+      // Disable Continue button
+      const nextBtn = document.getElementById('stepper-next-btn');
+      if (nextBtn) nextBtn.disabled = true;
+    } else if (cv.outcome === 'Referral') {
+      let depositActionHtml = '';
+      if (!cv.depositPaid) {
+        depositActionHtml = `
+          <div style="margin-top: 12px;">
+            <p style="font-size: 12px; margin-bottom: 8px; font-weight:500;"><strong>Business Rule:</strong> Customer is required to pay a R 250.00 deposit before continuing.</p>
+            <button class="btn btn-sm btn-outline" onclick="payCreditVettingDeposit()">Record Deposit Payment (R250)</button>
+          </div>
+        `;
+        // Disable Continue button until paid
+        const nextBtn = document.getElementById('stepper-next-btn');
+        if (nextBtn) nextBtn.disabled = true;
+      } else {
+        depositActionHtml = `
+          <div style="margin-top: 12px; color: var(--success); font-weight: 600; font-size: 13px;">
+            ✓ Refundable Deposit of R250.00 Paid (Receipt Ref: DEP-8902). Assessment lock cleared.
+          </div>
+        `;
+      }
+
+      outcomeHtml = `
+        <div class="vetting-panel vetting-warning">
+          <div class="vetting-panel-icon">!</div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-weight:700;">Credit Assessment Referral</h4>
+            <p style="margin: 0; font-size: 13px;">Additional review is required before proceeding.</p>
+            ${depositActionHtml}
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    outcomeHtml = `
+      <div style="text-align: center; padding: 32px 0;">
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">Initiate credit assessment through NCR-approved databases.</p>
+        
+        <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin-bottom: 24px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">Select Vetting Outcome (UAT Simulation):</label>
+          <select id="mock-vetting-outcome" class="form-control" style="width:160px; height:32px; font-size:12px; padding:4px 8px;">
+            <option value="Successful">Successful</option>
+            <option value="Declined">Declined</option>
+            <option value="Referral">Referral</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" onclick="runCreditVettingCheck()">Execute Credit Bureau Vetting</button>
+      </div>
+    `;
+  }
+
+  container.innerHTML = `
+    <h3 style="margin-bottom: 16px;">Step 6: Credit Vetting Check</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">National Credit Regulator (NCR) risk evaluation scoring.</p>
+    ${outcomeHtml}
+  `;
+}
+
+function runCreditVettingCheck() {
+  const select = document.getElementById('mock-vetting-outcome');
+  const val = select ? select.value : 'Successful';
+  
+  if (APP_STATE.cart.creditVetting) {
+    APP_STATE.cart.creditVetting.outcome = val;
+    APP_STATE.cart.creditVetting.ran = true;
+    APP_STATE.cart.creditVetting.depositPaid = false;
+  }
+  
+  showToast(`Credit Bureau check finished: ${val}`, "success");
+  renderStepper();
+}
+
+function payCreditVettingDeposit() {
+  if (APP_STATE.cart.creditVetting) {
+    APP_STATE.cart.creditVetting.depositPaid = true;
+  }
+  showToast("Refundable deposit payment captured.", "success");
+  renderStepper();
+}
+
+// -----------------------------------------
+// STEP 9 SUPPORTING DOCUMENTS RENDERER
+// -----------------------------------------
+function renderStepperSupportingDocs(container) {
+  const customer = APP_STATE.selectedCustomer;
+  const idNum = customer.id || customer.passport || "Not declared";
+
+  if (!APP_STATE.cart.supportingDocs) {
+    APP_STATE.cart.supportingDocs = {
+      option: "now",
+      uploads: { idDoc: null, bankStatements: null, proofAddress: null, companyReg: null },
+      progress: { idDoc: 0, bankStatements: 0, proofAddress: 0, companyReg: 0 }
+    };
+  }
+
+  // Sync customer profile documents if present
+  const custDocs = customer.documents || {};
+  const sd = APP_STATE.cart.supportingDocs;
+  Object.keys(sd.uploads).forEach(key => {
+    if (!sd.uploads[key] && custDocs[key]) {
+      sd.uploads[key] = { name: custDocs[key].name, size: custDocs[key].size };
+      sd.progress[key] = 100;
+    }
+  });
+
+  const isNow = sd.option === 'now';
+
+  let filesHtml = '';
+  if (isNow) {
+    const docTypes = [
+      { key: "idDoc", label: "Identity Document (ID Card/Passport)" },
+      { key: "bankStatements", label: "Last 3 Months Bank Statements" },
+      { key: "proofAddress", label: "Proof of Address (Utility Bill)" },
+      { key: "companyReg", label: "Company Registration Document (CIPC)" }
+    ];
+
+    docTypes.forEach(doc => {
+      const file = sd.uploads[doc.key];
+      const prog = sd.progress[doc.key];
+
+      let innerUploadHtml = '';
+      if (file) {
+        if (prog < 100) {
+          innerUploadHtml = `
+            <div style="width:100%;">
+              <div style="font-size:12px; color:var(--text-secondary); margin-bottom:6px; display:flex; justify-content:space-between;">
+                <span>Uploading: <strong>${file.name}</strong></span>
+                <span>${prog}%</span>
+              </div>
+              <div class="upload-progress-container" style="display:block;">
+                <div class="upload-progress-bar" id="progress-bar-${doc.key}" style="width:${prog}%;"></div>
+              </div>
+            </div>
+          `;
+        } else {
+          innerUploadHtml = `
+            <div class="uploaded-file-info" style="width:100%;">
+              <div class="uploaded-file-details">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>${file.name} (${file.size})</span>
+              </div>
+              <div class="uploaded-file-actions">
+                <button class="btn btn-sm btn-secondary" onclick="triggerBrowseDoc('${doc.key}')">Replace</button>
+                <button class="btn btn-sm btn-danger" onclick="removeUploadedDoc('${doc.key}')">Remove</button>
+              </div>
+            </div>
+          `;
+        }
+      } else {
+        innerUploadHtml = `
+          <div class="upload-drag-zone" id="drag-zone-${doc.key}" 
+               ondragover="handleDocDragOver(event, '${doc.key}')" 
+               ondragleave="handleDocDragLeave(event, '${doc.key}')" 
+               ondrop="handleDocDrop(event, '${doc.key}')"
+               onclick="triggerBrowseDoc('${doc.key}')">
+            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-bottom:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+            <span style="font-size:13px; color:var(--text-primary); font-weight:600;">Drag and drop file here, or <span style="color:var(--telkom-blue); text-decoration:underline;">Browse</span></span>
+            <span style="font-size:11px; color:var(--text-muted);">PDF, JPG, PNG up to 5 MB</span>
+          </div>
+          <input type="file" id="file-input-${doc.key}" style="display:none;" onchange="handleDocFileSelected(event, '${doc.key}')" accept=".pdf,.jpg,.png">
+        `;
+      }
+
+      filesHtml += `
+        <div class="file-upload-card">
+          <label class="form-label" style="margin-bottom:8px; font-weight:700; color:var(--telkom-blue-dark);">${doc.label}</label>
+          ${innerUploadHtml}
+        </div>
+      `;
+    });
+  }
+
+  container.innerHTML = `
+    <h3 style="margin-bottom: 16px;">Supporting Documents (Optional)</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Upload legally required supporting customer documents to verify identity and banking details.</p>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom:20px; background-color: var(--bg-light); padding:16px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); font-weight:700;">PRE-FILLED ID NUMBER</div>
+        <input type="text" class="form-control" value="${idNum}" disabled style="background-color:transparent; font-weight:700; border:none; padding:4px 0;">
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-muted); font-weight:700;">UPLOAD SETTINGS</div>
+        <div style="display:flex; gap:16px; margin-top:8px;">
+          <label class="checkbox-group" style="margin:0; align-items:center;">
+            <input type="radio" name="docs-opt" value="now" ${isNow ? 'checked' : ''} onchange="updateDocsOption('now')">
+            <span class="checkbox-label" style="font-weight:600;">Upload documents now</span>
+          </label>
+          <label class="checkbox-group" style="margin:0; align-items:center;">
+            <input type="radio" name="docs-opt" value="later" ${!isNow ? 'checked' : ''} onchange="updateDocsOption('later')">
+            <span class="checkbox-label" style="font-weight:600;">Skip for now and upload later</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div id="docs-upload-fields" style="display: ${isNow ? 'block' : 'none'};">
+      ${filesHtml}
+    </div>
+
+    <div id="docs-skip-message" style="display: ${!isNow ? 'block' : 'none'}; background-color: var(--info-light); border-left:4px solid var(--telkom-blue); padding:16px; border-radius: var(--radius-md); font-size:13px; font-weight:600; color:var(--text-secondary);">
+      No problem. You can upload your documents anytime from your Profile or provide them to a call centre agent later.
+    </div>
+  `;
+}
+
+function updateDocsOption(opt) {
+  if (APP_STATE.cart.supportingDocs) {
+    APP_STATE.cart.supportingDocs.option = opt;
+  }
+  renderStepper();
+}
+
+function saveDocsOptionInput() {
+  const radio = document.querySelector('input[name="docs-opt"]:checked');
+  if (radio && APP_STATE.cart.supportingDocs) {
+    APP_STATE.cart.supportingDocs.option = radio.value;
+  }
+}
+
+function triggerBrowseDoc(key) {
+  const input = document.getElementById(`file-input-${key}`);
+  if (input) input.click();
+}
+
+function handleDocFileSelected(e, key) {
+  const file = e.target.files[0];
+  if (file) {
+    simulateDocUpload(key, file.name);
+  }
+}
+
+function removeUploadedDoc(key) {
+  if (APP_STATE.cart.supportingDocs) {
+    APP_STATE.cart.supportingDocs.uploads[key] = null;
+    APP_STATE.cart.supportingDocs.progress[key] = 0;
+  }
+  const cust = APP_STATE.selectedCustomer;
+  if (cust && cust.documents && cust.documents[key]) {
+    delete cust.documents[key];
+  }
+  renderStepper();
+}
+
+// Drag & Drop Handlers
+function handleDocDragOver(e, key) {
+  e.preventDefault();
+  const zone = document.getElementById(`drag-zone-${key}`);
+  if (zone) zone.classList.add('dragover');
+}
+
+function handleDocDragLeave(e, key) {
+  e.preventDefault();
+  const zone = document.getElementById(`drag-zone-${key}`);
+  if (zone) zone.classList.remove('dragover');
+}
+
+function handleDocDrop(e, key) {
+  e.preventDefault();
+  const zone = document.getElementById(`drag-zone-${key}`);
+  if (zone) zone.classList.remove('dragover');
+
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    // Validate type
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'pdf' || ext === 'jpg' || ext === 'png') {
+      simulateDocUpload(key, file.name);
+    } else {
+      showToast("Invalid format: PDF, JPG, PNG only.", "danger");
+    }
+  }
+}
+
+function simulateDocUpload(docType, fileName) {
+  if (!APP_STATE.cart.supportingDocs) return;
+  APP_STATE.cart.supportingDocs.progress[docType] = 1;
+  APP_STATE.cart.supportingDocs.uploads[docType] = { name: fileName, size: "1.2 MB" };
+  renderStepper(); 
+
+  let current = 0;
+  const interval = setInterval(() => {
+    current += 10;
+    if (current > 100) {
+      current = 100;
+      clearInterval(interval);
+      
+      // Save to customer profile as well!
+      const cust = APP_STATE.selectedCustomer;
+      if (cust) {
+        cust.documents = cust.documents || {};
+        cust.documents[docType] = { name: fileName, size: "1.2 MB" };
+      }
+      
+      showToast(`${docType.replace(/([A-Z])/g, ' $1')} uploaded successfully.`, "success");
+    }
+    if (APP_STATE.cart.supportingDocs) {
+      APP_STATE.cart.supportingDocs.progress[docType] = current;
+    }
+    
+    // Update progress bar element in DOM
+    const pBar = document.getElementById(`progress-bar-${docType}`);
+    if (pBar) pBar.style.width = `${current}%`;
+    
+    if (current === 100) {
+      setTimeout(() => {
+        renderStepper(); 
+      }, 200);
+    }
+  }, 100);
+}
+
+// Bind to window for click triggers
+window.runCreditVettingCheck = runCreditVettingCheck;
+window.payCreditVettingDeposit = payCreditVettingDeposit;
+window.updateBillingSelection = updateBillingSelection;
+window.handleBillingNewInput = handleBillingNewInput;
+window.toggleBillingBankMenu = toggleBillingBankMenu;
+window.filterBillingBankOptions = filterBillingBankOptions;
+window.selectBillingBankOption = selectBillingBankOption;
+window.updateDocsOption = updateDocsOption;
+window.triggerBrowseDoc = triggerBrowseDoc;
+window.handleDocFileSelected = handleDocFileSelected;
+window.removeUploadedDoc = removeUploadedDoc;
+window.handleDocDragOver = handleDocDragOver;
+window.handleDocDragLeave = handleDocDragLeave;
+window.handleDocDrop = handleDocDrop;
+
 
 // Stepper Step 4: GIS Coverage Check
 function renderStepperCoverageCheck(container) {
@@ -1259,17 +1925,59 @@ function renderStepperReviewChecklist(container) {
     stockValid = APP_STATE.cart.stockChecked && APP_STATE.cart.stockStatus === 'In Stock';
   }
 
+  // Step 5: Billing Selection Validation
+  let billingValid = false;
+  if (APP_STATE.cart.billingSelection) {
+    const bill = APP_STATE.cart.billingSelection;
+    if (bill.option === 'existing' && bill.selectedId) {
+      billingValid = true;
+    } else if (bill.option === 'new') {
+      const nd = bill.newDebit;
+      if (nd.bankName && nd.branchCode && nd.accountType && nd.accountNumber && nd.debiCheckConsent) {
+        billingValid = true;
+      }
+    }
+  }
+
+  // Step 6: Credit Vetting Validation
+  let vettingValid = false;
+  if (APP_STATE.cart.creditVetting && APP_STATE.cart.creditVetting.ran) {
+    const cv = APP_STATE.cart.creditVetting;
+    if (cv.outcome === 'Successful') {
+      vettingValid = true;
+    } else if (cv.outcome === 'Referral' && cv.depositPaid) {
+      vettingValid = true;
+    }
+  }
+
+  // Step 7: Connection details validation
   const detailsValid = APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans' ?
     (!!APP_STATE.cart.contractDetails.installationContactName && !!APP_STATE.cart.contractDetails.installationContactPhone) : true;
   
+  // Step 8: Consent validation
   const consentValid = APP_STATE.cart.consent;
+
+  // Step 9: Supporting documents validation
+  let docsValid = false;
+  if (APP_STATE.cart.supportingDocs) {
+    const sd = APP_STATE.cart.supportingDocs;
+    if (sd.option === 'later') {
+      docsValid = true; // Skipped for now
+    } else if (sd.option === 'now') {
+      const uploads = sd.uploads;
+      if (uploads.idDoc && uploads.bankStatements && uploads.proofAddress && uploads.companyReg) {
+        docsValid = true;
+      }
+    }
+  }
+
   const roleValid = APP_STATE.currentUser.role === 'agent' || APP_STATE.currentUser.role === 'manager';
 
   // Overall check
-  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && detailsValid && consentValid && roleValid;
+  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 7: Final Validation Checklist</h3>
+    <h3 style="margin-bottom: 16px;">Step 10: Final Validation Checklist</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Pre-submission review. Ensure all required dependencies are validated.</p>
     
     <div style="margin-bottom: 24px;">
@@ -1317,6 +2025,22 @@ function renderStepperReviewChecklist(container) {
       </div>
       ` : ''}
 
+      <div class="checklist-item ${billingValid ? 'pass' : 'fail'}">
+        <div class="checklist-info">
+          <div class="checklist-status-icon ${billingValid ? 'pass' : 'fail'}">${billingValid ? '✓' : '✗'}</div>
+          <div><strong>Billing Account Selection</strong> - Valid existing profile or new DebiCheck setup.</div>
+        </div>
+        <span class="badge ${billingValid ? 'badge-success' : 'badge-danger'}">${billingValid ? 'Pass' : 'Fail'}</span>
+      </div>
+
+      <div class="checklist-item ${vettingValid ? 'pass' : 'fail'}">
+        <div class="checklist-info">
+          <div class="checklist-status-icon ${vettingValid ? 'pass' : 'fail'}">${vettingValid ? '✓' : '✗'}</div>
+          <div><strong>Credit Bureau Risk Vetting Check</strong> - Experian credit check outcome clean.</div>
+        </div>
+        <span class="badge ${vettingValid ? 'badge-success' : 'badge-danger'}">${vettingValid ? 'Pass' : 'Fail'}</span>
+      </div>
+
       <div class="checklist-item ${detailsValid ? 'pass' : 'fail'}">
         <div class="checklist-info">
           <div class="checklist-status-icon ${detailsValid ? 'pass' : 'fail'}">${detailsValid ? '✓' : '✗'}</div>
@@ -1331,6 +2055,14 @@ function renderStepperReviewChecklist(container) {
           <div><strong>NCA customer consent</strong> - Legally binding checked options.</div>
         </div>
         <span class="badge ${consentValid ? 'badge-success' : 'badge-danger'}">${consentValid ? 'Pass' : 'Fail'}</span>
+      </div>
+
+      <div class="checklist-item ${docsValid ? 'pass' : 'fail'}">
+        <div class="checklist-info">
+          <div class="checklist-status-icon ${docsValid ? 'pass' : 'fail'}">${docsValid ? '✓' : '✗'}</div>
+          <div><strong>Supporting Documents</strong> - Required files uploaded or deferred.</div>
+        </div>
+        <span class="badge ${docsValid ? 'badge-success' : 'badge-danger'}">${docsValid ? 'Pass' : 'Fail'}</span>
       </div>
     </div>
 
@@ -3354,7 +4086,13 @@ function selectProductForStepper(prodId) {
       APP_STATE.cart.stockStatus = "Skip";
     }
 
-    APP_STATE.cart.product = p;
+    // Get customized term and price
+    const { term, price } = getProductTermAndPrice(p);
+    APP_STATE.cart.product = {
+      ...p,
+      price: price,
+      term: term
+    };
     APP_STATE.currentStep = 1; // start from Step 1
     switchRoute('order-stepper');
   }
@@ -3368,30 +4106,64 @@ function handleStepperBack() {
 }
 
 function handleStepperNext() {
-  // Validate current step before proceeding
-  if (APP_STATE.currentStep === 2) {
-    // Validate CIM interaction notes length
+  const step = APP_STATE.currentStep;
+
+  // Validate Step 2: Log CIM
+  if (step === 2) {
     if (!APP_STATE.activeCIMInteraction || APP_STATE.activeCIMInteraction.notes.trim().length < 10) {
       document.getElementById('cim-notes-error').style.display = 'block';
       return;
     }
   }
 
-  if (APP_STATE.currentStep === 4) {
-    // If fixed line, requires coverage available
+  // Validate Step 4: Check Availability
+  if (step === 4) {
     if (APP_STATE.cart.product.category === 'Exlight broadband plans' && APP_STATE.cart.gisStatus !== 'Coverage available') {
       showToast("GIS check must return 'Coverage available' to proceed.", "warning");
       return;
     }
-    // If device contract, requires stock checked & available
     if (APP_STATE.cart.product.deviceSKU && (!APP_STATE.cart.stockChecked || APP_STATE.cart.stockStatus !== 'In Stock')) {
       showToast("Device stock must be locked and verified available to proceed.", "warning");
       return;
     }
   }
 
-  if (APP_STATE.currentStep === 5) {
-    // Validate form inputs
+  // Validate Step 5: Billing Selection
+  if (step === 5) {
+    saveBillingInputs();
+    const bill = APP_STATE.cart.billingSelection;
+    if (bill && bill.option === 'new') {
+      const nd = bill.newDebit;
+      if (!nd.bankName || !nd.branchCode || !nd.accountType || !nd.accountNumber) {
+        showToast("Please fill in all mandatory debit details (*)", "warning");
+        return;
+      }
+      if (!nd.debiCheckConsent) {
+        showToast("DebiCheck collection authorization checkbox is required.", "warning");
+        return;
+      }
+    }
+  }
+
+  // Validate Step 6: Credit Vetting
+  if (step === 6) {
+    const cv = APP_STATE.cart.creditVetting;
+    if (!cv || !cv.ran) {
+      showToast("Please run Credit Bureau vetting assessment first.", "warning");
+      return;
+    }
+    if (cv.outcome === 'Declined') {
+      showToast("Blocked: Credit vetting was declined. Cannot proceed with order.", "danger");
+      return;
+    }
+    if (cv.outcome === 'Referral' && !cv.depositPaid) {
+      showToast("Action Required: Customer must pay deposit to resolve referral block.", "warning");
+      return;
+    }
+  }
+
+  // Validate Step 7: Connection details (was Step 5)
+  if (step === 7) {
     const p = APP_STATE.cart.product;
     if (p.category === 'Exlight broadband plans') {
       const name = document.getElementById('billing-contact-name').value.trim();
@@ -3400,28 +4172,54 @@ function handleStepperNext() {
         showToast("Please complete all mandatory installation contact fields.", "warning");
         return;
       }
+      APP_STATE.cart.contractDetails.installationContactName = name;
+      APP_STATE.cart.contractDetails.installationContactPhone = phone;
+      APP_STATE.cart.contractDetails.preferredInstallationDate = document.getElementById('billing-install-date').value;
     } else {
-      if (APP_STATE.cart.contractDetails.numberOption === 'Port In' && !APP_STATE.cart.contractDetails.portInNumber) {
-        showToast("Port in phone number must be supplied.", "warning");
-        return;
+      const simType = document.getElementById('mobile-sim-type').value;
+      const numOpt = document.getElementById('mobile-number-opt').value;
+      APP_STATE.cart.contractDetails.simType = simType;
+      APP_STATE.cart.contractDetails.numberOption = numOpt;
+      
+      if (numOpt === 'Port In') {
+        const portNum = document.getElementById('mobile-port-number').value.trim();
+        if (!portNum) {
+          showToast("Port in phone number must be supplied.", "warning");
+          return;
+        }
+        APP_STATE.cart.contractDetails.portInNumber = portNum;
       }
     }
   }
 
-  if (APP_STATE.currentStep === 6) {
+  // Validate Step 8: Consent Check (was Step 6)
+  if (step === 8) {
     if (!APP_STATE.cart.consent) {
       showToast("NCA Credit Check consent checkboxes must be acknowledged.", "warning");
       return;
     }
   }
 
-  if (APP_STATE.currentStep === 7) {
-    // Trigger submission order to OMS
+  // Validate Step 9: Supporting Documents
+  if (step === 9) {
+    saveDocsOptionInput();
+    const sd = APP_STATE.cart.supportingDocs;
+    if (sd && sd.option === 'now') {
+      const uploads = sd.uploads;
+      if (!uploads.idDoc || !uploads.bankStatements || !uploads.proofAddress || !uploads.companyReg) {
+        showToast("Please upload all four required supporting documents or select 'Skip for now'.", "warning");
+        return;
+      }
+    }
+  }
+
+  // Final Step 10: Submission (was Step 7)
+  if (step === 10) {
     submitOrderToOMS();
     return;
   }
 
-  if (APP_STATE.currentStep < 7) {
+  if (step < 10) {
     APP_STATE.currentStep++;
     renderStepper();
   }
@@ -4385,3 +5183,1000 @@ document.addEventListener('click', function(e) {
     }
   }
 });
+
+
+// ==========================================
+// NEW CUSTOMER CREATION FLOW WIZARD
+// ==========================================
+
+const BANK_OPTIONS = [
+  "ABSA",
+  "African Bank",
+  "Bank Windhoek",
+  "Bidvest Bank",
+  "Capitec Bank Limited",
+  "Discovery Bank",
+  "FNB",
+  "Investec Bank Limited",
+  "Nedbank",
+  "Standard Bank",
+  "Tyme Bank"
+];
+
+const BRANCH_LOOKUP = {
+  "ABSA": { "632005": "Pretoria Central", "632006": "Johannesburg Main" },
+  "FNB": { "250655": "Randburg", "250117": "Pretoria North" },
+  "Capitec Bank Limited": { "470010": "Stellenbosch" },
+  "Standard Bank": { "051001": "Simmonds Street" },
+  "Nedbank": { "198765": "Sandton" }
+};
+
+const MOCK_EMPLOYER_ADDRESSES = [
+  { line1: "15 Alice Lane", street: "Alice Lane", suburb: "Sandton", city: "Johannesburg", postalCode: "2196" },
+  { line1: "24 Garsfontein Rd", street: "Garsfontein Rd", suburb: "Pretoria East", city: "Pretoria", postalCode: "0081" },
+  { line1: "100 Main Rd", street: "Main Rd", suburb: "Rosebank", city: "Cape Town", postalCode: "7700" },
+  { line1: "45 Anton Lembede St", street: "Anton Lembede St", suburb: "Durban Central", city: "Durban", postalCode: "4001" }
+];
+
+APP_STATE.employmentAccordionOpen = false;
+APP_STATE.accountNumberVisible = false;
+
+// Triggered from header CTA or "No Customer Found" search CTA
+function openNewCustomerWizard() {
+  APP_STATE.customerCreateStep = 1;
+  APP_STATE.employmentAccordionOpen = false;
+  APP_STATE.accountNumberVisible = false;
+  
+  // Clear/Initialize customer state structure
+  APP_STATE.newCustomerData = {
+    personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
+    employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
+    address: { line1: "", street: "", suburb: "", city: "", postalCode: "" },
+    financial: { grossIncome: "", netIncome: "", expenses: "" },
+    banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: false, creditConsent: false }
+  };
+
+  // Pre-fill ID info from search input if possible
+  const searchInputVal = document.getElementById('search-input') ? document.getElementById('search-input').value.trim() : '';
+  const searchType = document.getElementById('search-type') ? document.getElementById('search-type').value : 'id';
+  
+  if (searchInputVal) {
+    if (searchType === 'id' && /^\d{13}$/.test(searchInputVal)) {
+      APP_STATE.newCustomerData.personal.idNum = searchInputVal;
+      APP_STATE.newCustomerData.personal.idType = "SA ID";
+    } else if (searchType === 'passport' || (searchType === 'id' && searchInputVal.length >= 6)) {
+      APP_STATE.newCustomerData.personal.idNum = searchInputVal;
+      APP_STATE.newCustomerData.personal.idType = "Passport";
+    }
+  }
+
+  switchRoute('customer-create');
+}
+
+// Render the Wizard Steps
+function renderCustomerCreateStep(step) {
+  APP_STATE.customerCreateStep = step;
+  
+  // Highlight stepper numbers in UI
+  document.querySelectorAll('#cust-create-stepper .stepper-step').forEach((el, index) => {
+    el.className = 'stepper-step';
+    const sNum = index + 1;
+    if (sNum < step) {
+      el.classList.add('completed');
+    } else if (sNum === step) {
+      el.classList.add('active');
+    }
+  });
+
+  const stepContainer = document.getElementById('customer-create-content');
+  if (!stepContainer) return;
+  stepContainer.innerHTML = '';
+
+  const personal = APP_STATE.newCustomerData.personal;
+  const employment = APP_STATE.newCustomerData.employment;
+  const address = APP_STATE.newCustomerData.address;
+  const financial = APP_STATE.newCustomerData.financial;
+  const banking = APP_STATE.newCustomerData.banking;
+
+  // Render navigation buttons based on step
+  const backBtn = document.getElementById('cust-back-btn');
+  const nextBtn = document.getElementById('cust-next-btn');
+
+  if (backBtn) backBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+  if (nextBtn) {
+    nextBtn.innerText = step === 6 ? 'Create Profile & Proceed' : 'Continue';
+    nextBtn.className = 'btn btn-primary';
+  }
+
+  switch (step) {
+    case 1:
+      stepContainer.innerHTML = `
+        <h3 style="margin-bottom: 16px;">Step 1: Capture Personal & Identity Information</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Enter primary customer details. Standard validations will run against the CRM database.</p>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Identification Type <span class="required">*</span></label>
+            <select id="new-cust-idtype" class="form-control" onchange="saveCustomerCreateInputs()">
+              <option value="SA ID" ${personal.idType === 'SA ID' ? 'selected' : ''}>South African Identity Document</option>
+              <option value="Passport" ${personal.idType === 'Passport' ? 'selected' : ''}>International Passport</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ID Number / Passport Number <span class="required">*</span></label>
+            <input type="text" id="new-cust-idnum" class="form-control" placeholder="Enter ID/Passport number..." value="${personal.idNum || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">First Name <span class="required">*</span></label>
+            <input type="text" id="new-cust-firstname" class="form-control" placeholder="Enter first name..." value="${personal.firstName || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name <span class="required">*</span></label>
+            <input type="text" id="new-cust-lastname" class="form-control" placeholder="Enter last name..." value="${personal.lastName || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="required">*</span></label>
+            <input type="email" id="new-cust-email" class="form-control" placeholder="customer@domain.com" value="${personal.email || ''}" oninput="saveCustomerCreateInputs()">
+            <div id="cust-email-error" class="input-error-msg" style="display:none; margin-top: 4px;">Please enter a valid email address.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number <span class="required">*</span></label>
+            <input type="text" id="new-cust-mobile" class="form-control" placeholder="e.g. 0821234567" value="${personal.mobile || ''}" oninput="saveCustomerCreateInputs()">
+            <div id="cust-mobile-error" class="input-error-msg" style="display:none; margin-top: 4px;">Must be a valid 10-digit South African number starting with 0.</div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Alternative Contact Number (Optional)</label>
+          <input type="text" id="new-cust-altcontact" class="form-control" placeholder="e.g. 0111234567" value="${personal.altContact || ''}" oninput="saveCustomerCreateInputs()">
+        </div>
+
+        <label class="checkbox-group" style="margin-top: 20px;">
+          <input type="checkbox" id="new-cust-marketing" ${personal.marketingConsent ? 'checked' : ''} onchange="saveCustomerCreateInputs()">
+          <span class="checkbox-label" style="font-weight: 500;">Authorize marketing communications via SMS and Email.</span>
+        </label>
+      `;
+      break;
+
+    case 2:
+      stepContainer.innerHTML = `
+        <h3 style="margin-bottom: 16px;">Step 2: Employment Status & Occupational Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Optional: Provide employer context. Required later for credit-related purchases.</p>
+        
+        <div class="accordion ${APP_STATE.employmentAccordionOpen ? 'open' : ''}" id="employment-accordion">
+          <div class="accordion-header" onclick="toggleEmploymentAccordion()">
+            <span>Employment Details Questionnaire (Optional)</span>
+            <span class="accordion-arrow">▼</span>
+          </div>
+          <div class="accordion-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Employment Status</label>
+                <select id="new-cust-empstatus" class="form-control" onchange="saveCustomerCreateInputs()">
+                  <option value="">-- Select Status --</option>
+                  <option value="Employed" ${employment.status === 'Employed' ? 'selected' : ''}>Employed</option>
+                  <option value="Self-Employed" ${employment.status === 'Self-Employed' ? 'selected' : ''}>Self-Employed</option>
+                  <option value="Unemployed" ${employment.status === 'Unemployed' ? 'selected' : ''}>Unemployed</option>
+                  <option value="Student" ${employment.status === 'Student' ? 'selected' : ''}>Student</option>
+                  <option value="Retired" ${employment.status === 'Retired' ? 'selected' : ''}>Retired</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Employment Type</label>
+                <select id="new-cust-emptype" class="form-control" onchange="saveCustomerCreateInputs()">
+                  <option value="">-- Select Type --</option>
+                  <option value="Permanent" ${employment.type === 'Permanent' ? 'selected' : ''}>Permanent</option>
+                  <option value="Contract" ${employment.type === 'Contract' ? 'selected' : ''}>Contract</option>
+                  <option value="Temporary" ${employment.type === 'Temporary' ? 'selected' : ''}>Temporary</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 16px;">
+              <div class="form-group">
+                <label class="form-label">Occupation</label>
+                <input type="text" id="new-cust-occupation" class="form-control" placeholder="e.g. Engineer" value="${employment.occupation || ''}" oninput="saveCustomerCreateInputs()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Employer Name</label>
+                <input type="text" id="new-cust-empname" class="form-control" placeholder="e.g. Telkom Corporate" value="${employment.employerName || ''}" oninput="saveCustomerCreateInputs()">
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 16px;">
+              <div class="form-group">
+                <label class="form-label">Employer Contact Number</label>
+                <input type="text" id="new-cust-empcontact" class="form-control" placeholder="e.g. 0123111111" value="${employment.employerContact || ''}" oninput="saveCustomerCreateInputs()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Employment Start Date</label>
+                <input type="date" id="new-cust-empstart" class="form-control" value="${employment.startDate || ''}" onchange="saveCustomerCreateInputs()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="background-color: var(--bg-light); border-left: 4px solid var(--telkom-blue); padding: 14px 18px; border-radius: var(--radius-md); font-size: 12px; color: var(--text-secondary); margin-top: 16px; font-weight: 500;">
+          📌 <strong>Business Rule:</strong> You can completely skip this step. Credit-related products (like handset contracts) may require the agent to collect these fields later in CRM.
+        </div>
+      `;
+      break;
+
+    case 3:
+      stepContainer.innerHTML = `
+        <h3 style="margin-bottom: 16px;">Step 3: Employer Physical Location Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Optional: Capture employer address location. Autocomplete will look up validated business coordinates.</p>
+        
+        <div class="form-group" style="position: relative;">
+          <label class="form-label">Employer Address Line 1</label>
+          <input type="text" id="new-cust-addr1" class="form-control" placeholder="Type address (e.g. 15 Alice)..." value="${address.line1 || ''}" oninput="handleEmployerAddressInput(this)">
+          <div id="addr-autocomplete-menu" class="searchable-dropdown-menu" style="width: 100%;"></div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Street Address</label>
+          <input type="text" id="new-cust-street" class="form-control ${address.street ? 'auto-populated-field' : ''}" placeholder="Street name..." value="${address.street || ''}" oninput="saveCustomerCreateInputs()">
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Suburb</label>
+            <input type="text" id="new-cust-suburb" class="form-control ${address.suburb ? 'auto-populated-field' : ''}" placeholder="Suburb..." value="${address.suburb || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input type="text" id="new-cust-city" class="form-control ${address.city ? 'auto-populated-field' : ''}" placeholder="City..." value="${address.city || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Postal Code</label>
+            <input type="text" id="new-cust-postal" class="form-control ${address.postalCode ? 'auto-populated-field' : ''}" placeholder="Code..." value="${address.postalCode || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+        </div>
+      `;
+      break;
+
+    case 4:
+      stepContainer.innerHTML = `
+        <h3 style="margin-bottom: 16px;">Step 4: Net Worth & Financial Health Parameters</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Optional: Declare monthly net revenue streams. Numeric-only values will auto-format to ZAR.</p>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Gross Monthly Income</label>
+            <input type="text" id="new-cust-gross" class="form-control" placeholder="e.g. 25000" value="${financial.grossIncome ? formatCurrencySimple(financial.grossIncome) : ''}" oninput="handleFinancialInput(this, 'grossIncome')" onblur="handleFinancialBlur(this, 'grossIncome')" onfocus="handleFinancialFocus(this, 'grossIncome')">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Net Monthly Income</label>
+            <input type="text" id="new-cust-net" class="form-control" placeholder="e.g. 18000" value="${financial.netIncome ? formatCurrencySimple(financial.netIncome) : ''}" oninput="handleFinancialInput(this, 'netIncome')" onblur="handleFinancialBlur(this, 'netIncome')" onfocus="handleFinancialFocus(this, 'netIncome')">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label">Typical Monthly Expenses</label>
+          <input type="text" id="new-cust-expenses" class="form-control" placeholder="e.g. 12000" value="${financial.expenses ? formatCurrencySimple(financial.expenses) : ''}" oninput="handleFinancialInput(this, 'expenses')" onblur="handleFinancialBlur(this, 'expenses')" onfocus="handleFinancialFocus(this, 'expenses')">
+        </div>
+      `;
+      break;
+
+    case 5:
+      stepContainer.innerHTML = `
+        <h3 style="margin-bottom: 16px;">Step 5: Capture Postpaid Settlement Banking Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Set up monthly payment deductions. DebiCheck authorization and Credit Bureau checks are required.</p>
+        
+        <div class="form-row">
+          <div class="form-group searchable-dropdown-container">
+            <label class="form-label">Settlement Bank Name <span class="required">*</span></label>
+            <input type="text" id="new-cust-bankname" class="form-control searchable-dropdown-input" placeholder="Select bank name..." value="${banking.bankName || ''}" onclick="toggleBankMenu(event)" readonly>
+            <div id="bank-dropdown-menu" class="searchable-dropdown-menu">
+              <div class="searchable-dropdown-search-box">
+                <input type="text" class="form-control" placeholder="Filter banks..." oninput="filterBankOptions(this)" onclick="event.stopPropagation()">
+              </div>
+              <div id="bank-dropdown-options-list">
+                <!-- Sorted alphabetically dynamically -->
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Branch Code <span class="required">*</span></label>
+            <input type="text" id="new-cust-branchcode" class="form-control" placeholder="e.g. 632005" value="${banking.branchCode || ''}" oninput="handleBranchCodeInput(this)">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Account Type <span class="required">*</span></label>
+            <select id="new-cust-acctype" class="form-control" onchange="saveCustomerCreateInputs()">
+              <option value="">-- Select Type --</option>
+              <option value="Cheque" ${banking.accountType === 'Cheque' ? 'selected' : ''}>Cheque / Current Account</option>
+              <option value="Savings" ${banking.accountType === 'Savings' ? 'selected' : ''}>Savings Account</option>
+              <option value="Transmission" ${banking.accountType === 'Transmission' ? 'selected' : ''}>Transmission Account</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Account Number <span class="required">*</span></label>
+            <div class="secure-input-container">
+              <input type="${APP_STATE.accountNumberVisible ? 'text' : 'password'}" id="new-cust-accnum" class="form-control" placeholder="Enter bank account..." value="${banking.accountNumber || ''}" oninput="handleAccountNumberInput(this)">
+              <button type="button" class="secure-toggle-btn" onclick="toggleAccountNumberVisibility()">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  ${APP_STATE.accountNumberVisible ? 
+                    `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />` : 
+                    `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />`
+                  }
+                </svg>
+              </button>
+            </div>
+            <div id="cust-accnum-error" class="input-error-msg" style="display:none; margin-top: 4px;">Account number must be numeric and between 7 and 16 digits.</div>
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Branch Name (Optional)</label>
+            <input type="text" id="new-cust-branchname" class="form-control ${banking.branchName ? 'auto-populated-field' : ''}" placeholder="Branch name..." value="${banking.branchName || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Preferred Debit Order Date <span class="required">*</span></label>
+            <select id="new-cust-debitdate" class="form-control" onchange="saveCustomerCreateInputs()">
+              <option value="1st" ${banking.debitDate === '1st' ? 'selected' : ''}>1st of the month</option>
+              <option value="15th" ${banking.debitDate === '15th' ? 'selected' : ''}>15th of the month</option>
+              <option value="25th" ${banking.debitDate === '25th' ? 'selected' : ''}>25th of the month</option>
+              <option value="Last Day" ${banking.debitDate === 'Last Day' ? 'selected' : ''}>Last Day of the month</option>
+            </select>
+            <div class="input-helper">Select the day you would like your monthly payment to be deducted.</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+          <label class="checkbox-group" style="margin-bottom: 12px; align-items: flex-start;">
+            <input type="checkbox" id="new-cust-debicheck" ${banking.debiCheckConsent ? 'checked' : ''} onchange="saveCustomerCreateInputs()" style="margin-top: 3px;">
+            <span class="checkbox-label"><strong>Debit Collection Authorization (Required):</strong> I authorize Telkom and/or its approved debt collection partners to use DEBICHECK for the collection of any outstanding amounts from my account.</span>
+          </label>
+          <label class="checkbox-group" style="align-items: flex-start;">
+            <input type="checkbox" id="new-cust-creditcheck" ${banking.creditConsent ? 'checked' : ''} onchange="saveCustomerCreateInputs()" style="margin-top: 3px;">
+            <span class="checkbox-label"><strong>Credit Bureau Verification (Required):</strong> I authorize Telkom to verify my information with the Credit Bureau.</span>
+          </label>
+        </div>
+      `;
+      break;
+
+    case 6:
+      stepContainer.innerHTML = `
+        <h3 style="margin-bottom: 16px;">Step 6: Review & Finalize Customer Registration</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Confirm all captured customer specifications before sending the profile transaction payload to Clarify CRM.</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Personal Information</span></div>
+            <div class="panel-body font-sm" style="font-size: 13px; line-height: 1.6;">
+              <div><strong>Full Name:</strong> ${personal.firstName} ${personal.lastName}</div>
+              <div><strong>ID Type/Number:</strong> ${personal.idType} (${personal.idNum})</div>
+              <div><strong>Email Address:</strong> ${personal.email}</div>
+              <div><strong>Mobile Phone:</strong> ${personal.mobile}</div>
+              ${personal.altContact ? `<div><strong>Alt Contact:</strong> ${personal.altContact}</div>` : ''}
+              <div><strong>Marketing Choice:</strong> ${personal.marketingConsent ? 'Opt-In' : 'Opt-Out'}</div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Employment & Financials</span></div>
+            <div class="panel-body font-sm" style="font-size: 13px; line-height: 1.6;">
+              <div><strong>Status/Type:</strong> ${employment.status || 'Not declared'} / ${employment.type || 'Not declared'}</div>
+              <div><strong>Occupation:</strong> ${employment.occupation || 'Not declared'}</div>
+              <div><strong>Employer Name:</strong> ${employment.employerName || 'Not declared'}</div>
+              <div><strong>Employer Phone:</strong> ${employment.employerContact || 'Not declared'}</div>
+              <div><strong>Gross Income:</strong> ${financial.grossIncome ? formatCurrencySimple(financial.grossIncome) : 'Not declared'}</div>
+              <div><strong>Net Income:</strong> ${financial.netIncome ? formatCurrencySimple(financial.netIncome) : 'Not declared'}</div>
+              <div><strong>Expenses:</strong> ${financial.expenses ? formatCurrencySimple(financial.expenses) : 'Not declared'}</div>
+            </div>
+          </div>
+
+          <div class="panel" style="grid-column: 1 / -1;">
+            <div class="panel-header"><span class="panel-title">Settlement Account & Auths</span></div>
+            <div class="panel-body font-sm" style="font-size: 13px; line-height: 1.6; display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+              <div>
+                <div><strong>Bank Name:</strong> ${banking.bankName}</div>
+                <div><strong>Branch Code/Name:</strong> ${banking.branchCode} (${banking.branchName || 'Auto'})</div>
+                <div><strong>Account Number:</strong> ${maskAccountNumber(banking.accountNumber)} (${banking.accountType})</div>
+                <div><strong>Preferred Debit Date:</strong> ${banking.debitDate} of the month</div>
+              </div>
+              <div>
+                <div style="color: var(--success); font-weight: 600; margin-bottom: 6px;">✓ DebiCheck Debit Collection Signed</div>
+                <div style="color: var(--success); font-weight: 600;">✓ Credit Bureau Verification Authorized</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      break;
+  }
+}
+
+// Synchronize inputs into APP_STATE
+function saveCustomerCreateInputs() {
+  const step = APP_STATE.customerCreateStep;
+  const personal = APP_STATE.newCustomerData.personal;
+  const employment = APP_STATE.newCustomerData.employment;
+  const address = APP_STATE.newCustomerData.address;
+  const banking = APP_STATE.newCustomerData.banking;
+
+  if (step === 1) {
+    personal.idType = document.getElementById('new-cust-idtype').value;
+    personal.idNum = document.getElementById('new-cust-idnum').value.trim();
+    personal.firstName = document.getElementById('new-cust-firstname').value.trim();
+    personal.lastName = document.getElementById('new-cust-lastname').value.trim();
+    personal.email = document.getElementById('new-cust-email').value.trim();
+    personal.mobile = document.getElementById('new-cust-mobile').value.trim();
+    personal.altContact = document.getElementById('new-cust-altcontact').value.trim();
+    personal.marketingConsent = document.getElementById('new-cust-marketing').checked;
+  } else if (step === 2) {
+    const statusSel = document.getElementById('new-cust-empstatus');
+    const typeSel = document.getElementById('new-cust-emptype');
+    if (statusSel) employment.status = statusSel.value;
+    if (typeSel) employment.type = typeSel.value;
+    
+    const occInput = document.getElementById('new-cust-occupation');
+    const nameInput = document.getElementById('new-cust-empname');
+    const contactInput = document.getElementById('new-cust-empcontact');
+    const startInput = document.getElementById('new-cust-empstart');
+
+    if (occInput) employment.occupation = occInput.value.trim();
+    if (nameInput) employment.employerName = nameInput.value.trim();
+    if (contactInput) employment.employerContact = contactInput.value.trim();
+    if (startInput) employment.startDate = startInput.value;
+  } else if (step === 3) {
+    const l1 = document.getElementById('new-cust-addr1');
+    const str = document.getElementById('new-cust-street');
+    const sub = document.getElementById('new-cust-suburb');
+    const city = document.getElementById('new-cust-city');
+    const post = document.getElementById('new-cust-postal');
+
+    if (l1) address.line1 = l1.value.trim();
+    if (str) address.street = str.value.trim();
+    if (sub) address.suburb = sub.value.trim();
+    if (city) address.city = city.value.trim();
+    if (post) address.postalCode = post.value.trim();
+  } else if (step === 5) {
+    const bankEl = document.getElementById('new-cust-bankname');
+    const typeEl = document.getElementById('new-cust-acctype');
+    const debitEl = document.getElementById('new-cust-debitdate');
+    const debiCheckEl = document.getElementById('new-cust-debicheck');
+    const creditEl = document.getElementById('new-cust-creditcheck');
+    const branchNameEl = document.getElementById('new-cust-branchname');
+
+    if (bankEl) banking.bankName = bankEl.value;
+    if (typeEl) banking.accountType = typeEl.value;
+    if (debitEl) banking.debitDate = debitEl.value;
+    if (debiCheckEl) banking.debiCheckConsent = debiCheckEl.checked;
+    if (creditEl) banking.creditConsent = creditEl.checked;
+    if (branchNameEl) banking.branchName = branchNameEl.value.trim();
+  }
+}
+
+// Collapsible accordion toggle
+function toggleEmploymentAccordion() {
+  const acc = document.getElementById('employment-accordion');
+  if (acc) {
+    APP_STATE.employmentAccordionOpen = !APP_STATE.employmentAccordionOpen;
+    acc.classList.toggle('open', APP_STATE.employmentAccordionOpen);
+  }
+}
+
+// Address Autocomplete Handlers
+function handleEmployerAddressInput(el) {
+  saveCustomerCreateInputs();
+  const menu = document.getElementById('addr-autocomplete-menu');
+  if (!menu) return;
+
+  const val = el.value.trim().toLowerCase();
+  if (!val || val.length < 2) {
+    menu.style.display = 'none';
+    return;
+  }
+
+  const matches = MOCK_EMPLOYER_ADDRESSES.filter(addr => addr.line1.toLowerCase().includes(val));
+  
+  if (matches.length === 0) {
+    menu.style.display = 'none';
+    return;
+  }
+
+  menu.innerHTML = '';
+  matches.forEach((addr, index) => {
+    menu.innerHTML += `
+      <div class="searchable-dropdown-option" onclick="selectEmployerAddressSuggestion(${index})">
+        <strong>${addr.line1}</strong> — ${addr.suburb}, ${addr.city}, ${addr.postalCode}
+      </div>
+    `;
+  });
+  menu.style.display = 'block';
+}
+
+function selectEmployerAddressSuggestion(index) {
+  const addr = MOCK_EMPLOYER_ADDRESSES[index];
+  if (addr) {
+    APP_STATE.newCustomerData.address = {
+      line1: addr.line1,
+      street: addr.street,
+      suburb: addr.suburb,
+      city: addr.city,
+      postalCode: addr.postalCode
+    };
+    
+    // Rerender Step 3 to show populated fields
+    renderCustomerCreateStep(3);
+    showToast("Employer address auto-completed.", "success");
+  }
+
+  const menu = document.getElementById('addr-autocomplete-menu');
+  if (menu) menu.style.display = 'none';
+}
+
+// Financial Inputs (Step 4 Currency formatting)
+function formatCurrencySimple(val) {
+  if (!val) return "";
+  const clean = val.toString().replace(/[^0-9]/g, '');
+  if (!clean) return "";
+  return "R " + parseInt(clean).toLocaleString('en-ZA');
+}
+
+function handleFinancialInput(el, field) {
+  const val = el.value.replace(/[^0-9]/g, '');
+  APP_STATE.newCustomerData.financial[field] = val;
+}
+
+function handleFinancialBlur(el, field) {
+  const val = APP_STATE.newCustomerData.financial[field];
+  if (val) {
+    el.value = formatCurrencySimple(val);
+  }
+}
+
+function handleFinancialFocus(el, field) {
+  const val = APP_STATE.newCustomerData.financial[field];
+  if (val) {
+    el.value = val;
+  }
+}
+
+// Searchable bank dropdown controls
+function toggleBankMenu(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('bank-dropdown-menu');
+  if (!menu) return;
+  menu.classList.toggle('show');
+  
+  // Render options list sorted alphabetically
+  filterBankOptions(null);
+}
+
+function filterBankOptions(searchEl) {
+  const listEl = document.getElementById('bank-dropdown-options-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const searchVal = searchEl ? searchEl.value.trim().toLowerCase() : '';
+  const filtered = BANK_OPTIONS.filter(b => b.toLowerCase().includes(searchVal));
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div style="padding: 10px 14px; font-size: 13px; color: var(--text-muted);">No banks found</div>`;
+    return;
+  }
+
+  const selectedBank = APP_STATE.newCustomerData.banking.bankName;
+
+  filtered.forEach(b => {
+    listEl.innerHTML += `
+      <div class="searchable-dropdown-option ${selectedBank === b ? 'selected' : ''}" onclick="selectBankOption('${b}')">
+        ${b}
+      </div>
+    `;
+  });
+}
+
+function selectBankOption(bank) {
+  APP_STATE.newCustomerData.banking.bankName = bank;
+  const input = document.getElementById('new-cust-bankname');
+  if (input) input.value = bank;
+
+  const menu = document.getElementById('bank-dropdown-menu');
+  if (menu) menu.classList.remove('show');
+  
+  // Trigger branch code checker to refresh lookup
+  const branchEl = document.getElementById('new-cust-branchcode');
+  if (branchEl) handleBranchCodeInput(branchEl);
+}
+
+// Close bank dropdown on clicking outside
+document.addEventListener('click', function() {
+  const menu = document.getElementById('bank-dropdown-menu');
+  if (menu) menu.classList.remove('show');
+  
+  const addrMenu = document.getElementById('addr-autocomplete-menu');
+  if (addrMenu) addrMenu.style.display = 'none';
+});
+
+// Branch auto-population lookup
+function handleBranchCodeInput(el) {
+  const code = el.value.replace(/[^0-9]/g, '');
+  el.value = code;
+  APP_STATE.newCustomerData.banking.branchCode = code;
+
+  const bankName = APP_STATE.newCustomerData.banking.bankName;
+  const nameInput = document.getElementById('new-cust-branchname');
+  if (!nameInput) return;
+
+  if (bankName && BRANCH_LOOKUP[bankName] && BRANCH_LOOKUP[bankName][code]) {
+    const branchName = BRANCH_LOOKUP[bankName][code];
+    APP_STATE.newCustomerData.banking.branchName = branchName;
+    nameInput.value = branchName;
+    nameInput.classList.add('auto-populated-field');
+    showToast(`Branch auto-detected: ${branchName}`, "success");
+  } else {
+    nameInput.classList.remove('auto-populated-field');
+  }
+}
+
+// Account number masking & visibility
+function handleAccountNumberInput(el) {
+  const code = el.value.replace(/[^0-9]/g, '');
+  el.value = code;
+  APP_STATE.newCustomerData.banking.accountNumber = code;
+}
+
+function toggleAccountNumberVisibility() {
+  APP_STATE.accountNumberVisible = !APP_STATE.accountNumberVisible;
+  
+  // Re-render banking step to update eye icon and type
+  renderCustomerCreateStep(5);
+}
+
+function maskAccountNumber(accNum) {
+  if (!accNum) return "";
+  if (accNum.length < 5) return accNum;
+  return "••••••" + accNum.slice(-4);
+}
+
+// Navigation back and next actions
+function handleCustomerCreateBack() {
+  if (APP_STATE.customerCreateStep > 1) {
+    saveCustomerCreateInputs();
+    renderCustomerCreateStep(APP_STATE.customerCreateStep - 1);
+  }
+}
+
+function handleCustomerCreateNext() {
+  saveCustomerCreateInputs();
+  const step = APP_STATE.customerCreateStep;
+  const personal = APP_STATE.newCustomerData.personal;
+  const banking = APP_STATE.newCustomerData.banking;
+
+  // STEP 1 VALIDATIONS
+  if (step === 1) {
+    if (!personal.idNum || !personal.firstName || !personal.lastName || !personal.email || !personal.mobile) {
+      showToast("Please fill in all mandatory customer details (*)", "warning");
+      return;
+    }
+
+    if (personal.idType === 'SA ID' && !/^\d{13}$/.test(personal.idNum)) {
+      showToast("South African ID must be exactly 13 digits.", "danger");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(personal.email)) {
+      document.getElementById('cust-email-error').style.display = 'block';
+      return;
+    } else {
+      document.getElementById('cust-email-error').style.display = 'none';
+    }
+
+    if (!/^\d{10}$/.test(personal.mobile)) {
+      document.getElementById('cust-mobile-error').style.display = 'block';
+      return;
+    } else {
+      document.getElementById('cust-mobile-error').style.display = 'none';
+    }
+
+    // Duplicate Check
+    const exists = MOCK_DB.crm.some(c => (c.id === personal.idNum || (c.passport && c.passport === personal.idNum)));
+    if (exists) {
+      showToast(`Conflict: Customer with ID/Passport ${personal.idNum} already exists in CRM database.`, "danger");
+      return;
+    }
+  }
+
+  // STEP 5 VALIDATIONS
+  if (step === 5) {
+    if (!banking.bankName || !banking.branchCode || !banking.accountType || !banking.accountNumber) {
+      showToast("Please capture all required settlement banking parameters (*).", "warning");
+      return;
+    }
+
+    if (!/^\d+$/.test(banking.branchCode)) {
+      showToast("Branch Code must be numeric digits only.", "danger");
+      return;
+    }
+
+    if (!/^\d{7,16}$/.test(banking.accountNumber)) {
+      document.getElementById('cust-accnum-error').style.display = 'block';
+      return;
+    } else {
+      document.getElementById('cust-accnum-error').style.display = 'none';
+    }
+
+    if (!banking.debiCheckConsent || !banking.creditConsent) {
+      showToast("Debit DebiCheck and Credit Bureau verification consents must be checked to register account.", "warning");
+      return;
+    }
+  }
+
+  if (step === 6) {
+    submitNewCustomerProfile();
+    return;
+  }
+
+  // Go to next step
+  renderCustomerCreateStep(step + 1);
+}
+
+// Complete customer registration
+function submitNewCustomerProfile() {
+  const personal = APP_STATE.newCustomerData.personal;
+  const address = APP_STATE.newCustomerData.address;
+  
+  // Format SA Address or default
+  const formattedAddress = address.line1 ? `${address.line1}, ${address.suburb}, ${address.city}, ${address.postalCode}` : "12 Main Rd, Rosebank, Johannesburg, 2196";
+
+  const newCust = {
+    id: personal.idType === 'SA ID' ? personal.idNum : "",
+    passport: personal.idType === 'Passport' ? personal.idNum : "",
+    accountNumber: "TEL-" + Math.floor(10000000 + Math.random() * 90000000),
+    name: `${personal.firstName} ${personal.lastName}`,
+    status: "Active",
+    segment: "Consumer",
+    mobile: personal.mobile,
+    email: personal.email,
+    address: formattedAddress,
+    billingAddress: formattedAddress,
+    preferredContact: "SMS",
+    activeProducts: [],
+    interactions: []
+  };
+
+  // Add supporting documents array to support upload logic
+  newCust.documents = [];
+
+  MOCK_DB.crm.push(newCust);
+  
+  // Display success state inside content viewport
+  const content = document.getElementById('customer-create-content');
+  const backBtn = document.getElementById('cust-back-btn');
+  const nextBtn = document.getElementById('cust-next-btn');
+
+  if (backBtn) backBtn.style.visibility = 'hidden';
+  if (nextBtn) nextBtn.style.display = 'none';
+
+  content.innerHTML = `
+    <div style="text-align: center; padding: 40px 20px;">
+      <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
+      <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
+      <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
+        The customer profile for <strong>${newCust.name}</strong> has been created and is now available in the system.
+      </p>
+      
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
+        Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${newCust.accountNumber}</strong>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 16px;">
+        <button class="btn btn-secondary" onclick="identifyCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">View Customer Profile</button>
+        <button class="btn btn-primary" onclick="proceedToCatalogueForCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">Proceed to Product Selection</button>
+      </div>
+    </div>
+  `;
+
+  showToast("CRM Customer profile created successfully.", "success");
+}
+
+function proceedToCatalogueForCustomer(idVal, type) {
+  identifyCustomer(idVal, type);
+  switchRoute('catalogue');
+}
+
+// Render customer documents in Customer 360
+function renderCustomer360Documents() {
+  const cust = APP_STATE.selectedCustomer;
+  if (!cust) return;
+
+  if (!cust.documents || Array.isArray(cust.documents)) {
+    cust.documents = {};
+  }
+
+  const docTypes = [
+    { key: "idDoc", label: "Identity Document" },
+    { key: "bankStatements", label: "Last 3 Months Bank Statements" },
+    { key: "proofAddress", label: "Proof of Address" },
+    { key: "companyReg", label: "Company Registration Document" }
+  ];
+
+  const panel = document.getElementById('c360-documents-panel');
+  if (!panel) return;
+
+  let html = `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+
+  docTypes.forEach(doc => {
+    const file = cust.documents[doc.key];
+    const progress = APP_STATE.customerDocProgress && APP_STATE.customerDocProgress[doc.key];
+
+    html += `
+      <div class="c360-doc-row" style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card); transition: all 0.2s ease;">
+        <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+          <div class="doc-icon-wrapper" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: ${file ? 'var(--success-light)' : 'var(--warning-light)'}; color: ${file ? 'var(--success)' : 'var(--warning)'}; flex-shrink: 0;">
+            ${file 
+              ? `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`
+              : `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>`
+            }
+          </div>
+          <div style="min-width: 0; flex: 1;">
+            <div style="font-weight: 700; font-size: 13px; color: var(--telkom-blue-dark);">${doc.label}</div>
+            <div style="font-size: 11px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+              ${file 
+                ? `<span style="color: var(--text-primary); font-weight: 500;">${file.name} (${file.size})</span>`
+                : `<span style="color: var(--text-muted);">Not uploaded</span>`
+              }
+            </div>
+          </div>
+        </div>
+    `;
+
+    if (progress !== undefined && progress < 100) {
+      html += `
+        <div style="width: 140px; flex-shrink: 0; text-align: right;">
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; display: flex; justify-content: space-between;">
+            <span>Uploading...</span>
+            <span>${progress}%</span>
+          </div>
+          <div class="upload-progress-container" style="display:block; height: 6px; margin: 0;">
+            <div class="upload-progress-bar" style="width: ${progress}%;"></div>
+          </div>
+        </div>
+      `;
+    } else {
+      html += `
+        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+          ${file 
+            ? `
+              <button class="btn btn-sm btn-secondary" onclick="triggerBrowseCustomerDoc('${doc.key}')" style="padding: 4px 8px; font-size: 11px; height: 28px;">Replace</button>
+              <button class="btn btn-sm btn-danger" onclick="removeCustomerProfileDoc('${doc.key}')" style="padding: 4px 8px; font-size: 11px; height: 28px;">Remove</button>
+            `
+            : `
+              <button class="btn btn-sm btn-primary" onclick="triggerBrowseCustomerDoc('${doc.key}')" style="padding: 4px 12px; font-size: 11px; height: 28px;">Upload</button>
+            `
+          }
+        </div>
+        <input type="file" id="c360-file-input-${doc.key}" style="display:none;" onchange="handleCustomerDocSelected(event, '${doc.key}')" accept=".pdf,.jpg,.png">
+      `;
+    }
+
+    html += `</div>`;
+  });
+
+  html += `</div>`;
+  panel.innerHTML = html;
+}
+
+function triggerBrowseCustomerDoc(key) {
+  const input = document.getElementById(`c360-file-input-${key}`);
+  if (input) {
+    input.click();
+  }
+}
+
+function handleCustomerDocSelected(e, key) {
+  const file = e.target.files[0];
+  if (file) {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext !== 'pdf' && ext !== 'jpg' && ext !== 'png') {
+      showToast("Invalid format: PDF, JPG, PNG only.", "danger");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("File size exceeds 5 MB limit.", "danger");
+      return;
+    }
+    simulateCustomerDocUpload(key, file.name);
+  }
+}
+
+function simulateCustomerDocUpload(docType, fileName) {
+  const cust = APP_STATE.selectedCustomer;
+  if (!cust) return;
+
+  if (!APP_STATE.customerDocProgress) {
+    APP_STATE.customerDocProgress = {};
+  }
+
+  APP_STATE.customerDocProgress[docType] = 1;
+  renderCustomer360Documents();
+
+  let current = 0;
+  const interval = setInterval(() => {
+    current += 20;
+    if (current > 100) {
+      current = 100;
+      clearInterval(interval);
+      
+      cust.documents = cust.documents || {};
+      cust.documents[docType] = { name: fileName, size: "1.2 MB" };
+      delete APP_STATE.customerDocProgress[docType];
+
+      if (cust.interactions) {
+        cust.interactions.unshift({
+          date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+          agent: APP_STATE.currentUser.id || "AGT-101",
+          type: "Document Uploaded",
+          notes: `Uploaded supporting document: ${docType.replace(/([A-Z])/g, ' $1')} (${fileName})`
+        });
+      }
+
+      showToast(`${docType.replace(/([A-Z])/g, ' $1')} uploaded successfully.`, "success");
+      renderCustomer360();
+    } else {
+      APP_STATE.customerDocProgress[docType] = current;
+      renderCustomer360Documents();
+    }
+  }, 150);
+}
+
+function removeCustomerProfileDoc(key) {
+  const cust = APP_STATE.selectedCustomer;
+  if (!cust) return;
+
+  if (cust.documents && cust.documents[key]) {
+    const fileName = cust.documents[key].name;
+    delete cust.documents[key];
+
+    if (cust.interactions) {
+      cust.interactions.unshift({
+        date: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        agent: APP_STATE.currentUser.id || "AGT-101",
+        type: "Document Removed",
+        notes: `Removed supporting document: ${key.replace(/([A-Z])/g, ' $1')} (${fileName})`
+      });
+    }
+
+    showToast(`${key.replace(/([A-Z])/g, ' $1')} removed.`, "info");
+    renderCustomer360();
+  }
+}
+
+// Bind to window
+window.openNewCustomerWizard = openNewCustomerWizard;
+window.handleCustomerCreateBack = handleCustomerCreateBack;
+window.handleCustomerCreateNext = handleCustomerCreateNext;
+window.toggleEmploymentAccordion = toggleEmploymentAccordion;
+window.handleEmployerAddressInput = handleEmployerAddressInput;
+window.selectEmployerAddressSuggestion = selectEmployerAddressSuggestion;
+window.handleFinancialInput = handleFinancialInput;
+window.handleFinancialBlur = handleFinancialBlur;
+window.handleFinancialFocus = handleFinancialFocus;
+window.toggleBankMenu = toggleBankMenu;
+window.filterBankOptions = filterBankOptions;
+window.selectBankOption = selectBankOption;
+window.handleBranchCodeInput = handleBranchCodeInput;
+window.handleAccountNumberInput = handleAccountNumberInput;
+window.toggleAccountNumberVisibility = toggleAccountNumberVisibility;
+window.proceedToCatalogueForCustomer = proceedToCatalogueForCustomer;
+window.triggerBrowseCustomerDoc = triggerBrowseCustomerDoc;
+window.handleCustomerDocSelected = handleCustomerDocSelected;
+window.removeCustomerProfileDoc = removeCustomerProfileDoc;
+window.renderCustomer360Documents = renderCustomer360Documents;
+
