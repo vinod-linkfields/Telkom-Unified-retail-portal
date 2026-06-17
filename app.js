@@ -2888,6 +2888,7 @@ function renderReports() {
 
   const tableThead = document.getElementById('report-table-thead');
   const tableTbody = document.getElementById('report-table-tbody');
+  if (!tableThead || !tableTbody) return;
   tableThead.innerHTML = '';
   tableTbody.innerHTML = '';
 
@@ -3413,12 +3414,14 @@ function renderReports() {
   generateActionableInsights(filtered, category, role);
 
   // Update table row count
-  document.getElementById('report-table-count').innerText = `Showing ${filtered.length} entries`;
+  const countEl = document.getElementById('report-table-count');
+  if (countEl) countEl.innerText = `Showing ${filtered.length} entries`;
 
   // Set Generation Timestamp
   const now = new Date();
   const timestampStr = now.toISOString().replace('T', ' ').substring(0, 19) + " SAST";
-  document.getElementById('report-generation-timestamp').innerText = `Generated: ${timestampStr} by ${APP_STATE.currentUser.id} (${APP_STATE.currentUser.name})`;
+  const tsEl = document.getElementById('report-generation-timestamp');
+  if (tsEl) tsEl.innerText = `Generated: ${timestampStr} by ${APP_STATE.currentUser.id} (${APP_STATE.currentUser.name})`;
 }
 
 // ==========================================
