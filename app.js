@@ -3508,7 +3508,7 @@ function downloadPDFReport(category, store, data, fromDate, toDate) {
     <body>
       <div class="logo-area">
         <div>
-          <img src="Images/Logo.svg" alt="Telkom Retail" style="height: 40px; object-fit: contain; display: block; margin-bottom: 4px; filter: invert(1);">
+          <img src="Images/Logo_new.svg" alt="Telkom Retail" style="height: 40px; object-fit: contain; display: block; margin-bottom: 4px; filter: invert(1);">
           <div style="font-size: 12px; color: #0099ff; font-weight: 600;">Unified Digital Platform</div>
         </div>
         <div class="report-meta" style="text-align: right;">
