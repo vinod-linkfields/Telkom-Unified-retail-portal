@@ -673,7 +673,7 @@ function renderAgentDashboard() {
   }
   
   // Stock alert box
-  const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch];
+  const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch] || {};
   const stockAlertContainer = document.getElementById('agent-stock-alerts');
   stockAlertContainer.innerHTML = '';
   
@@ -733,7 +733,7 @@ function renderManagerDashboard() {
   document.getElementById('mgr-orders-today').innerText = storeOrders.length;
   document.getElementById('mgr-pending-reqs').innerText = APP_STATE.stockRequests.filter(r => r.storeId === APP_STATE.currentUser.branch && r.status === 'Submitted').length;
   
-  const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch];
+  const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch] || {};
   let oosItems = [];
   for (const [sku, detail] of Object.entries(branchStock)) {
     if (detail.available === 0) {
@@ -1045,7 +1045,7 @@ function renderCatalogue() {
     let isOos = false;
     
     if (p.deviceSKU) {
-      const stock = MOCK_DB.stock[APP_STATE.currentUser.branch][p.deviceSKU];
+      const stock = MOCK_DB.stock[APP_STATE.currentUser.branch]?.[p.deviceSKU] || { onHand: 0, reserved: 0, available: 0 };
       if (stock) {
         if (stock.available === 0) {
           stockBadgeHtml = `<span class="badge badge-danger" style="margin-left: 8px;">Out of Stock</span>`;
@@ -1991,7 +1991,7 @@ function renderStepperStockCheck(container) {
   }
 
   const p = APP_STATE.cart.product;
-  const stockInfo = MOCK_DB.stock[APP_STATE.currentUser.branch][p.deviceSKU] || { onHand: 0, reserved: 0, available: 0 };
+  const stockInfo = MOCK_DB.stock[APP_STATE.currentUser.branch]?.[p.deviceSKU] || { onHand: 0, reserved: 0, available: 0 };
 
   let statusAlert = '';
   if (APP_STATE.cart.stockChecked) {
@@ -4670,7 +4670,7 @@ function simulateGisApiRetry() {
 
 function simulateStockCheckAction() {
   const p = APP_STATE.cart.product;
-  const stock = MOCK_DB.stock[APP_STATE.currentUser.branch][p.deviceSKU];
+  const stock = MOCK_DB.stock[APP_STATE.currentUser.branch]?.[p.deviceSKU];
   
   if (stock && stock.available > 0) {
     // Allocate/Reserve stock temporarily
