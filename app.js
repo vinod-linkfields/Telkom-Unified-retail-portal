@@ -558,51 +558,54 @@ function switchRoute(route) {
 
 function renderScreen(route) {
   // Render headers / sessions
-  updateSessionBanner();
+  try { updateSessionBanner(); } catch(e) { console.warn('updateSessionBanner error:', e); }
 
   switch (route) {
     case "agent-dashboard":
-      renderAgentDashboard();
+      try { renderAgentDashboard(); } catch(e) { console.error('renderAgentDashboard error:', e); }
       break;
     case "manager-dashboard":
-      renderManagerDashboard();
+      try { renderManagerDashboard(); } catch(e) { console.error('renderManagerDashboard error:', e); }
       break;
     case "area-dashboard":
-      renderAreaDashboard();
+      try { renderAreaDashboard(); } catch(e) { console.error('renderAreaDashboard error:', e); }
       break;
     case "admin-dashboard":
-      renderAdminDashboard();
+      try { renderAdminDashboard(); } catch(e) { console.error('renderAdminDashboard error:', e); }
       break;
     case "customer-search":
-      // Reset customer search inputs
-      document.getElementById('search-error').style.display = 'none';
+      try {
+        // Reset customer search inputs
+        const searchErrEl = document.getElementById('search-error');
+        if (searchErrEl) searchErrEl.style.display = 'none';
+      } catch(e) { console.warn('customer-search reset error:', e); }
       break;
     case "customer-create":
-      renderCustomerCreateStep(APP_STATE.customerCreateStep);
+      try { renderCustomerCreateStep(APP_STATE.customerCreateStep); } catch(e) { console.error('renderCustomerCreateStep error:', e); }
       break;
     case "customer-360":
-      renderCustomer360();
+      try { renderCustomer360(); } catch(e) { console.error('renderCustomer360 error:', e); }
       break;
     case "catalogue":
-      renderCatalogue();
+      try { renderCatalogue(); } catch(e) { console.error('renderCatalogue error:', e); }
       break;
     case "order-stepper":
-      renderStepper();
+      try { renderStepper(); } catch(e) { console.error('renderStepper error:', e); }
       break;
     case "order-tracking":
-      renderOrderTracking();
+      try { renderOrderTracking(); } catch(e) { console.error('renderOrderTracking error:', e); }
       break;
     case "stock-requests":
-      switchStockTab('inventory');
+      try { switchStockTab('inventory'); } catch(e) { console.error('switchStockTab error:', e); }
       break;
     case "reports":
-      renderReports();
+      try { renderReports(); } catch(e) { console.error('renderReports error:', e); }
       break;
     case "record-logs":
-      renderRecordLogs();
+      try { renderRecordLogs(); } catch(e) { console.error('renderRecordLogs error:', e); }
       break;
     case "notifications":
-      renderNotificationsView();
+      try { renderNotificationsView(); } catch(e) { console.error('renderNotificationsView error:', e); }
       break;
   }
 }
@@ -610,19 +613,24 @@ function renderScreen(route) {
 // Update Header Customer Session info
 function updateSessionBanner() {
   const banner = document.getElementById('session-banner');
+  if (!banner) return;
   if (APP_STATE.selectedCustomer) {
     banner.style.display = 'flex';
-    document.getElementById('session-customer-name').innerText = APP_STATE.selectedCustomer.name;
-    document.getElementById('session-account-no').innerText = APP_STATE.selectedCustomer.accountNumber;
+    const nameEl = document.getElementById('session-customer-name');
+    const accEl = document.getElementById('session-account-no');
+    if (nameEl) nameEl.innerText = APP_STATE.selectedCustomer.name;
+    if (accEl) accEl.innerText = APP_STATE.selectedCustomer.accountNumber;
     
     // CIM interaction status
     const cimStatus = document.getElementById('session-cim-status');
-    if (APP_STATE.activeCIMInteraction) {
-      cimStatus.innerText = `Active CIM Session: ${APP_STATE.activeCIMInteraction.type}`;
-      cimStatus.className = "session-tag";
-    } else {
-      cimStatus.innerText = "No active CIM interaction";
-      cimStatus.className = "session-tag warning";
+    if (cimStatus) {
+      if (APP_STATE.activeCIMInteraction) {
+        cimStatus.innerText = `Active CIM Session: ${APP_STATE.activeCIMInteraction.type}`;
+        cimStatus.className = "session-tag";
+      } else {
+        cimStatus.innerText = "No active CIM interaction";
+        cimStatus.className = "session-tag warning";
+      }
     }
   } else {
     banner.style.display = 'none';
@@ -637,6 +645,7 @@ function renderAgentDashboard() {
     .slice(0, 5);
 
   const tbody = document.getElementById('agent-recent-orders-tbody');
+  if (!tbody) return;
   tbody.innerHTML = '';
   if (recentOrders.length === 0) {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No orders found.</td></tr>`;
@@ -655,7 +664,8 @@ function renderAgentDashboard() {
   }
 
   // Set counts
-  document.getElementById('agent-today-count').innerText = recentOrders.length;
+  const agentTodayEl = document.getElementById('agent-today-count');
+  if (agentTodayEl) agentTodayEl.innerText = recentOrders.length;
   
   const pendingEl = document.getElementById('agent-pending-payments');
   if (pendingEl) {
@@ -675,6 +685,7 @@ function renderAgentDashboard() {
   // Stock alert box
   const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch] || {};
   const stockAlertContainer = document.getElementById('agent-stock-alerts');
+  if (!stockAlertContainer) return;
   stockAlertContainer.innerHTML = '';
   
   let oosCount = 0;
@@ -730,8 +741,10 @@ function renderAgentDashboard() {
 // Render Store Manager Dashboard
 function renderManagerDashboard() {
   const storeOrders = APP_STATE.ordersList.filter(o => o.store === APP_STATE.currentUser.branch);
-  document.getElementById('mgr-orders-today').innerText = storeOrders.length;
-  document.getElementById('mgr-pending-reqs').innerText = APP_STATE.stockRequests.filter(r => r.storeId === APP_STATE.currentUser.branch && r.status === 'Submitted').length;
+  const mgrOrdersEl = document.getElementById('mgr-orders-today');
+  if (mgrOrdersEl) mgrOrdersEl.innerText = storeOrders.length;
+  const mgrPendingEl = document.getElementById('mgr-pending-reqs');
+  if (mgrPendingEl) mgrPendingEl.innerText = APP_STATE.stockRequests.filter(r => r.storeId === APP_STATE.currentUser.branch && r.status === 'Submitted').length;
   
   const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch] || {};
   let oosItems = [];
@@ -741,10 +754,12 @@ function renderManagerDashboard() {
       oosItems.push(p ? p.name : sku);
     }
   }
-  document.getElementById('mgr-oos-count').innerText = oosItems.length;
+  const mgrOosEl = document.getElementById('mgr-oos-count');
+  if (mgrOosEl) mgrOosEl.innerText = oosItems.length;
 
   // Active agents table
   const agentsBody = document.getElementById('mgr-agents-tbody');
+  if (!agentsBody) return;
   agentsBody.innerHTML = `
     <tr>
       <td>AGT-101</td>
@@ -764,11 +779,14 @@ function renderManagerDashboard() {
 // Render Area Manager Dashboard
 function renderAreaDashboard() {
   // Aggregate KPIs
-  document.getElementById('am-total-orders').innerText = APP_STATE.ordersList.length;
-  document.getElementById('am-pending-approvals').innerText = APP_STATE.stockRequests.filter(r => r.status === 'Submitted').length;
+  const amTotalEl = document.getElementById('am-total-orders');
+  if (amTotalEl) amTotalEl.innerText = APP_STATE.ordersList.length;
+  const amPendingEl = document.getElementById('am-pending-approvals');
+  if (amPendingEl) amPendingEl.innerText = APP_STATE.stockRequests.filter(r => r.status === 'Submitted').length;
 
   // Filter requests table to only display Submitted stock requests
   const pendingTbody = document.getElementById('am-pending-requests-tbody');
+  if (!pendingTbody) return;
   pendingTbody.innerHTML = '';
   
   const pendingRequests = APP_STATE.stockRequests.filter(r => r.status === 'Submitted');
@@ -804,6 +822,7 @@ function renderAdminDashboard() {
   ];
 
   const logTbody = document.getElementById('admin-logs-tbody');
+  if (!logTbody) return;
   logTbody.innerHTML = '';
   integrationLogs.forEach(l => {
     logTbody.innerHTML += `
@@ -991,7 +1010,8 @@ function renderCatalogue() {
   }
 
   const typeFilter = Array.from(document.querySelectorAll('.filter-type-checkbox:checked')).map(cb => cb.value);
-  const priceFilter = document.querySelector('.filter-price-radio:checked').value; // all, 0-200, 200-500, 500+
+  const checkedPriceRadio = document.querySelector('.filter-price-radio:checked');
+  const priceFilter = checkedPriceRadio ? checkedPriceRadio.value : 'all'; // all, 0-200, 200-500, 500+
 
   let filtered = MOCK_DB.products;
 
