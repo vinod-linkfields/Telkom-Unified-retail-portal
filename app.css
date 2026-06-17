@@ -1898,7 +1898,9 @@ input[type="checkbox"], input[type="radio"] {
   display: flex;
   width: 100%;
   min-height: 100vh;
-  background: var(--bg-light);
+  background: #FAF9F6; /* Off-white background */
+  justify-content: center;
+  align-items: center;
 }
 
 /* ---- Left Brand Panel — matches sidebar colour ---- */
@@ -2069,13 +2071,13 @@ input[type="checkbox"], input[type="radio"] {
 
 /* ---- Right Form Panel ---- */
 .login-form-panel {
-  width: 480px;
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 48px 40px;
-  background: var(--bg-light);
+  background: transparent;
+  width: 100%;
+  max-width: 480px;
 }
 
 .login-card {
@@ -2749,5 +2751,30 @@ input[type="checkbox"], input[type="radio"] {
 
 .search-input-clear-btn:hover {
   color: var(--danger);
+}
+
+/* RICA & SIM activation custom styles */
+.rica-compliance-panel {
+  margin-top: 20px;
+  padding: 18px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.rica-progress-container {
+  margin-top: 12px;
+  background-color: var(--border-color);
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.rica-progress-bar {
+  height: 100%;
+  background-color: var(--telkom-blue);
+  width: 0%;
+  transition: width 0.4s ease;
 }
 

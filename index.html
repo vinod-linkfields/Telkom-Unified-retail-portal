@@ -96,72 +96,13 @@
               <div class="login-bg-grid"></div>
             </div>
 
-            <!-- Left Branding Panel -->
-            <div class="login-brand-panel">
-              <div class="login-brand-top">
-                <div class="login-logo-wrap">
-                  <img src="Images/Logo_new.svg" alt="Telkom" class="login-logo-img">
-                </div>
-                <div class="login-brand-divider"></div>
-                <h1 class="login-brand-title">Retail Portal</h1>
-                <p class="login-brand-sub">Unified Digital Journey Platform</p>
-              </div>
-
-              <div class="login-features">
-                <div class="login-feature-item">
-                  <div class="login-feature-icon">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                  </div>
-                  <div>
-                    <div class="login-feature-title">Consumer Mobile</div>
-                    <div class="login-feature-desc">Prepaid, postpaid & data packages</div>
-                  </div>
-                </div>
-                <div class="login-feature-item">
-                  <div class="login-feature-icon">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
-                  </div>
-                  <div>
-                    <div class="login-feature-title">Handset Contracts</div>
-                    <div class="login-feature-desc">Device financing & credit assessments</div>
-                  </div>
-                </div>
-                <div class="login-feature-item">
-                  <div class="login-feature-icon">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                  </div>
-                  <div>
-                    <div class="login-feature-title">Exlight Fixed-Line</div>
-                    <div class="login-feature-desc">Coverage checks & GIS outcomes</div>
-                  </div>
-                </div>
-                <div class="login-feature-item">
-                  <div class="login-feature-icon">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                  </div>
-                  <div>
-                    <div class="login-feature-title">Analytics & Reporting</div>
-                    <div class="login-feature-desc">Real-time KPIs & export dashboards</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="login-brand-footer">
-                <div class="login-secure-badge">
-                  <span class="login-secure-dot"></span>
-                  IAM Secure Authorization Gateway
-                </div>
-                <p class="login-copyright">© 2026 Telkom South Africa SOC Ltd.</p>
-              </div>
-            </div>
-
-            <!-- Right Login Form Panel -->
+            <!-- Centered Login Form Panel -->
             <div class="login-form-panel">
               <div class="login-card">
 
                 <div class="login-card-header">
-                  <div class="login-card-icon">
-                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <div class="login-logo-wrap" style="margin: 0 auto 16px; background: var(--telkom-blue-dark); padding: 8px 16px; border-radius: var(--radius-md); width: fit-content; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,47,93,0.18);">
+                    <img src="Images/Logo_new.svg" alt="Telkom" class="login-logo-img" style="height: 30px;">
                   </div>
                   <h2 class="login-card-title">Welcome Back</h2>
                   <p class="login-card-sub">Sign in to your workspace</p>
@@ -172,6 +113,7 @@
                   <span>Invalid credentials. Please try again.</span>
                 </div>
 
+                <!-- Form 1: LOGIN FORM -->
                 <form id="login-form" onsubmit="handleLoginSubmit(event)" class="login-form-body">
 
                   <div class="login-field-group">
@@ -227,7 +169,7 @@
                       <span class="login-checkbox-custom"></span>
                       Remember workstation
                     </label>
-                    <a href="#" class="login-forgot-link" onclick="return false;">Forgot password?</a>
+                    <a href="#" class="login-forgot-link" onclick="showForgotPasswordForm(); return false;">Forgot password?</a>
                   </div>
 
                   <button type="submit" class="login-submit-btn" id="login-submit-btn">
@@ -240,6 +182,73 @@
                     </span>
                   </button>
 
+                </form>
+
+                <!-- Form 2: FORGOT PASSWORD FORM -->
+                <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)" class="login-form-body" style="display: none;">
+                  <div class="login-field-group">
+                    <label class="login-field-label" for="forgot-username">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      Agent / IAM ID <span class="required">*</span>
+                    </label>
+                    <div class="login-input-wrap">
+                      <input type="text" id="forgot-username" class="login-input" placeholder="e.g. AGT-101" required>
+                    </div>
+                  </div>
+                  <div class="login-field-group">
+                    <label class="login-field-label" for="forgot-email">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      Email Address <span class="required">*</span>
+                    </label>
+                    <div class="login-input-wrap">
+                      <input type="email" id="forgot-email" class="login-input" placeholder="e.g. agent@telkom.co.za" required>
+                    </div>
+                  </div>
+                  <div class="login-remember-row" style="margin-bottom: 16px;">
+                    <a href="#" class="login-forgot-link" onclick="showLoginForm(); return false;">Back to Login</a>
+                  </div>
+                  <button type="submit" class="login-submit-btn">Send OTP</button>
+                </form>
+
+                <!-- Form 3: OTP VERIFICATION FORM -->
+                <form id="otp-verify-form" onsubmit="handleOtpSubmit(event)" class="login-form-body" style="display: none;">
+                  <div class="login-field-group">
+                    <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">We've simulated sending a temporary verification code to your email. Please enter it below.</p>
+                    <label class="login-field-label" for="forgot-otp">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      Enter OTP Code <span class="required">*</span>
+                    </label>
+                    <div class="login-input-wrap">
+                      <input type="text" id="forgot-otp" class="login-input" placeholder="Enter OTP code" required maxLength="6">
+                    </div>
+                  </div>
+                  <div class="login-remember-row" style="margin-bottom: 16px;">
+                    <a href="#" class="login-forgot-link" onclick="showForgotPasswordForm(); return false;">Resend OTP / Back</a>
+                  </div>
+                  <button type="submit" class="login-submit-btn">Verify OTP</button>
+                </form>
+
+                <!-- Form 4: PASSWORD RESET FORM -->
+                <form id="password-reset-form" onsubmit="handlePasswordResetSubmit(event)" class="login-form-body" style="display: none;">
+                  <div class="login-field-group">
+                    <label class="login-field-label" for="new-password">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      New Password <span class="required">*</span>
+                    </label>
+                    <div class="login-input-wrap">
+                      <input type="password" id="new-password" class="login-input" placeholder="At least 6 characters" required>
+                    </div>
+                  </div>
+                  <div class="login-field-group">
+                    <label class="login-field-label" for="confirm-password">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                      Confirm Password <span class="required">*</span>
+                    </label>
+                    <div class="login-input-wrap">
+                      <input type="password" id="confirm-password" class="login-input" placeholder="Confirm your password" required>
+                    </div>
+                  </div>
+                  <button type="submit" class="login-submit-btn">Reset Password</button>
                 </form>
 
                 <div class="login-card-version">Retail Portal v3.1 &nbsp;·&nbsp; Build 2026.06</div>
@@ -274,18 +283,18 @@
               <div class="card-label">Orders Submitted Today</div>
             </div>
             <div class="dashboard-card">
-              <div class="card-icon-wrapper orange">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div class="card-icon-wrapper green">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
               </div>
-              <div class="card-metric" id="agent-pending-payments">0</div>
-              <div class="card-label">Pending POS Payments</div>
+              <div class="card-metric" id="agent-total-ldus">0</div>
+              <div class="card-label">Total LDU's</div>
             </div>
             <div class="dashboard-card">
-              <div class="card-icon-wrapper green">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <div class="card-icon-wrapper orange" style="background-color: #f3e8ff; color: #a855f7;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
               </div>
-              <div class="card-metric">100%</div>
-              <div class="card-label">API Integrations Stable</div>
+              <div class="card-metric" id="agent-demo-units">0</div>
+              <div class="card-label">Demo Units</div>
             </div>
             <div class="dashboard-card">
               <div class="card-icon-wrapper red">
@@ -322,12 +331,27 @@
               </div>
             </div>
 
-            <div class="panel">
-              <div class="panel-header">
-                <span class="panel-title">Branch Stock Status & Alerts</span>
+            <div>
+              <!-- Action Card for Product Selection -->
+              <div class="panel" style="background: linear-gradient(135deg, var(--telkom-blue-light) 0%, #ffffff 100%); border: 1px solid var(--telkom-blue-border); box-shadow: var(--shadow-md); margin-bottom: 20px;">
+                <div class="panel-body" style="padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
+                  <div>
+                    <h4 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 6px; font-size: 15px; font-family: var(--font-display);">Select Products</h4>
+                    <p style="color: var(--text-secondary); font-size: 12.5px; margin: 0; line-height: 1.4;">Explore the device catalogue, mobile plans, and fixed broadband coverage to start an order journey.</p>
+                  </div>
+                  <button class="btn btn-primary" onclick="switchRoute('catalogue')" style="white-space: nowrap; box-shadow: 0 4px 12px rgba(0,163,224,0.25);">
+                    Browse Catalogue &nbsp;→
+                  </button>
+                </div>
               </div>
-              <div class="panel-body" id="agent-stock-alerts">
-                <!-- Rendered dynamically -->
+
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title">Branch Stock Status & Alerts</span>
+                </div>
+                <div class="panel-body" id="agent-stock-alerts">
+                  <!-- Rendered dynamically -->
+                </div>
               </div>
             </div>
           </div>

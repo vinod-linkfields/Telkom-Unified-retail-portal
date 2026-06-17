@@ -197,6 +197,8 @@ let APP_STATE = {
     gisStatus: "Not checked",
     stockChecked: false,
     stockStatus: "",
+    ricaStatus: "",
+    simActivationNumber: "",
     paymentStatus: "Pending",
     posTxnRef: "",
     receiptNo: "",
@@ -632,7 +634,21 @@ function renderAgentDashboard() {
 
   // Set counts
   document.getElementById('agent-today-count').innerText = recentOrders.length;
-  document.getElementById('agent-pending-payments').innerText = APP_STATE.ordersList.filter(o => o.payment === 'Payment Pending').length;
+  
+  const pendingEl = document.getElementById('agent-pending-payments');
+  if (pendingEl) {
+    pendingEl.innerText = APP_STATE.ordersList.filter(o => o.payment === 'Payment Pending').length;
+  }
+  
+  const totalLdusEl = document.getElementById('agent-total-ldus');
+  if (totalLdusEl) {
+    totalLdusEl.innerText = "18";
+  }
+  
+  const demoUnitsEl = document.getElementById('agent-demo-units');
+  if (demoUnitsEl) {
+    demoUnitsEl.innerText = "6";
+  }
   
   // Stock alert box
   const branchStock = MOCK_DB.stock[APP_STATE.currentUser.branch];
@@ -1937,7 +1953,7 @@ function renderStepperContractDetails(container, product) {
         </select>
       </div>
 
-      <div class="form-group">
+      <div class="form-group" style="margin-top: 12px;">
         <label class="form-label">Mobile Number Routing <span class="required">*</span></label>
         <select id="mobile-number-opt" class="form-control" onchange="updateContractDetailsState()">
           <option value="New Number" ${APP_STATE.cart.contractDetails.numberOption === 'New Number' ? 'selected' : ''}>Provision New Telkom MSISDN</option>
@@ -1945,10 +1961,34 @@ function renderStepperContractDetails(container, product) {
         </select>
       </div>
 
-      <div class="form-group" id="port-in-wrapper" style="display: ${APP_STATE.cart.contractDetails.numberOption === 'Port In' ? 'block' : 'none'};">
+      <div class="form-group" id="port-in-wrapper" style="display: ${APP_STATE.cart.contractDetails.numberOption === 'Port In' ? 'block' : 'none'}; margin-top: 12px;">
         <label class="form-label">Number to Port <span class="required">*</span></label>
         <input type="text" id="mobile-port-number" class="form-control" placeholder="e.g. 082 123 4567" value="${APP_STATE.cart.contractDetails.portInNumber || ''}" oninput="updateContractDetailsState()">
         <div class="input-helper">Please ensure port forms are signed.</div>
+      </div>
+
+      <!-- RICA Compliance validation -->
+      <div class="rica-compliance-panel">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">RICA Validation Compliance</h5>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">Customer's SA ID/Passport and address details must be validated against the national RICA database.</p>
+        
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-sm btn-primary" id="btn-run-rica" onclick="runRicaValidation()" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); padding: 8px 16px; font-weight: 600;">
+            Run RICA Validation
+          </button>
+          <div id="rica-status-indicator" style="font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            ${APP_STATE.cart.ricaStatus === 'verified' ? 
+              `<span style="color: var(--success); display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Status: Verified</span>` : 
+              `<span style="color: var(--warning); display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Status: Pending Validation</span>`}
+          </div>
+        </div>
+        
+        <div id="rica-progress-area" style="display: none; margin-top: 14px;">
+          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500;" id="rica-progress-text">Connecting to RICA verification gateway...</div>
+          <div class="rica-progress-container">
+            <div class="rica-progress-bar" id="rica-progress-bar"></div>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -2019,13 +2059,42 @@ function renderStepperReviewChecklist(container) {
 
   const roleValid = APP_STATE.currentUser.role === 'agent' || APP_STATE.currentUser.role === 'manager';
 
+  // RICA check for Mobile/SIM products
+  let ricaValid = true;
+  if (APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts')) {
+    ricaValid = APP_STATE.cart.ricaStatus === 'verified';
+  }
+
+  // SIM serial check for Mobile/SIM products
+  let simActivationValid = true;
+  const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
+  if (isSimProduct) {
+    simActivationValid = !!APP_STATE.cart.simActivationNumber;
+  }
+
   // Overall check
-  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
+  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid && ricaValid && simActivationValid;
+
+  let simInputHtml = '';
+  if (isSimProduct) {
+    simInputHtml = `
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md); margin-bottom: 24px;">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 6px; font-size: 14px; font-family: var(--font-display);">SIM Activation Setup</h5>
+        <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">Enter the physical or eSIM activation barcode number (ICCID) to provision this line on the HLR gateway.</p>
+        <div class="form-group">
+          <label class="form-label" style="font-size: 11.5px; font-weight: 600;">SIM Serial Number / ICCID <span class="required">*</span></label>
+          <input type="text" id="stepper-sim-activation-num" class="form-control" placeholder="e.g. 8927000000001234567" value="${APP_STATE.cart.simActivationNumber || ''}" oninput="updateSimActivationNumber(this.value)">
+        </div>
+      </div>
+    `;
+  }
 
   container.innerHTML = `
     <h3 style="margin-bottom: 16px;">Step 10: Final Validation Checklist</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Pre-submission review. Ensure all required dependencies are validated.</p>
     
+    ${simInputHtml}
+
     <div style="margin-bottom: 24px;">
       <div class="checklist-item ${customerValid ? 'pass' : 'fail'}">
         <div class="checklist-info">
@@ -2094,6 +2163,24 @@ function renderStepperReviewChecklist(container) {
         </div>
         <span class="badge ${detailsValid ? 'badge-success' : 'badge-danger'}">${detailsValid ? 'Pass' : 'Fail'}</span>
       </div>
+
+      ${isSimProduct ? `
+      <div class="checklist-item ${ricaValid ? 'pass' : 'fail'}" id="chk-rica-compliance">
+        <div class="checklist-info">
+          <div class="checklist-status-icon ${ricaValid ? 'pass' : 'fail'}">${ricaValid ? '✓' : '✗'}</div>
+          <div><strong>RICA Validation Compliance</strong> - Customer RICA details verified.</div>
+        </div>
+        <span class="badge ${ricaValid ? 'badge-success' : 'badge-danger'}">${ricaValid ? 'Pass' : 'Fail'}</span>
+      </div>
+
+      <div class="checklist-item ${simActivationValid ? 'pass' : 'fail'}" id="chk-sim-activation">
+        <div class="checklist-info">
+          <div class="checklist-status-icon ${simActivationValid ? 'pass' : 'fail'}">${simActivationValid ? '✓' : '✗'}</div>
+          <div><strong>SIM Activation Number</strong> - Input validation check.</div>
+        </div>
+        <span class="badge ${simActivationValid ? 'badge-success' : 'badge-danger'}">${simActivationValid ? 'Pass' : 'Fail'}</span>
+      </div>
+      ` : ''}
 
       <div class="checklist-item ${consentValid ? 'pass' : 'fail'}">
         <div class="checklist-info">
@@ -4075,7 +4162,6 @@ function identifyCustomer(identityVal, type) {
 function closeCustomerSession() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
-  // Clear cart
   APP_STATE.cart = {
     product: null,
     contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
@@ -4084,6 +4170,8 @@ function closeCustomerSession() {
     gisStatus: "Not checked",
     stockChecked: false,
     stockStatus: "",
+    ricaStatus: "",
+    simActivationNumber: "",
     paymentStatus: "Pending",
     posTxnRef: "",
     receiptNo: "",
@@ -4258,6 +4346,12 @@ function handleStepperNext() {
           return;
         }
         APP_STATE.cart.contractDetails.portInNumber = portNum;
+      }
+
+      // RICA Check
+      if (APP_STATE.cart.ricaStatus !== 'verified') {
+        showToast("Compliance Block: RICA validation must be run and verified to proceed.", "warning");
+        return;
       }
     }
   }
@@ -4997,6 +5091,120 @@ function handleLogout() {
   clearAuthSession();
   switchRoute('login');
   showToast("User logged out.", "neutral");
+}
+
+// Login view switcher controllers
+function showLoginForm() {
+  document.getElementById('login-form').style.display = 'block';
+  document.getElementById('forgot-password-form').style.display = 'none';
+  document.getElementById('otp-verify-form').style.display = 'none';
+  document.getElementById('password-reset-form').style.display = 'none';
+  
+  document.querySelector('.login-card-title').innerText = "Welcome Back";
+  document.querySelector('.login-card-sub').innerText = "Sign in to your workspace";
+  document.getElementById('login-form-error').style.display = 'none';
+}
+
+function showForgotPasswordForm() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('forgot-password-form').style.display = 'block';
+  document.getElementById('otp-verify-form').style.display = 'none';
+  document.getElementById('password-reset-form').style.display = 'none';
+  
+  document.querySelector('.login-card-title').innerText = "Forgot Password";
+  document.querySelector('.login-card-sub').innerText = "Enter your username and email";
+  document.getElementById('login-form-error').style.display = 'none';
+}
+
+function showOtpForm() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('forgot-password-form').style.display = 'none';
+  document.getElementById('otp-verify-form').style.display = 'block';
+  document.getElementById('password-reset-form').style.display = 'none';
+  
+  document.querySelector('.login-card-title').innerText = "Verify Email";
+  document.querySelector('.login-card-sub').innerText = "Enter the verification code";
+  document.getElementById('login-form-error').style.display = 'none';
+}
+
+function showResetPasswordForm() {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('forgot-password-form').style.display = 'none';
+  document.getElementById('otp-verify-form').style.display = 'none';
+  document.getElementById('password-reset-form').style.display = 'block';
+  
+  document.querySelector('.login-card-title').innerText = "Reset Password";
+  document.querySelector('.login-card-sub').innerText = "Create a new secure password";
+  document.getElementById('login-form-error').style.display = 'none';
+}
+
+// Forgot Password Flow Handlers
+function handleForgotPasswordSubmit(e) {
+  e.preventDefault();
+  const username = document.getElementById('forgot-username').value.trim().toUpperCase();
+  const email = document.getElementById('forgot-email').value.trim();
+  const errorBanner = document.getElementById('login-form-error');
+  
+  if (!DEMO_LOGIN_CREDENTIALS[username]) {
+    errorBanner.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>User ID not found.</span>';
+    errorBanner.style.display = 'block';
+    return;
+  }
+  
+  // Generate random 4-digit OTP
+  const mockOtp = Math.floor(1000 + Math.random() * 9000).toString();
+  window.CURRENT_MOCK_OTP = mockOtp;
+  window.CURRENT_RESET_USER = username;
+  
+  showToast(`OTP sent to ${email}: ${mockOtp}`, "success");
+  showOtpForm();
+}
+
+function handleOtpSubmit(e) {
+  e.preventDefault();
+  const otpInput = document.getElementById('forgot-otp').value.trim();
+  const errorBanner = document.getElementById('login-form-error');
+  
+  if (otpInput !== window.CURRENT_MOCK_OTP) {
+    errorBanner.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Invalid OTP code. Please try again.</span>';
+    errorBanner.style.display = 'block';
+    return;
+  }
+  
+  showToast("OTP verified successfully.", "success");
+  showResetPasswordForm();
+}
+
+function handlePasswordResetSubmit(e) {
+  e.preventDefault();
+  const newPass = document.getElementById('new-password').value;
+  const confirmPass = document.getElementById('confirm-password').value;
+  const errorBanner = document.getElementById('login-form-error');
+  
+  if (newPass.length < 6) {
+    errorBanner.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Password must be at least 6 characters.</span>';
+    errorBanner.style.display = 'block';
+    return;
+  }
+  
+  if (newPass !== confirmPass) {
+    errorBanner.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>Passwords do not match.</span>';
+    errorBanner.style.display = 'block';
+    return;
+  }
+  
+  // Mutate demo credentials
+  DEMO_LOGIN_CREDENTIALS[window.CURRENT_RESET_USER].password = newPass;
+  showToast("Password reset successfully. Please log in.", "success");
+  
+  // Clear inputs
+  document.getElementById('forgot-username').value = "";
+  document.getElementById('forgot-email').value = "";
+  document.getElementById('forgot-otp').value = "";
+  document.getElementById('new-password').value = "";
+  document.getElementById('confirm-password').value = "";
+  
+  showLoginForm();
 }
 
 // Login verification
@@ -6659,8 +6867,148 @@ window.unlinkCustomerInStepper = unlinkCustomerInStepper;
 window.openNewCustomerWizardFromStepper = openNewCustomerWizardFromStepper;
 window.linkCustomerAndReturnToStepper = linkCustomerAndReturnToStepper;
 window.updateTempAddress = updateTempAddress;
+function runRicaValidation() {
+  const btn = document.getElementById('btn-run-rica');
+  const indicator = document.getElementById('rica-status-indicator');
+  const progressArea = document.getElementById('rica-progress-area');
+  const progressText = document.getElementById('rica-progress-text');
+  const progressBar = document.getElementById('rica-progress-bar');
+  
+  if (!btn || !indicator || !progressArea || !progressBar || !progressText) return;
+  
+  btn.disabled = true;
+  progressArea.style.display = 'block';
+  progressBar.style.width = '0%';
+  progressText.innerText = "Querying RICA verification gateway...";
+  
+  setTimeout(() => {
+    progressBar.style.width = '40%';
+    progressText.innerText = "Verifying customer ID against Home Affairs database...";
+  }, 400);
+  
+  setTimeout(() => {
+    progressBar.style.width = '80%';
+    progressText.innerText = "Validating customer proof of address...";
+  }, 900);
+  
+  setTimeout(() => {
+    progressBar.style.width = '100%';
+    progressText.innerText = "RICA Validation successful!";
+    
+    // Update state
+    APP_STATE.cart.ricaStatus = 'verified';
+    
+    // Update indicator
+    indicator.innerHTML = `<span style="color: var(--success); display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Status: Verified</span>`;
+    
+    showToast("RICA status verified.", "success");
+  }, 1400);
+}
+
+function updateSimActivationNumber(val) {
+  APP_STATE.cart.simActivationNumber = val.trim();
+  
+  // Re-evaluate Step 10 submissionAllowed and next button state!
+  const customerValid = !!APP_STATE.selectedCustomer;
+  const interactionValid = !!APP_STATE.activeCIMInteraction && APP_STATE.activeCIMInteraction.notes.trim().length >= 10;
+  const productValid = !!APP_STATE.cart.product;
+  
+  let coverageValid = true;
+  if (APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans') {
+    coverageValid = APP_STATE.cart.gisStatus === 'Coverage available';
+  }
+
+  let stockValid = true;
+  if (APP_STATE.cart.product && APP_STATE.cart.product.deviceSKU) {
+    stockValid = APP_STATE.cart.stockChecked && APP_STATE.cart.stockStatus === 'In Stock';
+  }
+
+  let billingValid = false;
+  if (APP_STATE.cart.billingSelection) {
+    const bill = APP_STATE.cart.billingSelection;
+    if (bill.option === 'existing' && bill.selectedId) {
+      billingValid = true;
+    } else if (bill.option === 'new') {
+      const nd = bill.newDebit;
+      if (nd.bankName && nd.branchCode && nd.accountType && nd.accountNumber && nd.debiCheckConsent) {
+        billingValid = true;
+      }
+    }
+  }
+
+  let vettingValid = false;
+  if (APP_STATE.cart.creditVetting && APP_STATE.cart.creditVetting.ran) {
+    const cv = APP_STATE.cart.creditVetting;
+    if (cv.outcome === 'Successful') {
+      vettingValid = true;
+    } else if (cv.outcome === 'Referral' && cv.depositPaid) {
+      vettingValid = true;
+    }
+  }
+
+  const detailsValid = APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans' ?
+    (!!APP_STATE.cart.contractDetails.installationContactName && !!APP_STATE.cart.contractDetails.installationContactPhone) : true;
+  
+  const consentValid = APP_STATE.cart.consent;
+
+  let docsValid = false;
+  if (APP_STATE.cart.supportingDocs) {
+    const sd = APP_STATE.cart.supportingDocs;
+    if (sd.option === 'later') {
+      docsValid = true;
+    } else if (sd.option === 'now') {
+      const uploads = sd.uploads;
+      if (uploads.idDoc && uploads.bankStatements && uploads.proofAddress && uploads.companyReg) {
+        docsValid = true;
+      }
+    }
+  }
+
+  const roleValid = APP_STATE.currentUser.role === 'agent' || APP_STATE.currentUser.role === 'manager';
+  
+  let ricaValid = true;
+  if (APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts')) {
+    ricaValid = APP_STATE.cart.ricaStatus === 'verified';
+  }
+  
+  let simActivationValid = true;
+  const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
+  if (isSimProduct) {
+    simActivationValid = !!APP_STATE.cart.simActivationNumber;
+  }
+
+  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid && ricaValid && simActivationValid;
+
+  document.getElementById('stepper-next-btn').disabled = !submissionAllowed;
+  
+  // Update the checklist item in DOM directly
+  const chkSim = document.getElementById('chk-sim-activation');
+  if (chkSim) {
+    chkSim.className = `checklist-item ${simActivationValid ? 'pass' : 'fail'}`;
+    const badge = chkSim.querySelector('.badge');
+    if (badge) {
+      badge.className = `badge ${simActivationValid ? 'badge-success' : 'badge-danger'}`;
+      badge.innerText = simActivationValid ? 'Pass' : 'Fail';
+    }
+    const icon = chkSim.querySelector('.checklist-status-icon');
+    if (icon) {
+      icon.className = `checklist-status-icon ${simActivationValid ? 'pass' : 'fail'}`;
+      icon.innerText = simActivationValid ? '✓' : '✗';
+    }
+  }
+}
+
 window.switchStockTab = switchStockTab;
 window.handleStockReqDeviceSelectChange = handleStockReqDeviceSelectChange;
 window.renderStoreInventoryTab = renderStoreInventoryTab;
 window.renderLowStockTab = renderLowStockTab;
+window.showLoginForm = showLoginForm;
+window.showForgotPasswordForm = showForgotPasswordForm;
+window.showOtpForm = showOtpForm;
+window.showResetPasswordForm = showResetPasswordForm;
+window.handleForgotPasswordSubmit = handleForgotPasswordSubmit;
+window.handleOtpSubmit = handleOtpSubmit;
+window.handlePasswordResetSubmit = handlePasswordResetSubmit;
+window.runRicaValidation = runRicaValidation;
+window.updateSimActivationNumber = updateSimActivationNumber;
 
