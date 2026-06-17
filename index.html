@@ -353,6 +353,31 @@
                   <!-- Rendered dynamically -->
                 </div>
               </div>
+          </div>
+
+          <!-- Agent Draft / Pending Orders Panel -->
+          <div class="panel" style="margin-top: 20px;" id="agent-draft-orders-panel">
+            <div class="panel-header">
+              <span class="panel-title">My Saved Order Drafts</span>
+            </div>
+            <div class="panel-body">
+              <div class="table-container">
+                <table class="custom-table">
+                  <thead>
+                    <tr>
+                      <th>Draft ID</th>
+                      <th>Customer Name</th>
+                      <th>Selected Product</th>
+                      <th>Last Saved Step</th>
+                      <th>Saved Timestamp</th>
+                      <th style="width: 100px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="agent-draft-orders-tbody">
+                    <!-- Dynamic -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -772,6 +797,14 @@
                   </div>
                 </div>
 
+                <!-- Saved Order Drafts panel -->
+                <div class="panel" id="c360-drafts-panel" style="display: none;">
+                  <div class="panel-header"><span class="panel-title">Saved Order Drafts</span></div>
+                  <div class="panel-body" id="c360-drafts-content">
+                    <!-- Populated dynamically in JS -->
+                  </div>
+                </div>
+
                 <div class="panel">
                   <div class="panel-header"><span class="panel-title">Active Products & Services</span></div>
                   <div class="panel-body" id="c360-active-products">
@@ -930,8 +963,9 @@
               <!-- Form steps injected dynamically -->
             </div>
             
-            <div class="panel-header" style="border-top:1px solid var(--border-color); border-bottom:none; display:flex; justify-content:space-between;">
+            <div class="panel-header" style="border-top:1px solid var(--border-color); border-bottom:none; display:flex; justify-content:space-between; align-items:center;">
               <button class="btn btn-secondary" id="stepper-back-btn" onclick="handleStepperBack()">Back</button>
+              <button class="btn btn-outline" id="stepper-draft-btn" onclick="handleSaveDraft()" style="margin: 0 auto 0 16px; border-color: var(--telkom-blue); color: var(--telkom-blue);">Save Draft</button>
               <button class="btn btn-primary" id="stepper-next-btn" onclick="handleStepperNext()">Continue</button>
             </div>
           </div>
@@ -1062,6 +1096,9 @@
             </div>
           </div>
 
+          <!-- Post-submission RICA and SIM Activation panel -->
+          <div id="confirmation-rica-activation-panel" style="display: none; max-width: 600px; margin: 32px auto 0; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm);"></div>
+
           <div style="display: flex; justify-content: center; gap: 16px; margin-top: 32px;">
             <button class="btn btn-primary" onclick="window.print()">Print Receipt Copy</button>
             <button class="btn btn-outline" onclick="closeCustomerSession()">Start New Journey</button>
@@ -1079,7 +1116,13 @@
             </div>
           </div>
 
-          <div class="panel">
+          <!-- Tab Navigation inside Order Tracking -->
+          <div class="tab-navigation" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; padding-bottom: 0;">
+            <button class="tab-btn active" id="tracking-tab-btn-submitted" onclick="switchTrackingTab('submitted')" style="padding: 10px 16px; border: none; background: none; font-weight: 700; cursor: pointer; border-bottom: 3px solid var(--telkom-blue); color: var(--telkom-blue-dark);">Submitted Orders</button>
+            <button class="tab-btn" id="tracking-tab-btn-pending" onclick="switchTrackingTab('pending')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary);">Pending Orders</button>
+          </div>
+
+          <div class="panel" id="tracking-filter-panel">
             <div class="panel-body">
               <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
                 <input type="text" id="tracking-search-ref" class="form-control" placeholder="Search orders by reference ID or customer name..." oninput="renderOrderTracking()" style="flex: 1; min-width: 250px;">
@@ -1094,23 +1137,8 @@
 
           <div class="panel">
             <div class="panel-body">
-              <div class="table-container">
-                <table class="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Order Reference</th>
-                      <th>Customer Name</th>
-                      <th>Selected Product</th>
-                      <th>Store Node</th>
-                      <th>Submission Date</th>
-                      <th>OMS Status</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tracking-tbody">
-                    <!-- Populated dynamically -->
-                  </tbody>
-                </table>
+              <div class="table-container" id="tracking-table-container">
+                <!-- Dynamically rendered by JS -->
               </div>
             </div>
           </div>
@@ -1831,6 +1859,7 @@
               </div>
             </div>
           </div>
+          <div id="order-details-rica-panel" style="grid-column: 1 / -1; display: none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;"></div>
         </div>
       </div>
     </div>

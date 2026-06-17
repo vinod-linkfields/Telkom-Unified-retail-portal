@@ -202,7 +202,8 @@ let APP_STATE = {
     paymentStatus: "Pending",
     posTxnRef: "",
     receiptNo: "",
-    orderRef: ""
+    orderRef: "",
+    draftId: ""
   },
 
   // Lists stored in localStorage for UAT durability
@@ -213,6 +214,9 @@ let APP_STATE = {
   // Stepper Controller status
   currentStep: 1,
   productTerms: {},
+  productColors: {},
+  draftOrders: [],
+  activeTrackingTab: "submitted",
   customerCreateStep: 1,
   newCustomerData: {
     personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
@@ -305,6 +309,10 @@ function generateMockData() {
     const handlingTime = 12 + (i * 13) % 35; // 12 to 47 minutes
     const revenue = prod.price * (prod.term || 1) + prod.onceOff;
 
+    const isSimProduct = prod.category === 'SIM-only' || prod.category === 'Handset contracts';
+    const ricaStatus = isSimProduct ? (status === 'Fulfilled' ? 'Verified' : 'Pending') : 'N/A';
+    const simActivationNumber = isSimProduct && status === 'Fulfilled' ? '892700000000' + (1000000 + i) : '';
+
     orders.push({
       orderRef: `ORD-90${280 + i}`,
       customerName: cust.name,
@@ -320,7 +328,10 @@ function generateMockData() {
       coverageOutcome: coverage,
       handlingTime: handlingTime,
       revenue: revenue,
-      date: dateStr
+      date: dateStr,
+      ricaStatus: ricaStatus,
+      simActivationNumber: simActivationNumber,
+      isSimProduct: isSimProduct
     });
   }
 
@@ -402,6 +413,13 @@ function loadStateFromStorage() {
     saveNotifications();
   }
 
+  const savedDrafts = localStorage.getItem("telkom_draft_orders");
+  if (savedDrafts) {
+    APP_STATE.draftOrders = JSON.parse(savedDrafts);
+  } else {
+    APP_STATE.draftOrders = [];
+  }
+
   restoreAuthSession();
 }
 
@@ -411,6 +429,10 @@ function saveStockRequests() {
 
 function saveOrders() {
   localStorage.setItem("telkom_orders", JSON.stringify(APP_STATE.ordersList));
+}
+
+function saveDraftOrders() {
+  localStorage.setItem("telkom_draft_orders", JSON.stringify(APP_STATE.draftOrders));
 }
 
 function saveNotifications() {
@@ -673,6 +695,36 @@ function renderAgentDashboard() {
   if (oosCount === 0) {
     stockAlertContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary);">All catalogue devices are fully stocked in this branch.</p>`;
   }
+
+  // Saved order drafts for this agent
+  const draftTbody = document.getElementById('agent-draft-orders-tbody');
+  if (draftTbody) {
+    draftTbody.innerHTML = '';
+    const myDrafts = APP_STATE.draftOrders.filter(d => d.agentId === APP_STATE.currentUser.id);
+    if (myDrafts.length === 0) {
+      draftTbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No saved drafts found.</td></tr>`;
+    } else {
+      myDrafts.forEach(d => {
+        const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
+        const steps = getActiveStepsForProduct(d.cart.product);
+        const stepIndex = steps.findIndex(s => s.id === d.currentStep);
+        const stepLabel = stepIndex > -1 ? `Step ${stepIndex + 1}: ${steps[stepIndex].label}` : `Step ${d.currentStep}`;
+        
+        draftTbody.innerHTML += `
+          <tr>
+            <td><strong>${d.draftId}</strong></td>
+            <td>${d.customer ? d.customer.name : '<span style="color: var(--text-muted);">No Customer Linked</span>'}</td>
+            <td>${prodName}</td>
+            <td><span class="badge badge-warning">${stepLabel}</span></td>
+            <td>${d.date}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+  }
 }
 
 // Render Store Manager Dashboard
@@ -861,6 +913,34 @@ function renderCustomer360() {
 
   // Render documents panel
   renderCustomer360Documents();
+
+  // Saved order drafts for this customer
+  const custDraftsPanel = document.getElementById('c360-drafts-panel');
+  const custDraftsContent = document.getElementById('c360-drafts-content');
+  if (custDraftsPanel && custDraftsContent) {
+    const custDrafts = APP_STATE.draftOrders.filter(d => d.customer && d.customer.accountNumber === cust.accountNumber);
+    if (custDrafts.length > 0) {
+      custDraftsPanel.style.display = 'block';
+      custDraftsContent.innerHTML = custDrafts.map(d => {
+        const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
+        const steps = getActiveStepsForProduct(d.cart.product);
+        const stepIndex = steps.findIndex(s => s.id === d.currentStep);
+        const stepLabel = stepIndex > -1 ? `Step ${stepIndex + 1}: ${steps[stepIndex].label}` : `Step ${d.currentStep}`;
+        
+        return `
+          <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card);">
+            <div>
+              <div style="font-weight: 700; color: var(--telkom-blue-dark);">${prodName} (${d.draftId})</div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Saved at: ${stepLabel} | Date: ${d.date}</div>
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
+          </div>
+        `;
+      }).join('');
+    } else {
+      custDraftsPanel.style.display = 'none';
+    }
+  }
 }
 
 // Get selected term and calculated price for a product
@@ -881,6 +961,10 @@ function getProductTermAndPrice(p) {
 function updateProductTermPrice(productId, newTerm) {
   APP_STATE.productTerms[productId] = parseInt(newTerm);
   renderCatalogue();
+}
+
+function updateProductColor(productId, color) {
+  APP_STATE.productColors[productId] = color;
 }
 
 // Clear catalogue search text input
@@ -999,6 +1083,29 @@ function renderCatalogue() {
       `;
     }
 
+    let colorSelectorHtml = '';
+    if (p.deviceInfo) {
+      let colors = [];
+      if (p.deviceInfo.name.includes("Samsung Galaxy S24")) {
+        colors = ["Phantom Black", "Marble Gray", "Cobalt Violet", "Amber Yellow"];
+      } else if (p.deviceInfo.name.includes("iPhone 15 Pro Max")) {
+        colors = ["Natural Titanium", "Blue Titanium", "White Titanium", "Black Titanium"];
+      } else {
+        colors = [p.deviceInfo.colour || "Standard Color", "Ceramic White", "Charcoal Gray", "Sleek Silver"];
+      }
+      
+      const selectedColor = APP_STATE.productColors[p.id] || colors[0];
+      
+      colorSelectorHtml = `
+        <div class="product-color-selector" style="margin-top: 8px;">
+          <label class="form-label" style="font-size: 11px; margin-bottom: 4px; font-weight: 600;">Handset Color</label>
+          <select id="color-select-${p.id}" class="form-control" onchange="updateProductColor('${p.id}', this.value)" style="font-size: 13px;">
+            ${colors.map(c => `<option value="${c}" ${c === selectedColor ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>
+      `;
+    }
+
     listEl.innerHTML += `
       <div class="product-card">
         ${p.promo ? `<div class="product-badge-promo">PROMO</div>` : ''}
@@ -1017,6 +1124,8 @@ function renderCatalogue() {
               <option value="36" ${term === 36 ? 'selected' : ''}>36 Months</option>
             </select>
           </div>
+          
+          ${colorSelectorHtml}
           
           <div class="product-allocation" style="margin-top: 12px;">
             <div class="allocation-row">
@@ -1042,20 +1151,57 @@ function renderCatalogue() {
 }
 
 // Render Order Capture Wizard (Stepper steps)
+function getActiveStepsForProduct(product) {
+  const steps = [
+    { id: 1, label: "Check Avail" },
+    { id: 2, label: "Identify Cust" },
+    { id: 3, label: "Confirm Details" },
+    { id: 4, label: "Log CIM" },
+    { id: 5, label: "Billing Selection" },
+    { id: 6, label: "Credit Vetting" },
+    { id: 7, label: "Connection Form" },
+    { id: 8, label: "Consent Check" },
+    { id: 9, label: "Supporting Docs" },
+    { id: 10, label: "Pre-Sub Review" }
+  ];
+  
+  if (product && product.category === 'SIM-only') {
+    return steps.filter(s => s.id !== 1);
+  }
+  return steps;
+}
+
+function renderStepperHeader() {
+  const container = document.querySelector('#view-order-stepper .stepper-container');
+  if (!container) return;
+  
+  const product = APP_STATE.cart.product;
+  const steps = getActiveStepsForProduct(product);
+  const currentIndex = steps.findIndex(s => s.id === APP_STATE.currentStep);
+  
+  container.innerHTML = steps.map((s, index) => {
+    let statusClass = '';
+    if (index < currentIndex) {
+      statusClass = 'completed';
+    } else if (index === currentIndex) {
+      statusClass = 'active';
+    }
+    return `
+      <div class="stepper-step ${statusClass}" data-step="${s.id}">
+        <div class="step-icon">${index + 1}</div>
+        <span class="step-label">${s.label}</span>
+      </div>
+    `;
+  }).join('');
+}
+
 function renderStepper() {
   const stepContainer = document.getElementById('stepper-form-content');
   if (!stepContainer) return;
   stepContainer.innerHTML = '';
   
   // Render step navigation numbers in UI
-  document.querySelectorAll('#view-order-stepper .stepper-step').forEach((el, index) => {
-    el.className = 'stepper-step';
-    if (index + 1 < APP_STATE.currentStep) {
-      el.classList.add('completed');
-    } else if (index + 1 === APP_STATE.currentStep) {
-      el.classList.add('active');
-    }
-  });
+  renderStepperHeader();
 
   const product = APP_STATE.cart.product;
   const nextBtn = document.getElementById('stepper-next-btn');
@@ -1066,6 +1212,13 @@ function renderStepper() {
       nextBtn.innerText = 'Continue';
     }
     nextBtn.disabled = false; // default
+  }
+
+  const backBtn = document.getElementById('stepper-back-btn');
+  if (backBtn) {
+    const steps = getActiveStepsForProduct(product);
+    const currentIndex = steps.findIndex(s => s.id === APP_STATE.currentStep);
+    backBtn.disabled = (currentIndex <= 0);
   }
 
   switch (APP_STATE.currentStep) {
@@ -2059,42 +2212,13 @@ function renderStepperReviewChecklist(container) {
 
   const roleValid = APP_STATE.currentUser.role === 'agent' || APP_STATE.currentUser.role === 'manager';
 
-  // RICA check for Mobile/SIM products
-  let ricaValid = true;
-  if (APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts')) {
-    ricaValid = APP_STATE.cart.ricaStatus === 'verified';
-  }
-
-  // SIM serial check for Mobile/SIM products
-  let simActivationValid = true;
-  const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
-  if (isSimProduct) {
-    simActivationValid = !!APP_STATE.cart.simActivationNumber;
-  }
-
-  // Overall check
-  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid && ricaValid && simActivationValid;
-
-  let simInputHtml = '';
-  if (isSimProduct) {
-    simInputHtml = `
-      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md); margin-bottom: 24px;">
-        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 6px; font-size: 14px; font-family: var(--font-display);">SIM Activation Setup</h5>
-        <p style="font-size: 12.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">Enter the physical or eSIM activation barcode number (ICCID) to provision this line on the HLR gateway.</p>
-        <div class="form-group">
-          <label class="form-label" style="font-size: 11.5px; font-weight: 600;">SIM Serial Number / ICCID <span class="required">*</span></label>
-          <input type="text" id="stepper-sim-activation-num" class="form-control" placeholder="e.g. 8927000000001234567" value="${APP_STATE.cart.simActivationNumber || ''}" oninput="updateSimActivationNumber(this.value)">
-        </div>
-      </div>
-    `;
-  }
+  // Overall check (RICA and SIM Activation bypassed in stepper)
+  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
 
   container.innerHTML = `
     <h3 style="margin-bottom: 16px;">Step 10: Final Validation Checklist</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Pre-submission review. Ensure all required dependencies are validated.</p>
     
-    ${simInputHtml}
-
     <div style="margin-bottom: 24px;">
       <div class="checklist-item ${customerValid ? 'pass' : 'fail'}">
         <div class="checklist-info">
@@ -2164,24 +2288,6 @@ function renderStepperReviewChecklist(container) {
         <span class="badge ${detailsValid ? 'badge-success' : 'badge-danger'}">${detailsValid ? 'Pass' : 'Fail'}</span>
       </div>
 
-      ${isSimProduct ? `
-      <div class="checklist-item ${ricaValid ? 'pass' : 'fail'}" id="chk-rica-compliance">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${ricaValid ? 'pass' : 'fail'}">${ricaValid ? '✓' : '✗'}</div>
-          <div><strong>RICA Validation Compliance</strong> - Customer RICA details verified.</div>
-        </div>
-        <span class="badge ${ricaValid ? 'badge-success' : 'badge-danger'}">${ricaValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      <div class="checklist-item ${simActivationValid ? 'pass' : 'fail'}" id="chk-sim-activation">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${simActivationValid ? 'pass' : 'fail'}">${simActivationValid ? '✓' : '✗'}</div>
-          <div><strong>SIM Activation Number</strong> - Input validation check.</div>
-        </div>
-        <span class="badge ${simActivationValid ? 'badge-success' : 'badge-danger'}">${simActivationValid ? 'Pass' : 'Fail'}</span>
-      </div>
-      ` : ''}
-
       <div class="checklist-item ${consentValid ? 'pass' : 'fail'}">
         <div class="checklist-info">
           <div class="checklist-status-icon ${consentValid ? 'pass' : 'fail'}">${consentValid ? '✓' : '✗'}</div>
@@ -2216,48 +2322,124 @@ function renderStepperReviewChecklist(container) {
 
 // Render Order Tracking View
 function renderOrderTracking() {
-  const tbody = document.getElementById('tracking-tbody');
-  tbody.innerHTML = '';
-  
-  let filtered = APP_STATE.ordersList;
+  const container = document.getElementById('tracking-table-container');
+  if (!container) return;
 
-  // Search input filters
-  const searchVal = document.getElementById('tracking-search-ref').value.trim();
-  if (searchVal) {
-    filtered = filtered.filter(o => o.orderRef.toLowerCase().includes(searchVal.toLowerCase()) || o.customerName.toLowerCase().includes(searchVal.toLowerCase()));
-  }
+  const tab = APP_STATE.activeTrackingTab || 'submitted';
 
-  // Role visibility restriction / Checkbox override
-  const viewAllNetwork = document.getElementById('tracking-view-all') && document.getElementById('tracking-view-all').checked;
-  if (!viewAllNetwork) {
-    if (APP_STATE.currentUser.role === 'agent') {
-      filtered = filtered.filter(o => o.agent === APP_STATE.currentUser.id);
-    } else if (APP_STATE.currentUser.role === 'manager') {
-      filtered = filtered.filter(o => o.store === APP_STATE.currentUser.branch);
+  if (tab === 'submitted') {
+    let filtered = APP_STATE.ordersList || [];
+
+    // Search input filters
+    const searchVal = document.getElementById('tracking-search-ref') ? document.getElementById('tracking-search-ref').value.trim() : '';
+    if (searchVal) {
+      filtered = filtered.filter(o => o.orderRef.toLowerCase().includes(searchVal.toLowerCase()) || o.customerName.toLowerCase().includes(searchVal.toLowerCase()));
     }
-  }
 
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No tracking orders found.</td></tr>`;
-    return;
-  }
+    // Role visibility restriction / Checkbox override
+    const viewAllNetwork = document.getElementById('tracking-view-all') && document.getElementById('tracking-view-all').checked;
+    if (!viewAllNetwork) {
+      if (APP_STATE.currentUser.role === 'agent') {
+        filtered = filtered.filter(o => o.agent === APP_STATE.currentUser.id);
+      } else if (APP_STATE.currentUser.role === 'manager') {
+        filtered = filtered.filter(o => o.store === APP_STATE.currentUser.branch);
+      }
+    }
 
-  filtered.forEach(o => {
-    tbody.innerHTML += `
-      <tr>
-        <td><strong>${o.orderRef}</strong></td>
-        <td>${o.customerName}</td>
-        <td>${o.product}</td>
-        <td><code>${o.store}</code></td>
-        <td>${o.date}</td>
-        <td><span class="badge ${o.status === 'Fulfilled' ? 'badge-success' : (o.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}">${o.status}</span></td>
-        <td>
-          <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
-          <button class="btn btn-sm btn-primary" onclick="downloadOrderReceipt('${o.orderRef}')" style="background-color: var(--telkom-blue); border-color: var(--telkom-blue);">Receipt</button>
-        </td>
-      </tr>
+    let rowsHtml = '';
+    if (filtered.length === 0) {
+      rowsHtml = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No tracking orders found.</td></tr>`;
+    } else {
+      filtered.forEach(o => {
+        rowsHtml += `
+          <tr>
+            <td><strong>${o.orderRef}</strong></td>
+            <td>${o.customerName}</td>
+            <td>${o.product}</td>
+            <td><code>${o.store}</code></td>
+            <td>${o.date}</td>
+            <td><span class="badge ${o.status === 'Fulfilled' || o.status === 'Active' ? 'badge-success' : (o.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}">${o.status}</span></td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
+              <button class="btn btn-sm btn-primary" onclick="downloadOrderReceipt('${o.orderRef}')" style="background-color: var(--telkom-blue); border-color: var(--telkom-blue);">Receipt</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    container.innerHTML = `
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Order Reference</th>
+            <th>Customer Name</th>
+            <th>Selected Product</th>
+            <th>Store Node</th>
+            <th>Submission Date</th>
+            <th>OMS Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tracking-tbody">
+          ${rowsHtml}
+        </tbody>
+      </table>
     `;
-  });
+  } else {
+    // pending (drafts) tab
+    let filtered = APP_STATE.draftOrders || [];
+
+    // Filter by currentUser details if agent/manager
+    if (APP_STATE.currentUser.role === 'agent') {
+      filtered = filtered.filter(d => d.agentId === APP_STATE.currentUser.id);
+    } else if (APP_STATE.currentUser.role === 'manager') {
+      filtered = filtered.filter(d => d.branch === APP_STATE.currentUser.branch);
+    }
+
+    let rowsHtml = '';
+    if (filtered.length === 0) {
+      rowsHtml = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending order drafts found.</td></tr>`;
+    } else {
+      filtered.forEach(d => {
+        const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
+        const steps = getActiveStepsForProduct(d.cart.product);
+        const stepIndex = steps.findIndex(s => s.id === d.currentStep);
+        const stepLabel = stepIndex > -1 ? `Step ${stepIndex + 1}: ${steps[stepIndex].label}` : `Step ${d.currentStep}`;
+
+        rowsHtml += `
+          <tr>
+            <td><strong>${d.draftId}</strong></td>
+            <td>${d.customer ? d.customer.name : '<span style="color: var(--text-muted);">No Customer Linked</span>'}</td>
+            <td>${prodName}</td>
+            <td><span class="badge badge-warning">${stepLabel}</span></td>
+            <td>${d.date}</td>
+            <td>
+              <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    container.innerHTML = `
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Draft ID</th>
+            <th>Customer Name</th>
+            <th>Selected Product</th>
+            <th>Last Saved Step</th>
+            <th>Saved Timestamp</th>
+            <th style="width: 100px;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="pending-tracking-tbody">
+          ${rowsHtml}
+        </tbody>
+      </table>
+    `;
+  }
 }
 
 // Render Stock Requests View
@@ -4124,7 +4306,7 @@ function handleCustomerSearch(e) {
         <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
           Customer record not found. 
           <br><br>
-          <button class="btn btn-sm btn-outline" onclick="openCreateCustomerModal()">Create / Refer Customer</button>
+          <button class="btn btn-sm btn-outline" onclick="openNewCustomerWizard()">Add New Customer</button>
         </td>
       </tr>
     `;
@@ -4214,10 +4396,12 @@ function selectProductForStepper(prodId) {
 
     // Get customized term and price
     const { term, price } = getProductTermAndPrice(p);
+    const selectedColor = APP_STATE.productColors[prodId] || (p.deviceInfo ? p.deviceInfo.colour : "");
     APP_STATE.cart.product = {
       ...p,
       price: price,
-      term: term
+      term: term,
+      selectedColor: selectedColor
     };
 
     if (!APP_STATE.selectedCustomer) {
@@ -4231,14 +4415,17 @@ function selectProductForStepper(prodId) {
       };
     }
 
-    APP_STATE.currentStep = 1; // start from Step 1
+    APP_STATE.currentStep = (p.category === 'SIM-only') ? 2 : 1;
     switchRoute('order-stepper');
   }
 }
 
 function handleStepperBack() {
-  if (APP_STATE.currentStep > 1) {
-    APP_STATE.currentStep--;
+  const product = APP_STATE.cart.product;
+  const steps = getActiveStepsForProduct(product);
+  const currentIndex = steps.findIndex(s => s.id === APP_STATE.currentStep);
+  if (currentIndex > 0) {
+    APP_STATE.currentStep = steps[currentIndex - 1].id;
     renderStepper();
   }
 }
@@ -4348,11 +4535,7 @@ function handleStepperNext() {
         APP_STATE.cart.contractDetails.portInNumber = portNum;
       }
 
-      // RICA Check
-      if (APP_STATE.cart.ricaStatus !== 'verified') {
-        showToast("Compliance Block: RICA validation must be run and verified to proceed.", "warning");
-        return;
-      }
+      // RICA Check removed from checkout stepper (relocated to post-submission workflow)
     }
   }
 
@@ -4383,8 +4566,12 @@ function handleStepperNext() {
     return;
   }
 
-  if (step < 10) {
-    APP_STATE.currentStep++;
+  const product = APP_STATE.cart.product;
+  const steps = getActiveStepsForProduct(product);
+  const currentIndex = steps.findIndex(s => s.id === step);
+
+  if (currentIndex > -1 && currentIndex < steps.length - 1) {
+    APP_STATE.currentStep = steps[currentIndex + 1].id;
     renderStepper();
   }
 }
@@ -4564,18 +4751,28 @@ function handlePOSPaymentTrigger() {
       APP_STATE.cart.paymentStatus = "Successful";
 
       // Append order to local database orders
+      const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
       const newOrder = {
         orderRef: APP_STATE.cart.orderRef,
         customerName: APP_STATE.selectedCustomer.name,
         accountNo: APP_STATE.selectedCustomer.accountNumber,
         product: APP_STATE.cart.product.name,
+        selectedColor: APP_STATE.cart.product.selectedColor || "",
         type: APP_STATE.cart.product.type,
         store: APP_STATE.currentUser.branch,
         agent: APP_STATE.currentUser.id,
         status: "Submitted",
         payment: "Payment Complete",
-        date: new Date().toISOString().replace('T', ' ').slice(0, 19)
+        date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        ricaStatus: isSimProduct ? "Pending" : "N/A",
+        simActivationNumber: "",
+        isSimProduct: isSimProduct
       };
+
+      if (APP_STATE.cart.draftId) {
+        APP_STATE.draftOrders = APP_STATE.draftOrders.filter(d => d.draftId !== APP_STATE.cart.draftId);
+        saveDraftOrders();
+      }
 
       APP_STATE.ordersList.unshift(newOrder);
       saveOrders();
@@ -4605,11 +4802,23 @@ function renderConfirmationReceipt() {
   document.getElementById('conf-account').innerText = APP_STATE.selectedCustomer.accountNumber;
   document.getElementById('conf-agent').innerText = `${APP_STATE.currentUser.name} (${APP_STATE.currentUser.id})`;
   document.getElementById('conf-store').innerText = APP_STATE.currentUser.branch;
-  document.getElementById('conf-product').innerText = APP_STATE.cart.product.name;
+  
+  const productText = APP_STATE.cart.product.name + (APP_STATE.cart.product.selectedColor ? ` (${APP_STATE.cart.product.selectedColor})` : '');
+  document.getElementById('conf-product').innerText = productText;
+  
   document.getElementById('conf-term').innerText = `${APP_STATE.cart.product.term} Months`;
   document.getElementById('conf-price').innerText = `R${APP_STATE.cart.product.price} /mo`;
   document.getElementById('conf-onceoff').innerText = `R${APP_STATE.cart.product.onceOff}`;
   document.getElementById('conf-total').innerText = `R${APP_STATE.cart.product.price + APP_STATE.cart.product.onceOff}`;
+
+  const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
+  const panel = document.getElementById('confirmation-rica-activation-panel');
+  if (isSimProduct && panel) {
+    panel.style.display = 'block';
+    renderConfirmationRicaActivation();
+  } else if (panel) {
+    panel.style.display = 'none';
+  }
 }
 
 // ==========================================
@@ -5070,15 +5279,73 @@ function viewOrderDetails(orderRef) {
 
   document.getElementById('view-order-ref').innerText = order.orderRef;
   document.getElementById('view-order-status').innerText = order.status;
-  document.getElementById('view-order-status').className = `badge ${order.status === 'Fulfilled' ? 'badge-success' : 'badge-warning'}`;
+  document.getElementById('view-order-status').className = `badge ${order.status === 'Fulfilled' || order.status === 'Active' ? 'badge-success' : 'badge-warning'}`;
   document.getElementById('view-order-cust').innerText = order.customerName;
   document.getElementById('view-order-acct').innerText = order.accountNo;
-  document.getElementById('view-order-prod').innerText = order.product;
+  
+  const productText = order.product + (order.selectedColor ? ` (${order.selectedColor})` : '');
+  document.getElementById('view-order-prod').innerText = productText;
+  
   document.getElementById('view-order-store').innerText = order.store;
   document.getElementById('view-order-agent').innerText = order.agent;
   document.getElementById('view-order-date').innerText = order.date;
   document.getElementById('view-order-pay').innerText = order.payment;
   document.getElementById('view-order-pay').className = `badge ${order.payment.includes('Complete') ? 'badge-success' : 'badge-danger'}`;
+
+  const ricaPanel = document.getElementById('order-details-rica-panel');
+  const isSim = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
+  if (isSim && ricaPanel) {
+    ricaPanel.style.display = 'block';
+    const ricaVerified = order.ricaStatus === 'Verified';
+    const simActivated = !!order.simActivationNumber;
+    
+    ricaPanel.innerHTML = `
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Order RICA & Activation</h5>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          
+          <!-- RICA -->
+          <div style="background-color: var(--bg-card); padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-weight: 600; font-size: 13px;">1. RICA status</span>
+              <span id="detail-rica-badge">
+                ${ricaVerified ? 
+                  `<span style="color: var(--success); font-weight: 700; font-size: 12px;">✓ Verified</span>` : 
+                  `<span style="color: var(--warning); font-weight: 700; font-size: 12px;">⚠ Pending</span>`}
+              </span>
+            </div>
+            ${!ricaVerified ? `
+              <button class="btn btn-sm btn-primary" id="btn-detail-rica" onclick="runDetailRicaValidation('${order.orderRef}')">Run RICA Validation</button>
+              <div id="detail-rica-progress-area" style="display: none; margin-top: 8px;">
+                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 2px;" id="detail-rica-progress-text">Connecting...</div>
+                <div style="height: 4px; background-color: var(--border-color); border-radius: 2px; overflow: hidden;">
+                  <div id="detail-rica-progress-bar" style="height: 100%; width: 0%; background-color: var(--telkom-blue); transition: width 0.1s ease;"></div>
+                </div>
+              </div>
+            ` : `<div style="font-size: 12px; color: var(--success);">RICA requirements satisfied.</div>`}
+          </div>
+          
+          <!-- SIM Activation -->
+          <div style="background-color: var(--bg-card); padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); opacity: ${ricaVerified ? '1' : '0.5'}; pointer-events: ${ricaVerified ? 'auto' : 'none'};">
+            <span style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">2. SIM ICCID Activation</span>
+            ${simActivated ? `
+              <div style="color: var(--success); font-weight: 700; font-size: 12px;">
+                ✓ Activated (ICCID: ${order.simActivationNumber})
+              </div>
+            ` : `
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="detail-sim-iccid" class="form-control" placeholder="19-digit ICCID" style="height: 32px; font-size: 12px; padding: 4px 8px;">
+                <button class="btn btn-sm btn-primary" onclick="submitDetailSimActivation('${order.orderRef}')" style="height: 32px; font-size: 12px; padding: 0 12px;">Activate</button>
+              </div>
+            `}
+          </div>
+          
+        </div>
+      </div>
+    `;
+  } else if (ricaPanel) {
+    ricaPanel.style.display = 'none';
+  }
 
   openModal('order-details-modal');
 }
@@ -7011,4 +7278,301 @@ window.handleOtpSubmit = handleOtpSubmit;
 window.handlePasswordResetSubmit = handlePasswordResetSubmit;
 window.runRicaValidation = runRicaValidation;
 window.updateSimActivationNumber = updateSimActivationNumber;
+window.updateProductColor = updateProductColor;
+
+// Draft Orders & Tabbed Order Tracking Implementation
+function handleSaveDraft() {
+  if (!APP_STATE.cart || !APP_STATE.cart.product) {
+    showToast("No active cart product to save.", "warning");
+    return;
+  }
+  
+  let draftId = APP_STATE.cart.draftId;
+  if (!draftId) {
+    draftId = "DFT-" + Math.floor(100000 + Math.random() * 900000);
+    APP_STATE.cart.draftId = draftId;
+  }
+  
+  const draftIndex = APP_STATE.draftOrders.findIndex(d => d.draftId === draftId);
+  const draftObj = {
+    draftId: draftId,
+    customer: APP_STATE.selectedCustomer || null,
+    cart: JSON.parse(JSON.stringify(APP_STATE.cart)),
+    currentStep: APP_STATE.currentStep,
+    date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    agentId: APP_STATE.currentUser.id,
+    branch: APP_STATE.currentUser.branch,
+    cimInteraction: APP_STATE.activeCIMInteraction || null
+  };
+  
+  if (draftIndex > -1) {
+    APP_STATE.draftOrders[draftIndex] = draftObj;
+  } else {
+    APP_STATE.draftOrders.unshift(draftObj);
+  }
+  
+  saveDraftOrders();
+  showToast(`Draft ${draftId} saved successfully.`, "success");
+  closeCustomerSession();
+}
+
+function resumeDraftOrder(draftId) {
+  const draft = APP_STATE.draftOrders.find(d => d.draftId === draftId);
+  if (!draft) {
+    showToast("Draft order not found.", "danger");
+    return;
+  }
+  
+  APP_STATE.selectedCustomer = draft.customer;
+  APP_STATE.cart = JSON.parse(JSON.stringify(draft.cart));
+  APP_STATE.currentStep = draft.currentStep;
+  APP_STATE.activeCIMInteraction = draft.cimInteraction;
+  
+  showToast(`Resumed draft order ${draftId}.`, "success");
+  switchRoute('order-stepper');
+}
+
+function switchTrackingTab(tabName) {
+  APP_STATE.activeTrackingTab = tabName;
+  
+  const subTab = document.getElementById('tracking-tab-btn-submitted');
+  const penTab = document.getElementById('tracking-tab-btn-pending');
+  const filterPanel = document.getElementById('tracking-filter-panel');
+  
+  if (tabName === 'submitted') {
+    if (subTab) {
+      subTab.classList.add('active');
+      subTab.style.borderBottom = '3px solid var(--telkom-blue)';
+      subTab.style.color = 'var(--telkom-blue-dark)';
+      subTab.style.fontWeight = '700';
+    }
+    if (penTab) {
+      penTab.classList.remove('active');
+      penTab.style.borderBottom = '3px solid transparent';
+      penTab.style.color = 'var(--text-secondary)';
+      penTab.style.fontWeight = '600';
+    }
+    if (filterPanel) filterPanel.style.display = 'block';
+  } else {
+    if (penTab) {
+      penTab.classList.add('active');
+      penTab.style.borderBottom = '3px solid var(--telkom-blue)';
+      penTab.style.color = 'var(--telkom-blue-dark)';
+      penTab.style.fontWeight = '700';
+    }
+    if (subTab) {
+      subTab.classList.remove('active');
+      subTab.style.borderBottom = '3px solid transparent';
+      subTab.style.color = 'var(--text-secondary)';
+      subTab.style.fontWeight = '600';
+    }
+    if (filterPanel) filterPanel.style.display = 'none';
+  }
+  
+  renderOrderTracking();
+}
+
+function renderConfirmationRicaActivation() {
+  const panel = document.getElementById('confirmation-rica-activation-panel');
+  if (!panel) return;
+
+  const orderRef = APP_STATE.cart.orderRef;
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+
+  const ricaVerified = order.ricaStatus === 'Verified';
+  const simActivated = !!order.simActivationNumber;
+
+  panel.innerHTML = `
+    <h4 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Post-Submission Activation Workflow</h4>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">SIM card provisioning requires a verified RICA validation gateway handshake followed by HLR serial mapping.</p>
+    
+    <!-- RICA Section -->
+    <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <strong style="font-size: 14px; color: var(--text-dark);">1. RICA Verification Gateway</strong>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Submit details to national database.</div>
+        </div>
+        <div id="post-rica-badge">
+          ${ricaVerified ? 
+            `<span style="color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Verified</span>` : 
+            `<span style="color: var(--warning); font-weight: 700; display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Pending Verification</span>`}
+        </div>
+      </div>
+      
+      ${!ricaVerified ? `
+        <div style="margin-top: 12px;">
+          <button type="button" class="btn btn-sm btn-primary" id="btn-post-rica" onclick="runPostOrderRicaValidation()" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark);">
+            Run RICA Validation
+          </button>
+        </div>
+        <div id="post-rica-progress-area" style="display: none; margin-top: 12px;">
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;" id="post-rica-progress-text">Connecting to gateway...</div>
+          <div class="rica-progress-container" style="height: 6px; background-color: var(--border-color); border-radius: 3px; overflow: hidden;">
+            <div class="rica-progress-bar" id="post-rica-progress-bar" style="height: 100%; width: 0%; background-color: var(--telkom-blue); transition: width 0.1s ease;"></div>
+          </div>
+        </div>
+      ` : ''}
+    </div>
+
+    <!-- SIM Activation Section -->
+    <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); opacity: ${ricaVerified ? '1' : '0.5'}; pointer-events: ${ricaVerified ? 'auto' : 'none'};">
+      <strong style="font-size: 14px; color: var(--text-dark); display: block; margin-bottom: 4px;">2. SIM Serial Code Activation (HLR Gateway)</strong>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Map the 19-digit SIM card ICCID to trigger cellular profile activation.</p>
+      
+      ${simActivated ? `
+        <div style="color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px; font-size: 13.5px;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+          SIM Activated (ICCID: ${order.simActivationNumber})
+        </div>
+      ` : `
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <div style="flex: 1;">
+            <input type="text" id="post-sim-iccid" class="form-control" placeholder="19-digit SIM serial e.g. 892700..." style="height: 38px;">
+          </div>
+          <button class="btn btn-primary" onclick="submitPostOrderSimActivation()" style="height: 38px;">Activate SIM</button>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function runPostOrderRicaValidation() {
+  const orderRef = APP_STATE.cart.orderRef;
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+
+  const btn = document.getElementById('btn-post-rica');
+  const progressArea = document.getElementById('post-rica-progress-area');
+  const progressBar = document.getElementById('post-rica-progress-bar');
+  const progressText = document.getElementById('post-rica-progress-text');
+
+  if (btn) btn.style.display = 'none';
+  if (progressArea) progressArea.style.display = 'block';
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 10;
+    if (progressBar) progressBar.style.width = progress + '%';
+    if (progressText) {
+      if (progress < 40) progressText.innerText = "Querying Clarify CRM metadata...";
+      else if (progress < 80) progressText.innerText = "Verifying biometric check record...";
+      else progressText.innerText = "Finalizing gateway handshake...";
+    }
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      order.ricaStatus = 'Verified';
+      saveOrders();
+      showToast("RICA Verification Successful.", "success");
+      renderConfirmationRicaActivation();
+      if (document.getElementById('order-details-modal').style.display !== 'none') {
+        viewOrderDetails(orderRef);
+      }
+    }
+  }, 200);
+}
+
+function submitPostOrderSimActivation() {
+  const orderRef = APP_STATE.cart.orderRef;
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+
+  const iccidVal = document.getElementById('post-sim-iccid').value.trim();
+  if (!/^\d{19}$/.test(iccidVal)) {
+    showToast("SIM serial number must be exactly 19 digits.", "danger");
+    return;
+  }
+
+  order.simActivationNumber = iccidVal;
+  order.status = 'Active';
+  saveOrders();
+
+  pushNotification(
+    "SIM Card Activated",
+    `SIM Serial ${iccidVal} activated successfully for order ${orderRef}.`,
+    "sim_activated",
+    "Normal"
+  );
+
+  showToast("SIM card successfully activated! Provisioning complete.", "success");
+  renderConfirmationRicaActivation();
+  if (document.getElementById('order-details-modal').style.display !== 'none') {
+    viewOrderDetails(orderRef);
+  }
+}
+
+function runDetailRicaValidation(orderRef) {
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+
+  const btn = document.getElementById('btn-detail-rica');
+  const progressArea = document.getElementById('detail-rica-progress-area');
+  const progressBar = document.getElementById('detail-rica-progress-bar');
+  const progressText = document.getElementById('detail-rica-progress-text');
+
+  if (btn) btn.style.display = 'none';
+  if (progressArea) progressArea.style.display = 'block';
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 10;
+    if (progressBar) progressBar.style.width = progress + '%';
+    if (progressText) {
+      if (progress < 40) progressText.innerText = "Querying Clarify CRM metadata...";
+      else if (progress < 80) progressText.innerText = "Verifying biometric check record...";
+      else progressText.innerText = "Finalizing gateway handshake...";
+    }
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      order.ricaStatus = 'Verified';
+      saveOrders();
+      showToast("RICA Verification Successful.", "success");
+      viewOrderDetails(orderRef);
+      if (APP_STATE.activeRoute === 'confirmation') {
+        renderConfirmationRicaActivation();
+      }
+    }
+  }, 200);
+}
+
+function submitDetailSimActivation(orderRef) {
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+
+  const iccidVal = document.getElementById('detail-sim-iccid').value.trim();
+  if (!/^\d{19}$/.test(iccidVal)) {
+    showToast("SIM serial number must be exactly 19 digits.", "danger");
+    return;
+  }
+
+  order.simActivationNumber = iccidVal;
+  order.status = 'Active';
+  saveOrders();
+
+  pushNotification(
+    "SIM Card Activated",
+    `SIM Serial ${iccidVal} activated successfully for order ${orderRef}.`,
+    "sim_activated",
+    "Normal"
+  );
+
+  showToast("SIM card successfully activated! Provisioning complete.", "success");
+  viewOrderDetails(orderRef);
+  if (APP_STATE.activeRoute === 'confirmation') {
+    renderConfirmationRicaActivation();
+  }
+}
+
+// Bind to window
+window.handleSaveDraft = handleSaveDraft;
+window.resumeDraftOrder = resumeDraftOrder;
+window.switchTrackingTab = switchTrackingTab;
+window.runPostOrderRicaValidation = runPostOrderRicaValidation;
+window.submitPostOrderSimActivation = submitPostOrderSimActivation;
+window.runDetailRicaValidation = runDetailRicaValidation;
+window.submitDetailSimActivation = submitDetailSimActivation;
+window.renderConfirmationRicaActivation = renderConfirmationRicaActivation;
 

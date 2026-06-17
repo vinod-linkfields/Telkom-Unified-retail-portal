@@ -1188,7 +1188,8 @@ input:checked + .uat-slider:before {
 .product-badge-promo {
   position: absolute;
   top: 12px;
-  left: 12px;
+  right: 12px;
+  left: auto;
   background-color: var(--danger);
   color: var(--text-white);
   font-size: 11px;
