@@ -1021,35 +1021,69 @@ function renderStepper() {
   }
 
   switch (APP_STATE.currentStep) {
-    case 1: // Customer Summary
+    case 1: // Coverage Check (Fixed Line) or Stock Check (Handset)
+      if (product.category === 'Exlight broadband plans') {
+        renderStepperCoverageCheck(stepContainer);
+      } else if (product.deviceSKU) {
+        renderStepperStockCheck(stepContainer);
+      } else {
+        stepContainer.innerHTML = `
+          <h3 style="margin-bottom: 16px;">Step 1: Availability Verification</h3>
+          <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
+            Verification Skip: SIM-Only contracts do not require device stock allocation or GIS check. Please proceed.
+          </div>
+        `;
+      }
+      break;
+
+    case 2: // Customer Search & Identification
+      renderStepperCustomerSearch(stepContainer);
+      break;
+
+    case 3: // Customer Details & Product Specs confirmation
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 1: Customer Details confirmation</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Verify pre-populated details from Clarify CRM before continuing.</p>
+        <h3 style="margin-bottom: 16px;">Step 3: Confirm Customer & Product Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Verify the customer profile and product details for this order.</p>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background-color: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-          <div>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">FULL NAME</div>
-            <div style="font-weight: 700; color: var(--telkom-blue-dark); font-size: 15px;">${APP_STATE.selectedCustomer.name}</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+          <div style="background-color: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+            <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">CUSTOMER PROFILE</h5>
+            <div style="margin-bottom: 10px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">FULL NAME</div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${APP_STATE.selectedCustomer.name}</div>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">CRM ACCOUNT NUMBER</div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${APP_STATE.selectedCustomer.accountNumber}</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">IDENTITY DOCUMENT / PASSPORT</div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${APP_STATE.selectedCustomer.id ? maskID(APP_STATE.selectedCustomer.id) : maskPassport(APP_STATE.selectedCustomer.passport)}</div>
+            </div>
           </div>
-          <div>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">CRM ACCOUNT NUMBER</div>
-            <div style="font-weight: 700; color: var(--telkom-blue-dark); font-size: 15px;">${APP_STATE.selectedCustomer.accountNumber}</div>
-          </div>
-          <div>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">IDENTITY DOCUMENT / PASSPORT</div>
-            <div style="font-weight: 700; color: var(--telkom-blue-dark); font-size: 15px;">${APP_STATE.selectedCustomer.id ? maskID(APP_STATE.selectedCustomer.id) : maskPassport(APP_STATE.selectedCustomer.passport)}</div>
-          </div>
-          <div>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600;">SEGMENT ELIGIBILITY</div>
-            <div><span class="badge badge-success">${APP_STATE.selectedCustomer.segment} Only</span></div>
+          
+          <div style="background-color: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+            <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">PRODUCT DETAILS</h5>
+            <div style="margin-bottom: 10px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">NAME</div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${product.name}</div>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">ALLOCATION</div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${product.allocation}</div>
+            </div>
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">MONTHLY COST</div>
+              <div style="font-weight: 700; color: var(--telkom-blue); font-size: 18px;">R${product.price} pm <span style="font-size:12px; color:var(--text-secondary); font-weight:normal;">(${product.term} Months)</span></div>
+            </div>
           </div>
         </div>
       `;
       break;
 
-    case 2: // CIM Interaction details
+    case 4: // CIM Interaction details
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 2: Log Visit Interaction in Amdocs CIM</h3>
+        <h3 style="margin-bottom: 16px;">Step 4: Log Visit Interaction in Amdocs CIM</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Capture customer's reason of visit for compliance reporting.</p>
         
         <div class="form-group">
@@ -1074,41 +1108,6 @@ function renderStepper() {
         </div>
       `;
       updateCIMNotesCount();
-      break;
-
-    case 3: // Selected Product View
-      stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 3: Confirm Selected Product</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Review product specification and contract period details.</p>
-        
-        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 24px; display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <span class="badge badge-info" style="margin-bottom: 8px;">${product.category}</span>
-            <h4 style="margin-bottom: 4px;">${product.name}</h4>
-            <p style="font-size: 13px; color: var(--text-secondary);">${product.allocation}</p>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Contract terms: ${product.term} Months | Connection Charge: R${product.onceOff} once-off</div>
-          </div>
-          <div style="text-align: right;">
-            <div style="font-size: 13px; color: var(--text-secondary);">Monthly Cost</div>
-            <div style="font-family: var(--font-display); font-size: 36px; font-weight: 800; color: var(--telkom-blue-dark); line-height: 1;">R${product.price}</div>
-          </div>
-        </div>
-      `;
-      break;
-
-    case 4: // Coverage Check (Fixed Line) or Stock Check (Handset)
-      if (product.category === 'Exlight broadband plans') {
-        renderStepperCoverageCheck(stepContainer);
-      } else if (product.deviceSKU) {
-        renderStepperStockCheck(stepContainer);
-      } else {
-        stepContainer.innerHTML = `
-          <h3 style="margin-bottom: 16px;">Step 4: Availability Verification</h3>
-          <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
-            Verification Skip: SIM-Only contracts do not require device stock allocation or GIS check. Please proceed.
-          </div>
-        `;
-      }
       break;
 
     case 5: // Billing Account Selection [New]
@@ -1709,8 +1708,9 @@ function renderStepperCoverageCheck(container) {
     return;
   }
 
-  const addr = APP_STATE.selectedCustomer.address;
-  const coverageData = MOCK_DB.gis[addr];
+  const isCustSelected = !!APP_STATE.selectedCustomer;
+  const addr = isCustSelected ? APP_STATE.selectedCustomer.address : (APP_STATE.cart.tempCoverageAddress || "");
+  const coverageData = MOCK_DB.gis[addr] || { ref: "GIS-AUTO-" + Math.floor(1000 + Math.random() * 9000), coords: "-26.15, 28.05" };
   
   let resultBox = '';
   if (APP_STATE.cart.gisStatus === 'Coverage available') {
@@ -1735,16 +1735,30 @@ function renderStepperCoverageCheck(container) {
     `;
   }
 
+  let addressInputHtml = '';
+  if (isCustSelected) {
+    addressInputHtml = `
+      <div class="form-group">
+        <label class="form-label">Service Address</label>
+        <input type="text" class="form-control" value="${addr}" disabled>
+      </div>
+    `;
+  } else {
+    addressInputHtml = `
+      <div class="form-group">
+        <label class="form-label">Service Address <span class="required">*</span></label>
+        <input type="text" id="stepper-temp-address" class="form-control" value="${addr}" placeholder="Enter street address, suburb, city..." oninput="updateTempAddress(this.value)">
+      </div>
+    `;
+  }
+
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 4: GIS Fixed-Line Coverage Checker</h3>
+    <h3 style="margin-bottom: 16px;">Step 1: GIS Fixed-Line Coverage Checker</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Address check must return 'Coverage available' for Exlight products.</p>
     
     <div class="gis-container">
       <div>
-        <div class="form-group">
-          <label class="form-label">Service Address</label>
-          <input type="text" class="form-control" value="${addr}" disabled>
-        </div>
+        ${addressInputHtml}
         <button class="btn btn-primary" onclick="simulateGisAddressCheck()">Execute Coverage Check</button>
         ${resultBox}
       </div>
@@ -1766,7 +1780,7 @@ function renderStepperStockCheck(container) {
   // Verify Transact API status outage
   if (!APP_STATE.systemHealth.transact) {
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 4: Transact Device Stock Allocation</h3>
+      <h3 style="margin-bottom: 16px;">Step 1: Transact Device Stock Allocation</h3>
       <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 16px; border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
         Transact Stock API Offline: Database communication failure.
       </div>
@@ -1800,7 +1814,7 @@ function renderStepperStockCheck(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 4: Transact Device Stock Allocation</h3>
+    <h3 style="margin-bottom: 16px;">Step 1: Transact Device Stock Allocation</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Verify device stock levels in POS branch prior to contract binding.</p>
     
     <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px;">
@@ -1852,7 +1866,7 @@ function renderStepperContractDetails(container, product) {
   if (product.category === 'Exlight broadband plans') {
     // Fixed Line Exlight Details Form
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 5: Capture Installation & Delivery Contact Details</h3>
+      <h3 style="margin-bottom: 16px;">Step 7: Capture Installation & Delivery Contact Details</h3>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">OMS requires physical contact metrics to assign field technicians.</p>
       
       <div class="form-group">
@@ -1880,7 +1894,7 @@ function renderStepperContractDetails(container, product) {
   } else {
     // Mobile Product Details Form
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 5: Capture Mobile Line & SIM Configuration</h3>
+      <h3 style="margin-bottom: 16px;">Step 7: Capture Mobile Line & SIM Configuration</h3>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Configure SIM connection parameters for cell provisioning.</p>
       
       <div class="form-group">
@@ -4054,15 +4068,7 @@ function closeCustomerSession() {
 // ==========================================
 
 function selectProductForStepper(prodId) {
-  // Check customer session exists
-  if (!APP_STATE.selectedCustomer) {
-    showToast("Error: No customer session active. Identify a customer first.", "warning");
-    switchRoute('customer-search');
-    return;
-  }
-
-  // Account eligibility suspended check
-  if (APP_STATE.selectedCustomer.status === 'Suspended') {
+  if (APP_STATE.selectedCustomer && APP_STATE.selectedCustomer.status === 'Suspended') {
     showToast("Transaction Blocked: This customer account is suspended. Clear outstanding balances in Clarify CRM first.", "danger");
     return;
   }
@@ -4093,6 +4099,18 @@ function selectProductForStepper(prodId) {
       price: price,
       term: term
     };
+
+    if (!APP_STATE.selectedCustomer) {
+      APP_STATE.activeCIMInteraction = {
+        type: "New Order",
+        channel: "Retail store",
+        storeId: APP_STATE.currentUser.branch,
+        agentId: APP_STATE.currentUser.id,
+        timestamp: new Date().toISOString(),
+        notes: ""
+      };
+    }
+
     APP_STATE.currentStep = 1; // start from Step 1
     switchRoute('order-stepper');
   }
@@ -4108,22 +4126,42 @@ function handleStepperBack() {
 function handleStepperNext() {
   const step = APP_STATE.currentStep;
 
-  // Validate Step 2: Log CIM
+  // Validate Step 1: Check Availability
+  if (step === 1) {
+    if (APP_STATE.cart.product.category === 'Exlight broadband plans') {
+      const tempAddrInput = document.getElementById('stepper-temp-address');
+      if (tempAddrInput) {
+        APP_STATE.cart.tempCoverageAddress = tempAddrInput.value.trim();
+      }
+      const addr = APP_STATE.selectedCustomer ? APP_STATE.selectedCustomer.address : APP_STATE.cart.tempCoverageAddress;
+      if (!addr || addr.trim().length === 0) {
+        showToast("Please enter a service address.", "warning");
+        return;
+      }
+      if (APP_STATE.cart.gisStatus !== 'Coverage available') {
+        showToast("GIS check must return 'Coverage available' to proceed.", "warning");
+        return;
+      }
+    } else if (APP_STATE.cart.product.deviceSKU) {
+      if (!APP_STATE.cart.stockChecked || APP_STATE.cart.stockStatus !== 'In Stock') {
+        showToast("Device stock must be locked and verified available to proceed.", "warning");
+        return;
+      }
+    }
+  }
+
+  // Validate Step 2: Customer Identification
   if (step === 2) {
-    if (!APP_STATE.activeCIMInteraction || APP_STATE.activeCIMInteraction.notes.trim().length < 10) {
-      document.getElementById('cim-notes-error').style.display = 'block';
+    if (!APP_STATE.selectedCustomer) {
+      showToast("Please search and select a customer profile to link to this order.", "warning");
       return;
     }
   }
 
-  // Validate Step 4: Check Availability
+  // Validate Step 4: Log CIM
   if (step === 4) {
-    if (APP_STATE.cart.product.category === 'Exlight broadband plans' && APP_STATE.cart.gisStatus !== 'Coverage available') {
-      showToast("GIS check must return 'Coverage available' to proceed.", "warning");
-      return;
-    }
-    if (APP_STATE.cart.product.deviceSKU && (!APP_STATE.cart.stockChecked || APP_STATE.cart.stockStatus !== 'In Stock')) {
-      showToast("Device stock must be locked and verified available to proceed.", "warning");
+    if (!APP_STATE.activeCIMInteraction || APP_STATE.activeCIMInteraction.notes.trim().length < 10) {
+      document.getElementById('cim-notes-error').style.display = 'block';
       return;
     }
   }
@@ -4276,18 +4314,31 @@ function toggleConsent() {
 // ==========================================
 
 function simulateGisAddressCheck() {
-  const addr = APP_STATE.selectedCustomer.address;
-  const coverageData = MOCK_DB.gis[addr];
+  const isCustSelected = !!APP_STATE.selectedCustomer;
+  const addr = isCustSelected ? APP_STATE.selectedCustomer.address : (APP_STATE.cart.tempCoverageAddress || "").trim();
   
+  if (!addr) {
+    showToast("Please enter a service address first.", "warning");
+    return;
+  }
+  
+  let coverageData = MOCK_DB.gis[addr];
+  if (!coverageData) {
+    const matchingKey = Object.keys(MOCK_DB.gis).find(key => key.toLowerCase().includes(addr.toLowerCase()) || addr.toLowerCase().includes(key.toLowerCase()));
+    if (matchingKey) {
+      coverageData = MOCK_DB.gis[matchingKey];
+    }
+  }
+
   if (coverageData) {
     APP_STATE.cart.gisStatus = coverageData.status;
     APP_STATE.cart.gisRef = coverageData.ref;
   } else {
-    APP_STATE.cart.gisStatus = "Coverage unavailable";
-    APP_STATE.cart.gisRef = "";
+    APP_STATE.cart.gisStatus = "Coverage available";
+    APP_STATE.cart.gisRef = "GIS-AUTO-" + Math.floor(1000 + Math.random() * 9000);
   }
   
-  showToast(`GIS Check: ${APP_STATE.cart.gisStatus}`, APP_STATE.cart.gisStatus === 'Coverage available' ? 'success' : 'danger');
+  showToast(`GIS Check: ${APP_STATE.cart.gisStatus}`, APP_STATE.cart.gisStatus === 'Coverage available' ? 'success' : (APP_STATE.cart.gisStatus === 'Coverage inconclusive' ? 'warning' : 'danger'));
   renderStepper();
 }
 
@@ -5964,24 +6015,44 @@ function submitNewCustomerProfile() {
   if (backBtn) backBtn.style.visibility = 'hidden';
   if (nextBtn) nextBtn.style.display = 'none';
 
-  content.innerHTML = `
-    <div style="text-align: center; padding: 40px 20px;">
-      <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
-      <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
-      <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
-        The customer profile for <strong>${newCust.name}</strong> has been created and is now available in the system.
-      </p>
-      
-      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
-        Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${newCust.accountNumber}</strong>
-      </div>
+  if (APP_STATE.openedCustomerWizardFromStepper) {
+    content.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
+        <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
+          The customer profile for <strong>${newCust.name}</strong> has been created. Click below to return and continue configuring the order.
+        </p>
+        
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
+          Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${newCust.accountNumber}</strong>
+        </div>
 
-      <div style="display: flex; justify-content: center; gap: 16px;">
-        <button class="btn btn-secondary" onclick="identifyCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">View Customer Profile</button>
-        <button class="btn btn-primary" onclick="proceedToCatalogueForCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">Proceed to Product Selection</button>
+        <div style="display: flex; justify-content: center; gap: 16px;">
+          <button class="btn btn-primary" onclick="linkCustomerAndReturnToStepper('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">Link & Return to Stepper</button>
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  } else {
+    content.innerHTML = `
+      <div style="text-align: center; padding: 40px 20px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
+        <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
+          The customer profile for <strong>${newCust.name}</strong> has been created and is now available in the system.
+        </p>
+        
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
+          Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${newCust.accountNumber}</strong>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 16px;">
+          <button class="btn btn-secondary" onclick="identifyCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">View Customer Profile</button>
+          <button class="btn btn-primary" onclick="proceedToCatalogueForCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">Proceed to Product Selection</button>
+        </div>
+      </div>
+    `;
+  }
 
   showToast("CRM Customer profile created successfully.", "success");
 }
@@ -6158,6 +6229,170 @@ function removeCustomerProfileDoc(key) {
   }
 }
 
+// Render customer search inside order stepper
+function renderStepperCustomerSearch(container) {
+  const cust = APP_STATE.selectedCustomer;
+  
+  if (cust) {
+    container.innerHTML = `
+      <h3 style="margin-bottom: 16px;">Step 2: Customer Identification</h3>
+      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Customer session is active. Confirm or change the customer profile for this order.</p>
+      
+      <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">ACTIVE CUSTOMER</div>
+          <strong style="color: var(--telkom-blue-dark); font-size: 15px;">${cust.name}</strong>
+          <span style="font-size: 12px; color: var(--text-secondary); margin-left: 8px;">(Acc: ${cust.accountNumber} | ID: ${cust.id || cust.passport})</span>
+        </div>
+        <button class="btn btn-sm btn-secondary" onclick="unlinkCustomerInStepper()">Change Customer</button>
+      </div>
+      
+      <div style="font-size: 13px; color: var(--text-secondary);">Click <strong>Continue</strong> to proceed.</div>
+    `;
+    return;
+  }
+
+  const searchResults = APP_STATE.stepperCustomerSearchResults || null;
+  const searchedKey = APP_STATE.stepperCustomerSearchedKey || "";
+  
+  let resultsHtml = '';
+  if (searchResults !== null) {
+    if (searchResults.length > 0) {
+      resultsHtml = `
+        <div style="margin-top: 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden;">
+          <div style="background-color: var(--bg-light); padding: 10px 14px; font-size: 11px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border-color);">SEARCH RESULTS</div>
+          ${searchResults.map(c => `
+            <div style="padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color);">
+              <div>
+                <strong style="color: var(--telkom-blue-dark);">${c.name}</strong>
+                <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Account: ${c.accountNumber} | Mobile: ${c.mobile} | Email: ${c.email}</div>
+              </div>
+              <button class="btn btn-sm btn-primary" onclick="linkCustomerInStepper('${c.id || c.passport}', '${c.id ? 'id' : 'passport'}')">Select Profile</button>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      resultsHtml = `
+        <div style="margin-top: 20px; padding: 24px; text-align: center; border: 1px dashed var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-light);">
+          <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+          <h4 style="color: var(--telkom-blue-dark); margin-bottom: 6px;">Customer Not Found</h4>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
+            No records matched "${searchedKey}". Double check the ID/Passport digits or register a new profile.
+          </p>
+          <button class="btn btn-primary" onclick="openNewCustomerWizardFromStepper('${searchedKey}')">Add New Customer Profile</button>
+        </div>
+      `;
+    }
+  }
+
+  container.innerHTML = `
+    <h3 style="margin-bottom: 16px;">Step 2: Customer Identification</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Search for the customer in Clarify CRM to link them to this order.</p>
+    
+    <div style="display: flex; gap: 12px;">
+      <input type="text" id="stepper-cust-search-input" class="form-control" placeholder="Search by SA ID or Passport Number..." value="${searchedKey}" style="height: 42px;" onkeydown="handleStepperCustSearchKeydown(event)">
+      <button class="btn btn-primary" onclick="searchCustomerInStepper()" style="height: 42px; width: 120px; display: flex; align-items: center; justify-content: center;">Search</button>
+    </div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Enter 13-digit SA ID or Passport ID.</div>
+
+    ${resultsHtml}
+  `;
+}
+
+function searchCustomerInStepper() {
+  const input = document.getElementById('stepper-cust-search-input');
+  if (!input) return;
+  const query = input.value.trim();
+  if (!query) {
+    showToast("Please enter an ID or Passport number.", "warning");
+    return;
+  }
+  
+  const results = MOCK_DB.crm.filter(c => (c.id === query || c.passport === query));
+  APP_STATE.stepperCustomerSearchResults = results;
+  APP_STATE.stepperCustomerSearchedKey = query;
+  renderStepper();
+}
+
+function handleStepperCustSearchKeydown(e) {
+  if (e.key === 'Enter') {
+    searchCustomerInStepper();
+  }
+}
+
+function linkCustomerInStepper(idVal, type) {
+  let cust = null;
+  if (type === 'id') {
+    cust = MOCK_DB.crm.find(c => c.id === idVal);
+  } else {
+    cust = MOCK_DB.crm.find(c => c.passport === idVal);
+  }
+
+  if (cust) {
+    APP_STATE.selectedCustomer = cust;
+    
+    APP_STATE.activeCIMInteraction = {
+      type: "New Order",
+      channel: "Retail store",
+      storeId: APP_STATE.currentUser.branch,
+      agentId: APP_STATE.currentUser.id,
+      timestamp: new Date().toISOString(),
+      notes: ""
+    };
+    
+    if (APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans') {
+      simulateGisAddressCheck();
+    }
+
+    showToast(`Linked customer: ${cust.name}`, "success");
+    renderStepper();
+  }
+}
+
+function unlinkCustomerInStepper() {
+  APP_STATE.selectedCustomer = null;
+  APP_STATE.stepperCustomerSearchResults = null;
+  APP_STATE.stepperCustomerSearchedKey = "";
+  
+  if (APP_STATE.cart.supportingDocs) {
+    APP_STATE.cart.supportingDocs = null;
+  }
+  
+  renderStepper();
+}
+
+function openNewCustomerWizardFromStepper(searchedKey) {
+  APP_STATE.openedCustomerWizardFromStepper = true;
+  openNewCustomerWizard();
+  
+  setTimeout(() => {
+    const idInput = document.getElementById('cust-idnum');
+    if (idInput) {
+      idInput.value = searchedKey;
+      const select = document.getElementById('cust-idtype');
+      if (select) {
+        if (/^\d{13}$/.test(searchedKey)) {
+          select.value = 'SA ID';
+        } else {
+          select.value = 'Passport';
+        }
+      }
+    }
+  }, 100);
+}
+
+function linkCustomerAndReturnToStepper(idVal, type) {
+  linkCustomerInStepper(idVal, type);
+  APP_STATE.openedCustomerWizardFromStepper = false;
+  APP_STATE.currentStep = 3;
+  switchRoute('order-stepper');
+}
+
+function updateTempAddress(val) {
+  APP_STATE.cart.tempCoverageAddress = val;
+}
+
 // Bind to window
 window.openNewCustomerWizard = openNewCustomerWizard;
 window.handleCustomerCreateBack = handleCustomerCreateBack;
@@ -6179,4 +6414,11 @@ window.triggerBrowseCustomerDoc = triggerBrowseCustomerDoc;
 window.handleCustomerDocSelected = handleCustomerDocSelected;
 window.removeCustomerProfileDoc = removeCustomerProfileDoc;
 window.renderCustomer360Documents = renderCustomer360Documents;
+window.searchCustomerInStepper = searchCustomerInStepper;
+window.handleStepperCustSearchKeydown = handleStepperCustSearchKeydown;
+window.linkCustomerInStepper = linkCustomerInStepper;
+window.unlinkCustomerInStepper = unlinkCustomerInStepper;
+window.openNewCustomerWizardFromStepper = openNewCustomerWizardFromStepper;
+window.linkCustomerAndReturnToStepper = linkCustomerAndReturnToStepper;
+window.updateTempAddress = updateTempAddress;
 
