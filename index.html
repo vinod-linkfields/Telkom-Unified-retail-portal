@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Telkom Unified Digital Journey Platform</title>
   <link rel="stylesheet" href="app.css">
+  <script>
+    window.__JS_ERRORS__ = [];
+    window.addEventListener('error', function(e) {
+      window.__JS_ERRORS__.push({ msg: e.message, src: e.filename, line: e.lineno, col: e.colno, stack: e.error && e.error.stack });
+      console.error('[CAUGHT ERROR]', e.message, 'at', e.filename, 'line', e.lineno);
+      localStorage.setItem('portal_js_errors', JSON.stringify(window.__JS_ERRORS__));
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      window.__JS_ERRORS__.push({ msg: String(e.reason), type: 'unhandledrejection' });
+      localStorage.setItem('portal_js_errors', JSON.stringify(window.__JS_ERRORS__));
+    });
+  </script>
 </head>
 <body>
 
@@ -380,6 +392,7 @@
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         <!-- ========================================== -->
@@ -866,6 +879,7 @@
                 <label class="filter-option">
                   <input type="checkbox" class="filter-type-checkbox" value="Handset contracts" onchange="renderCatalogue()" checked>
                   <span>Handset Contracts</span>
+        </div>
                 </label>
                 <label class="filter-option">
                   <input type="checkbox" class="filter-type-checkbox" value="Exlight broadband plans" onchange="renderCatalogue()" checked>
