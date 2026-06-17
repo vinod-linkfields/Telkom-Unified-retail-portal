@@ -1000,7 +1000,7 @@ function renderStepper() {
   stepContainer.innerHTML = '';
   
   // Render step navigation numbers in UI
-  document.querySelectorAll('.stepper-step').forEach((el, index) => {
+  document.querySelectorAll('#view-order-stepper .stepper-step').forEach((el, index) => {
     el.className = 'stepper-step';
     if (index + 1 < APP_STATE.currentStep) {
       el.classList.add('completed');
