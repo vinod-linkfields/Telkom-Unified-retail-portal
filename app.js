@@ -1256,7 +1256,7 @@ function renderStepper() {
   const nextBtn = document.getElementById('stepper-next-btn');
   if (nextBtn) {
     if (APP_STATE.currentStep === 10) {
-      nextBtn.innerText = 'Complete Order';
+      nextBtn.innerText = 'Create Contract';
     } else {
       nextBtn.innerText = 'Continue';
     }
@@ -4919,6 +4919,266 @@ function renderConfirmationReceipt() {
   } else if (panel) {
     panel.style.display = 'none';
   }
+
+  // Render customer contract agreement
+  renderConfirmationContract(APP_STATE.cart.orderRef);
+}
+
+function renderConfirmationContract(orderRef) {
+  const panel = document.getElementById('confirmation-contract-panel');
+  if (!panel) return;
+
+  const product = APP_STATE.cart.product;
+  const customer = APP_STATE.selectedCustomer;
+  if (!product || !customer) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  // Determine billing debit info
+  let bankName = "N/A";
+  let accountNo = "N/A";
+  if (APP_STATE.cart.billingSelection) {
+    const bs = APP_STATE.cart.billingSelection;
+    if (bs.option === 'existing') {
+      bankName = "Existing Account (ABSA)";
+      accountNo = "••••1234";
+    } else if (bs.option === 'new') {
+      bankName = bs.newDebit.bankName || "N/A";
+      const fullAcc = bs.newDebit.accountNumber || "";
+      accountNo = fullAcc.length > 4 ? "••••" + fullAcc.slice(-4) : fullAcc;
+    }
+  }
+
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="contract-header" style="text-align: center; border-bottom: 2px solid var(--telkom-blue); padding-bottom: 16px; margin-bottom: 20px;">
+      <h3 style="color: var(--telkom-blue-dark); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Customer Contract Agreement</h3>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 700;">TELKOM SA SOC LTD - MOBILE & BROADBAND SERVICES</div>
+    </div>
+
+    <div style="font-size: 13px; color: var(--text-primary); line-height: 1.6;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; background-color: var(--bg-light); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+        <div>
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Agreement Reference</div>
+          <strong style="color: var(--telkom-blue-dark);">${orderRef}</strong>
+        </div>
+        <div>
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Agreement Date</div>
+          <strong>${new Date().toLocaleDateString()}</strong>
+        </div>
+      </div>
+
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">1. Subscriber Personal Details</h5>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 12px;">
+        <div><strong>Full Name:</strong> ${customer.name}</div>
+        <div><strong>SA ID / Passport:</strong> ${customer.id ? maskID(customer.id) : maskPassport(customer.passport)}</div>
+        <div><strong>Contact Number:</strong> ${customer.mobile || 'N/A'}</div>
+        <div><strong>Email Address:</strong> ${customer.email || 'N/A'}</div>
+        <div style="grid-column: 1 / -1;"><strong>Billing Address:</strong> ${customer.address || 'N/A'}</div>
+      </div>
+
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">2. Contract Product Specifications</h5>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 12px;">
+        <div><strong>Allocated Product:</strong> ${product.name}</div>
+        <div><strong>Contract Term:</strong> ${product.term} Months</div>
+        <div><strong>Monthly Cost Plan:</strong> R${product.price} /mo</div>
+        <div><strong>Once-Off Charge:</strong> R${product.onceOff}</div>
+        <div style="grid-column: 1 / -1;"><strong>Product Allocation:</strong> ${product.allocation}</div>
+      </div>
+
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">3. Debit Order Billing Authorization</h5>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; font-size: 12px;">
+        <div><strong>Payment Bank:</strong> ${bankName}</div>
+        <div><strong>Account Number:</strong> ${accountNo}</div>
+        <div><strong>Debit Collection Date:</strong> 1st of every month</div>
+        <div><strong>DebiCheck Consent:</strong> Authorised (NCA Compliant)</div>
+      </div>
+
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; margin-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">4. Digital Signatures & Compliance</h5>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; font-size: 11px;">
+        <div style="border: 1px dashed var(--border-color); padding: 10px; border-radius: var(--radius-sm); background-color: var(--bg-light); text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Agent Signature (Piet van Zyl)</div>
+          <div style="font-family: 'Georgia', serif; font-style: italic; font-size: 15px; margin: 4px 0; color: var(--telkom-blue-dark);">Piet van Zyl</div>
+          <div style="font-size: 9px; color: var(--text-muted);">IP: 192.168.10.150 (Verified)</div>
+        </div>
+        <div style="border: 1px dashed var(--border-color); padding: 10px; border-radius: var(--radius-sm); background-color: var(--bg-light); text-align: center;">
+          <div style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Subscriber Signature (Digital)</div>
+          <div style="font-family: 'Georgia', serif; font-style: italic; font-size: 15px; margin: 4px 0; color: var(--telkom-blue-dark);">${customer.name}</div>
+          <div style="font-size: 9px; color: var(--text-muted);">NCA/POPIA Consent Checked</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 16px; justify-content: center; border-top: 1px solid var(--border-color); padding-top: 18px; margin-top: 16px;">
+        <button class="btn btn-outline" onclick="emailContractToCustomer('${orderRef}')" style="flex: 1; justify-content: center; height: 38px; border-color: var(--telkom-blue); color: var(--telkom-blue);">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+          Email Contract
+        </button>
+        <button class="btn btn-primary" onclick="printContractDocument('${orderRef}')" style="flex: 1; justify-content: center; height: 38px; background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark);">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          Print Contract
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function emailContractToCustomer(orderRef) {
+  const customer = APP_STATE.selectedCustomer;
+  if (!customer || !customer.email) {
+    showToast("Error: No customer email address found.", "danger");
+    return;
+  }
+  showToast(`Contract Agreement emailed successfully to ${customer.email}!`, "success");
+}
+
+function printContractDocument(orderRef) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    showToast("Popup blocker prevented print window. Please allow popups.", "danger");
+    return;
+  }
+
+  const customer = APP_STATE.selectedCustomer;
+  const product = APP_STATE.cart.product;
+
+  let bankName = "N/A";
+  let accountNo = "N/A";
+  if (APP_STATE.cart.billingSelection) {
+    const bs = APP_STATE.cart.billingSelection;
+    if (bs.option === 'existing') {
+      bankName = "Existing Account (ABSA)";
+      accountNo = "••••1234";
+    } else if (bs.option === 'new') {
+      bankName = bs.newDebit.bankName || "N/A";
+      const fullAcc = bs.newDebit.accountNumber || "";
+      accountNo = fullAcc.length > 4 ? "••••" + fullAcc.slice(-4) : fullAcc;
+    }
+  }
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Telkom Customer Contract - ${orderRef}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .logo { text-align: center; margin-bottom: 30px; }
+          .header { text-align: center; border-bottom: 3px solid #0099ff; padding-bottom: 10px; margin-bottom: 30px; }
+          h2 { color: #0f3057; text-transform: uppercase; margin: 0; }
+          .section-title { color: #0f3057; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+          td { padding: 8px 0; }
+          td.label { font-weight: bold; width: 30%; color: #666; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 40px; }
+          .sig-box { width: 45%; border: 1px dashed #ccc; padding: 15px; text-align: center; background-color: #f9f9f9; }
+          .sig-font { font-family: 'Georgia', serif; font-style: italic; font-size: 18px; color: #0f3057; margin: 8px 0; }
+          .footer { text-align: center; font-size: 11px; color: #999; margin-top: 50px; border-top: 1px solid #eee; padding-top: 10px; }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>Telkom SA SOC Ltd</h2>
+          <div style="font-size: 12px; font-weight: bold; color: #0099ff; letter-spacing: 1px; margin-top: 5px;">CUSTOMER CONTRACT AGREEMENT</div>
+        </div>
+
+        <table>
+          <tr>
+            <td class="label">Agreement Reference</td>
+            <td><strong>${orderRef}</strong></td>
+            <td class="label">Date of Agreement</td>
+            <td><strong>${new Date().toLocaleDateString()}</strong></td>
+          </tr>
+        </table>
+
+        <div class="section-title">1. Subscriber Personal Details</div>
+        <table>
+          <tr>
+            <td class="label">Full Name</td>
+            <td>${customer.name}</td>
+            <td class="label">Identity Number</td>
+            <td>${customer.id ? maskID(customer.id) : maskPassport(customer.passport)}</td>
+          </tr>
+          <tr>
+            <td class="label">Mobile Number</td>
+            <td>${customer.mobile || 'N/A'}</td>
+            <td class="label">Email Address</td>
+            <td>${customer.email || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td class="label">Billing Address</td>
+            <td colspan="3">${customer.address || 'N/A'}</td>
+          </tr>
+        </table>
+
+        <div class="section-title">2. Contract Plan Specifications</div>
+        <table>
+          <tr>
+            <td class="label">Allocated Product</td>
+            <td>${product.name}</td>
+            <td class="label">Contract Duration</td>
+            <td>${product.term} Months</td>
+          </tr>
+          <tr>
+            <td class="label">Monthly Charge</td>
+            <td>R${product.price} /mo</td>
+            <td class="label">Once-off Connection Fee</td>
+            <td>R${product.onceOff}</td>
+          </tr>
+          <tr>
+            <td class="label">Plan Details</td>
+            <td colspan="3">${product.allocation}</td>
+          </tr>
+        </table>
+
+        <div class="section-title">3. Debit Order Billing Information</div>
+        <table>
+          <tr>
+            <td class="label">Authorized Bank</td>
+            <td>${bankName}</td>
+            <td class="label">Account Number</td>
+            <td>${accountNo}</td>
+          </tr>
+          <tr>
+            <td class="label">Collection Date</td>
+            <td>1st of every month</td>
+            <td class="label">DebiCheck Status</td>
+            <td>Verified and Authorized</td>
+          </tr>
+        </table>
+
+        <div class="section-title">4. Compliance & Signatures</div>
+        <p style="font-size: 11px; color: #555; margin-bottom: 20px;">The Subscriber agrees to all terms and conditions of Telkom SA. Credit check, NCA requirements and POPI act consent checked digitally.</p>
+        
+        <div class="signatures">
+          <div class="sig-box">
+            <div style="font-size: 10px; color: #666; font-weight: bold;">AUTHORIZED AGENT SIGNATURE</div>
+            <div class="sig-font">Piet van Zyl</div>
+            <div style="font-size: 10px; color: #999;">Branch PTA-01 (Pretoria Main)</div>
+          </div>
+          <div class="sig-box">
+            <div style="font-size: 10px; color: #666; font-weight: bold;">SUBSCRIBER SIGNATURE</div>
+            <div class="sig-font">${customer.name}</div>
+            <div style="font-size: 10px; color: #999;">IP: 192.168.10.150 (POPIA Compliant)</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          Telkom SA SOC Ltd is an authorized financial services provider. Reg no: 1991/005476/30.
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 }
 
 // ==========================================
@@ -7439,8 +7699,8 @@ function getOrderActivationStep(order) {
     return 'completed';
   }
   if (!order.activationStep) {
-    if (order.simActivationNumber) {
-      return 'run_rica';
+    if (order.ricaStatus === 'Verified') {
+      return 'enter_sim';
     }
     return 'start';
   }
@@ -7457,31 +7717,16 @@ function renderOrderActivationWorkflow(order, container, isModal) {
       <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md); text-align: center;">
         <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">SIM Activation & RICA Workflow</h5>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">This order contains cellular lines that require mobile activation and RICA verification.</p>
-        <button class="btn btn-primary" onclick="setPostOrderActivationStep('${orderRef}', 'enter_sim', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
-          Proceed for SIM activation
+        <button class="btn btn-primary" onclick="setPostOrderActivationStep('${orderRef}', 'run_rica', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
+          Proceed to RICA Verification
         </button>
-      </div>
-    `;
-  } else if (step === 'enter_sim') {
-    container.innerHTML = `
-      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
-        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Enter SIM Serial Number</h5>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Provide the 19-digit ICCID SIM card number to continue.</p>
-        <div style="display: flex; gap: 12px; align-items: flex-end;">
-          <div style="flex: 1;">
-            <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${order.simActivationNumber || ''}">
-          </div>
-          <button class="btn btn-primary" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600;">
-            Proceed to RICA
-          </button>
-        </div>
       </div>
     `;
   } else if (step === 'run_rica') {
     container.innerHTML = `
       <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
         <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">RICA Verification</h5>
-        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">Perform the national RICA database check for SIM <strong>${order.simActivationNumber}</strong>.</p>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">Perform the national RICA database check for customer <strong>${order.customerName}</strong>.</p>
         
         <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
           <button type="button" class="btn btn-primary" id="btn-run-rica-activation" onclick="runRicaActivationWorkflow('${orderRef}', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
@@ -7497,12 +7742,27 @@ function renderOrderActivationWorkflow(order, container, isModal) {
         </div>
       </div>
     `;
+  } else if (step === 'enter_sim') {
+    container.innerHTML = `
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Enter SIM Serial Number</h5>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">RICA verification passed. Provide the 19-digit ICCID SIM card number to activate the cellular line.</p>
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <div style="flex: 1;">
+            <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${order.simActivationNumber || ''}">
+          </div>
+          <button class="btn btn-primary" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600;">
+            Activate SIM & Complete
+          </button>
+        </div>
+      </div>
+    `;
   } else if (step === 'completed') {
     container.innerHTML = `
       <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 18px; border-radius: var(--radius-md); text-align: center;">
         <div style="width: 44px; height: 44px; border-radius: 50%; background-color: var(--success); color: var(--text-white); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 22px; font-weight: bold;">✓</div>
-        <h5 style="color: var(--success); font-weight: 700; margin-bottom: 6px;">sim activation is completed!</h5>
-        <p style="font-size: 13px; color: var(--text-secondary);">The SIM card (ICCID: <strong>${order.simActivationNumber}</strong>) is verified and active on the HLR network.</p>
+        <h5 style="color: var(--success); font-weight: 700; margin-bottom: 6px;">SIM Activation is Completed!</h5>
+        <p style="font-size: 13px; color: var(--text-secondary);">The SIM card (ICCID: <strong>${order.simActivationNumber}</strong>) is verified via RICA and active on the HLR network.</p>
       </div>
     `;
   }
@@ -7531,11 +7791,30 @@ function submitPostOrderSimNumber(orderRef, containerId) {
     return;
   }
   order.simActivationNumber = val;
-  order.activationStep = 'run_rica';
+  order.status = 'Active';
+  order.activationStep = 'completed';
   saveOrders();
+  
+  pushNotification(
+    "SIM Card Activated",
+    `SIM Serial ${order.simActivationNumber} activated successfully for order ${orderRef}.`,
+    "sim_activated",
+    "Normal"
+  );
+  
+  showToast("SIM serial captured and cellular line activated successfully!", "success");
+
   const container = document.getElementById(containerId);
   if (container) {
     renderOrderActivationWorkflow(order, container, containerId === 'order-details-rica-panel');
+  }
+  
+  if (document.getElementById('order-details-modal').style.display !== 'none') {
+    viewOrderDetails(orderRef);
+  }
+  
+  if (APP_STATE.activeRoute === 'order-tracking') {
+    renderOrderTracking();
   }
 }
 
@@ -7564,18 +7843,10 @@ function runRicaActivationWorkflow(orderRef, containerId) {
     if (progress >= 100) {
       clearInterval(interval);
       order.ricaStatus = 'Verified';
-      order.status = 'Active';
-      order.activationStep = 'completed';
+      order.activationStep = 'enter_sim';
       saveOrders();
-      
-      pushNotification(
-        "SIM Card Activated",
-        `SIM Serial ${order.simActivationNumber} activated successfully for order ${orderRef}.`,
-        "sim_activated",
-        "Normal"
-      );
 
-      showToast("RICA Verification Successful & SIM Activated!", "success");
+      showToast("RICA Verification Successful! Now capture the SIM number.", "success");
       
       const container = document.getElementById(containerId);
       if (container) {
@@ -7615,4 +7886,7 @@ window.setPostOrderActivationStep = setPostOrderActivationStep;
 window.submitPostOrderSimNumber = submitPostOrderSimNumber;
 window.runRicaActivationWorkflow = runRicaActivationWorkflow;
 window.renderConfirmationRicaActivation = renderConfirmationRicaActivation;
+window.renderConfirmationContract = renderConfirmationContract;
+window.emailContractToCustomer = emailContractToCustomer;
+window.printContractDocument = printContractDocument;
 
