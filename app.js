@@ -1185,10 +1185,22 @@ function getActiveStepsForProduct(product) {
     { id: 10, label: "Pre-Sub Review" }
   ];
   
-  if (product && product.category === 'SIM-only') {
-    return steps.filter(s => s.id !== 1);
+  if (product) {
+    const needsGis = product.category === 'Exlight broadband plans';
+    const needsStock = !!product.deviceSKU;
+    if (!needsGis && !needsStock) {
+      return steps.filter(s => s.id !== 1);
+    }
   }
   return steps;
+}
+
+function getStepperStepTitle(stepId, defaultTitle) {
+  const product = APP_STATE.cart.product;
+  const steps = getActiveStepsForProduct(product);
+  const index = steps.findIndex(s => s.id === stepId);
+  const displayNum = index > -1 ? index + 1 : stepId;
+  return `Step ${displayNum}: ${defaultTitle}`;
 }
 
 function renderStepperHeader() {
@@ -1220,10 +1232,21 @@ function renderStepper() {
   if (!stepContainer) return;
   stepContainer.innerHTML = '';
   
+  const product = APP_STATE.cart.product;
+  if (!product) {
+    stepContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 15px;">No product selected. Please select a product from the catalogue first.</div>`;
+    return;
+  }
+
+  const steps = getActiveStepsForProduct(product);
+  const stepExists = steps.some(s => s.id === APP_STATE.currentStep);
+  if (!stepExists && steps.length > 0) {
+    APP_STATE.currentStep = steps[0].id;
+  }
+
   // Render step navigation numbers in UI
   renderStepperHeader();
 
-  const product = APP_STATE.cart.product;
   const nextBtn = document.getElementById('stepper-next-btn');
   if (nextBtn) {
     if (APP_STATE.currentStep === 10) {
@@ -4452,7 +4475,8 @@ function selectProductForStepper(prodId) {
       };
     }
 
-    APP_STATE.currentStep = (p.category === 'SIM-only') ? 2 : 1;
+    const activeSteps = getActiveStepsForProduct(APP_STATE.cart.product);
+    APP_STATE.currentStep = activeSteps.length > 0 ? activeSteps[0].id : 1;
     switchRoute('order-stepper');
   }
 }
