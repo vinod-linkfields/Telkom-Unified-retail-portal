@@ -1973,12 +1973,13 @@ input[type="checkbox"], input[type="radio"] {
 .login-form-panel {
   flex: 3;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  padding: 48px 40px;
-  background: #f9f9fb;
+  padding: 52px 48px;
+  background: #ffffff;
   min-height: 100vh;
   overflow-y: auto;
+  position: relative;
 }
 
 /* Subtle decorative circle behind the panel */
@@ -2135,15 +2136,41 @@ input[type="checkbox"], input[type="radio"] {
 
 
 
+/* Logo in right panel — no card background */
+.login-right-logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 36px;
+}
+
+.login-right-logo .login-logo-img {
+  height: 36px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Heading block */
+.login-right-heading {
+  margin-bottom: 32px;
+}
+
+.login-right-heading .login-card-title {
+  text-align: left;
+}
+
+.login-right-heading .login-card-sub {
+  text-align: left;
+}
+
+/* No card box — form is bare on panel */
 .login-card {
   width: 100%;
-  max-width: 420px;
-  background: var(--bg-card);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-color);
-  box-shadow: 0 8px 32px rgba(0,47,93,0.08), 0 2px 8px rgba(0,47,93,0.04);
-  overflow: hidden;
-  animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  overflow: visible;
+  animation: none;
 }
 
 @keyframes cardEntrance {
@@ -2151,19 +2178,14 @@ input[type="checkbox"], input[type="radio"] {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Card top accent bar */
-.login-card::before {
-  content: '';
-  display: block;
-  height: 4px;
-  background: linear-gradient(90deg, var(--telkom-blue-dark), var(--telkom-blue), #91e200);
-}
+/* No card top accent bar */
+.login-card::before { display: none; }
 
-/* Card Header */
+/* Card Header — left-aligned, no card padding */
 .login-card-header {
-  text-align: center;
-  padding: 28px 36px 0;
-  margin-bottom: 24px;
+  text-align: left;
+  padding: 0;
+  margin-bottom: 28px;
 }
 
 .login-card-icon {
@@ -2192,7 +2214,7 @@ input[type="checkbox"], input[type="radio"] {
   color: var(--text-muted);
 }
 
-/* Error Banner */
+/* Error Banner — no horizontal card margin */
 .login-error-banner {
   display: flex;
   align-items: center;
@@ -2203,7 +2225,7 @@ input[type="checkbox"], input[type="radio"] {
   color: #c0392b;
   font-size: 13px;
   font-weight: 500;
-  margin: 0 36px 16px;
+  margin: 0 0 16px;
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   animation: shake 0.35s ease;
 }
@@ -2214,12 +2236,12 @@ input[type="checkbox"], input[type="radio"] {
   75%       { transform: translateX(4px); }
 }
 
-/* Form */
+/* Form — no horizontal card padding */
 .login-form-body {
   display: flex;
   flex-direction: column;
   gap: 18px;
-  padding: 0 36px;
+  padding: 0;
 }
 
 .login-field-group {
@@ -2375,30 +2397,32 @@ input[type="checkbox"], input[type="radio"] {
 }
 .login-forgot-link:hover { color: var(--telkom-blue-dark); }
 
-/* Submit button */
+/* Submit button — Telkom Green */
 .login-submit-btn {
   width: 100%;
-  height: 46px;
+  height: 48px;
   border: none;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--telkom-blue) 0%, var(--telkom-blue-dark) 100%);
-  color: white;
+  background: var(--success);
+  color: var(--telkom-blue-dark);
   font-family: var(--font-display);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 0.15s, box-shadow 0.2s, opacity 0.15s;
-  box-shadow: 0 4px 14px rgba(0,163,224,0.3);
+  transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 4px 14px rgba(145, 226, 0, 0.35);
   margin-top: 4px;
 }
 
 .login-submit-btn:hover {
+  background: #83b610;
+  color: var(--telkom-blue-dark);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(0,163,224,0.4);
+  box-shadow: 0 6px 20px rgba(145, 226, 0, 0.45);
 }
 
 .login-submit-btn:active { transform: translateY(0); }
@@ -2427,13 +2451,13 @@ input[type="checkbox"], input[type="radio"] {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Card version footer */
+/* Card version footer — bare on panel */
 .login-card-version {
-  text-align: center;
+  text-align: left;
   font-size: 11px;
-  color: var(--border-color);
-  padding: 16px 36px 24px;
-  margin-top: 8px;
+  color: var(--text-muted);
+  padding: 20px 0 0;
+  margin-top: 16px;
   border-top: 1px solid var(--border-color);
 }
 

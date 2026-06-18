@@ -100,184 +100,175 @@
         <div id="view-login" class="view-container" style="padding:0; background:transparent;">
           <div class="login-page">
 
-            <!-- LEFT: 70% Image Panel -->
+            <!-- LEFT: 70% — Edge-to-edge image -->
             <div class="login-image-panel">
               <img src="Images/Telkom-counters-2024.jpg" alt="Telkom Store" class="login-store-img">
-              <div class="login-image-overlay">
-                <div class="login-image-brand">
-                  <div style="background: rgba(0,47,93,0.82); padding: 8px 18px; border-radius: 10px; display: inline-flex; align-items: center; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                    <img src="Images/Logo_new.svg" alt="Telkom" style="height: 30px;">
-                  </div>
-                  <h1 class="login-image-title">Telkom Unified<br>Retail Portal</h1>
-                  <p class="login-image-sub">Your gateway to seamless customer journeys,<br>order management &amp; retail operations.</p>
-                </div>
-                <div class="login-image-footer">
-                  <div class="login-secure-badge">
-                    <span class="login-secure-dot"></span>
-                    Secure Enterprise Session
-                  </div>
-                </div>
-              </div>
             </div>
 
-            <!-- RIGHT: 30% Form Panel -->
+            <!-- RIGHT: 30% — Bare form panel -->
             <div class="login-form-panel">
-              <div class="login-card">
 
-                <div class="login-card-header">
-                  <h2 class="login-card-title">Welcome Back</h2>
-                  <p class="login-card-sub">Sign in to your workspace</p>
-                </div>
-
-                <div id="login-form-error" class="login-error-banner" style="display:none;">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  <span>Invalid credentials. Please try again.</span>
-                </div>
-
-                <!-- Form 1: LOGIN FORM -->
-                <form id="login-form" onsubmit="handleLoginSubmit(event)" class="login-form-body">
-
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="login-agent-id">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                      Agent / IAM ID
-                    </label>
-                    <div class="login-input-wrap">
-                      <input type="text" id="login-agent-id" class="login-input" placeholder="e.g. AGT-101" required value="AGT-101" autocomplete="off">
-                    </div>
-                    <div class="login-field-hint">
-                      <span class="login-hint-chip">AGT-101</span> Agent &nbsp;·&nbsp;
-                      <span class="login-hint-chip">MGR-002</span> Manager &nbsp;·&nbsp;
-                      <span class="login-hint-chip">AM-909</span> Area Mgr &nbsp;·&nbsp;
-                      <span class="login-hint-chip">ADMIN-001</span> Admin
-                    </div>
-                    <div class="login-field-hint" style="margin-top: 8px;">
-                      Demo password for all accounts: <span class="login-hint-chip">password</span>
-                    </div>
-                  </div>
-
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="login-password">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      Password
-                    </label>
-                    <div class="login-input-wrap login-password-wrap">
-                      <input type="password" id="login-password" class="login-input" placeholder="Enter your password" required value="password">
-                      <button type="button" class="login-eye-btn" onclick="toggleLoginPassword(this)" tabindex="-1">
-                        <svg class="eye-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </button>
-                    </div>
-                    <div class="login-field-hint">Use <span class="login-hint-chip">error</span> to test locked-account state</div>
-                  </div>
-
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="login-branch">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-                      Retail Store / Branch
-                    </label>
-                    <div class="login-input-wrap">
-                      <select id="login-branch" class="login-input login-select">
-                        <option value="PTA-001">PTA-001 — Pretoria Main</option>
-                        <option value="JHB-002">JHB-002 — Rosebank</option>
-                        <option value="DBN-003">DBN-003 — Gateway</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="login-remember-row">
-                    <label class="login-checkbox-label">
-                      <input type="checkbox" id="login-remember" class="login-checkbox">
-                      <span class="login-checkbox-custom"></span>
-                      Remember workstation
-                    </label>
-                    <a href="#" class="login-forgot-link" onclick="showForgotPasswordForm(); return false;">Forgot password?</a>
-                  </div>
-
-                  <button type="submit" class="login-submit-btn" id="login-submit-btn">
-                    <span class="login-btn-text">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M14 12H3"/></svg>
-                      Login
-                    </span>
-                    <span class="login-btn-loader" style="display:none;">
-                      <span class="login-spinner"></span> Verifying...
-                    </span>
-                  </button>
-
-                </form>
-
-                <!-- Form 2: FORGOT PASSWORD FORM -->
-                <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)" class="login-form-body" style="display: none;">
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="forgot-username">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                      Agent / IAM ID <span class="required">*</span>
-                    </label>
-                    <div class="login-input-wrap">
-                      <input type="text" id="forgot-username" class="login-input" placeholder="e.g. AGT-101" required>
-                    </div>
-                  </div>
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="forgot-email">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                      Email Address <span class="required">*</span>
-                    </label>
-                    <div class="login-input-wrap">
-                      <input type="email" id="forgot-email" class="login-input" placeholder="e.g. agent@telkom.co.za" required>
-                    </div>
-                  </div>
-                  <div class="login-remember-row" style="margin-bottom: 16px;">
-                    <a href="#" class="login-forgot-link" onclick="showLoginForm(); return false;">Back to Login</a>
-                  </div>
-                  <button type="submit" class="login-submit-btn">Send OTP</button>
-                </form>
-
-                <!-- Form 3: OTP VERIFICATION FORM -->
-                <form id="otp-verify-form" onsubmit="handleOtpSubmit(event)" class="login-form-body" style="display: none;">
-                  <div class="login-field-group">
-                    <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">We've simulated sending a temporary verification code to your email. Please enter it below.</p>
-                    <label class="login-field-label" for="forgot-otp">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      Enter OTP Code <span class="required">*</span>
-                    </label>
-                    <div class="login-input-wrap">
-                      <input type="text" id="forgot-otp" class="login-input" placeholder="Enter OTP code" required maxLength="6">
-                    </div>
-                  </div>
-                  <div class="login-remember-row" style="margin-bottom: 16px;">
-                    <a href="#" class="login-forgot-link" onclick="showForgotPasswordForm(); return false;">Resend OTP / Back</a>
-                  </div>
-                  <button type="submit" class="login-submit-btn">Verify OTP</button>
-                </form>
-
-                <!-- Form 4: PASSWORD RESET FORM -->
-                <form id="password-reset-form" onsubmit="handlePasswordResetSubmit(event)" class="login-form-body" style="display: none;">
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="new-password">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      New Password <span class="required">*</span>
-                    </label>
-                    <div class="login-input-wrap">
-                      <input type="password" id="new-password" class="login-input" placeholder="At least 6 characters" required>
-                    </div>
-                  </div>
-                  <div class="login-field-group">
-                    <label class="login-field-label" for="confirm-password">
-                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                      Confirm Password <span class="required">*</span>
-                    </label>
-                    <div class="login-input-wrap">
-                      <input type="password" id="confirm-password" class="login-input" placeholder="Confirm your password" required>
-                    </div>
-                  </div>
-                  <button type="submit" class="login-submit-btn">Reset Password</button>
-                </form>
-
-                <div class="login-card-version">Retail Portal v3.1 &nbsp;·&nbsp; Build 2026.06</div>
+              <!-- Logo (transparent background) -->
+              <div class="login-right-logo">
+                <img src="Images/Logo_new.svg" alt="Telkom" class="login-logo-img">
               </div>
-            </div>
+
+              <!-- Page title -->
+              <div class="login-right-heading">
+                <h2 class="login-card-title">Welcome Back</h2>
+                <p class="login-card-sub">Sign in to your workspace</p>
+              </div>
+
+              <!-- Error banner -->
+              <div id="login-form-error" class="login-error-banner" style="display:none;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>Invalid credentials. Please try again.</span>
+              </div>
+
+              <!-- Form 1: LOGIN FORM -->
+              <form id="login-form" onsubmit="handleLoginSubmit(event)" class="login-form-body">
+
+                <div class="login-field-group">
+                  <label class="login-field-label" for="login-agent-id">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Username
+                  </label>
+                  <div class="login-input-wrap">
+                    <input type="text" id="login-agent-id" class="login-input" placeholder="e.g. AGT-101" required value="AGT-101" autocomplete="off">
+                  </div>
+                  <div class="login-field-hint">
+                    <span class="login-hint-chip">AGT-101</span> Agent &nbsp;·&nbsp;
+                    <span class="login-hint-chip">MGR-002</span> Manager &nbsp;·&nbsp;
+                    <span class="login-hint-chip">AM-909</span> Area Mgr &nbsp;·&nbsp;
+                    <span class="login-hint-chip">ADMIN-001</span> Admin
+                  </div>
+                  <div class="login-field-hint" style="margin-top: 4px;">
+                    Demo password: <span class="login-hint-chip">password</span>
+                  </div>
+                </div>
+
+                <div class="login-field-group">
+                  <label class="login-field-label" for="login-password">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    Password
+                  </label>
+                  <div class="login-input-wrap login-password-wrap">
+                    <input type="password" id="login-password" class="login-input" placeholder="Enter your password" required value="password">
+                    <button type="button" class="login-eye-btn" onclick="toggleLoginPassword(this)" tabindex="-1">
+                      <svg class="eye-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
+                  <div class="login-field-hint">Use <span class="login-hint-chip">error</span> to test locked-account state</div>
+                </div>
+
+                <div class="login-field-group">
+                  <label class="login-field-label" for="login-branch">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Retail Store / Branch
+                  </label>
+                  <div class="login-input-wrap">
+                    <select id="login-branch" class="login-input login-select">
+                      <option value="PTA-001">PTA-001 — Pretoria Main</option>
+                      <option value="JHB-002">JHB-002 — Rosebank</option>
+                      <option value="DBN-003">DBN-003 — Gateway</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="login-remember-row">
+                  <label class="login-checkbox-label">
+                    <input type="checkbox" id="login-remember" class="login-checkbox">
+                    <span class="login-checkbox-custom"></span>
+                    Remember workstation
+                  </label>
+                  <a href="#" class="login-forgot-link" onclick="showForgotPasswordForm(); return false;">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="login-submit-btn" id="login-submit-btn">
+                  <span class="login-btn-text">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M14 12H3"/></svg>
+                    Login
+                  </span>
+                  <span class="login-btn-loader" style="display:none;">
+                    <span class="login-spinner"></span> Verifying...
+                  </span>
+                </button>
+
+              </form>
+
+              <!-- Form 2: FORGOT PASSWORD FORM -->
+              <form id="forgot-password-form" onsubmit="handleForgotPasswordSubmit(event)" class="login-form-body" style="display: none;">
+                <div class="login-field-group">
+                  <label class="login-field-label" for="forgot-username">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Username <span class="required">*</span>
+                  </label>
+                  <div class="login-input-wrap">
+                    <input type="text" id="forgot-username" class="login-input" placeholder="e.g. AGT-101" required>
+                  </div>
+                </div>
+                <div class="login-field-group">
+                  <label class="login-field-label" for="forgot-email">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Email Address <span class="required">*</span>
+                  </label>
+                  <div class="login-input-wrap">
+                    <input type="email" id="forgot-email" class="login-input" placeholder="e.g. agent@telkom.co.za" required>
+                  </div>
+                </div>
+                <div class="login-remember-row" style="margin-bottom: 8px;">
+                  <a href="#" class="login-forgot-link" onclick="showLoginForm(); return false;">← Back to Login</a>
+                </div>
+                <button type="submit" class="login-submit-btn">Send OTP</button>
+              </form>
+
+              <!-- Form 3: OTP VERIFICATION FORM -->
+              <form id="otp-verify-form" onsubmit="handleOtpSubmit(event)" class="login-form-body" style="display: none;">
+                <div class="login-field-group">
+                  <p style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5;">Enter the temporary code sent to your email.</p>
+                  <label class="login-field-label" for="forgot-otp">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    OTP Code <span class="required">*</span>
+                  </label>
+                  <div class="login-input-wrap">
+                    <input type="text" id="forgot-otp" class="login-input" placeholder="Enter OTP" required maxLength="6">
+                  </div>
+                </div>
+                <div class="login-remember-row" style="margin-bottom: 8px;">
+                  <a href="#" class="login-forgot-link" onclick="showForgotPasswordForm(); return false;">← Resend OTP</a>
+                </div>
+                <button type="submit" class="login-submit-btn">Verify OTP</button>
+              </form>
+
+              <!-- Form 4: PASSWORD RESET FORM -->
+              <form id="password-reset-form" onsubmit="handlePasswordResetSubmit(event)" class="login-form-body" style="display: none;">
+                <div class="login-field-group">
+                  <label class="login-field-label" for="new-password">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    New Password <span class="required">*</span>
+                  </label>
+                  <div class="login-input-wrap">
+                    <input type="password" id="new-password" class="login-input" placeholder="At least 6 characters" required>
+                  </div>
+                </div>
+                <div class="login-field-group">
+                  <label class="login-field-label" for="confirm-password">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    Confirm Password <span class="required">*</span>
+                  </label>
+                  <div class="login-input-wrap">
+                    <input type="password" id="confirm-password" class="login-input" placeholder="Confirm your password" required>
+                  </div>
+                </div>
+                <button type="submit" class="login-submit-btn">Reset Password</button>
+              </form>
+
+              <div class="login-card-version">Retail Portal v3.1 &nbsp;·&nbsp; Build 2026.06</div>
+
+            </div><!-- end login-form-panel -->
 
           </div>
-        </div>
+        </div>    </div>
 
 
         <!-- ========================================== -->
