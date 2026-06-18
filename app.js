@@ -1236,9 +1236,7 @@ function renderStepper() {
 
   const backBtn = document.getElementById('stepper-back-btn');
   if (backBtn) {
-    const steps = getActiveStepsForProduct(product);
-    const currentIndex = steps.findIndex(s => s.id === APP_STATE.currentStep);
-    backBtn.disabled = (currentIndex <= 0);
+    backBtn.disabled = false;
   }
 
   switch (APP_STATE.currentStep) {
@@ -4450,6 +4448,8 @@ function handleStepperBack() {
   if (currentIndex > 0) {
     APP_STATE.currentStep = steps[currentIndex - 1].id;
     renderStepper();
+  } else {
+    switchRoute('catalogue');
   }
 }
 
@@ -5893,7 +5893,7 @@ function renderCustomerCreateStep(step) {
   const backBtn = document.getElementById('cust-back-btn');
   const nextBtn = document.getElementById('cust-next-btn');
 
-  if (backBtn) backBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+  if (backBtn) backBtn.style.visibility = 'visible';
   if (nextBtn) {
     nextBtn.innerText = step === 6 ? 'Create Profile & Proceed' : 'Continue';
     nextBtn.className = 'btn btn-primary';
@@ -6460,6 +6460,8 @@ function handleCustomerCreateBack() {
   if (APP_STATE.customerCreateStep > 1) {
     saveCustomerCreateInputs();
     renderCustomerCreateStep(APP_STATE.customerCreateStep - 1);
+  } else {
+    switchRoute('customer-search');
   }
 }
 
