@@ -582,11 +582,13 @@ button, input, select, textarea {
 
 .btn-primary {
   background-color: var(--success); /* Telkom Green CTA */
-  color: var(--text-white);
+  color: var(--telkom-blue-dark);
+  font-weight: 700;
 }
 
 .btn-primary:hover {
   background-color: #83b610; /* Hover Green */
+  color: var(--telkom-blue-dark);
   box-shadow: 0 4px 12px rgba(150, 209, 19, 0.2);
 }
 
@@ -621,11 +623,13 @@ button, input, select, textarea {
 
 .btn-success {
   background-color: var(--success);
-  color: var(--text-white);
+  color: var(--telkom-blue-dark);
+  font-weight: 700;
 }
 
 .btn-success:hover {
   background-color: #24b256;
+  color: var(--telkom-blue-dark);
 }
 
 .btn:disabled {
