@@ -1898,25 +1898,83 @@ input[type="checkbox"], input[type="radio"] {
 
 .login-page {
   display: flex;
+  flex-direction: row;
   width: 100%;
   min-height: 100vh;
-  background: #FAF9F6; /* Off-white background */
-  justify-content: center;
-  align-items: center;
+  overflow: hidden;
 }
 
-/* ---- Left Brand Panel — matches sidebar colour ---- */
-.login-brand-panel {
-  flex: 1;
-  min-width: 0;
-  background: var(--bg-dark); /* #E3F8FF — same as sidebar */
-  border-right: 1px solid var(--bg-dark-accent);
+/* ---- Left Image Panel: 70% ---- */
+.login-image-panel {
+  flex: 7;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+.login-store-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.login-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(0, 47, 93, 0.72) 0%,
+    rgba(0, 47, 93, 0.45) 50%,
+    rgba(0, 47, 93, 0.30) 100%
+  );
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 56px 52px;
-  position: relative;
-  overflow: hidden;
+  padding: 52px 56px;
+}
+
+.login-image-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.login-image-title {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.15;
+  margin-bottom: 16px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.3);
+}
+
+.login-image-sub {
+  font-size: 16px;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.6;
+  font-weight: 400;
+  text-shadow: 0 1px 8px rgba(0,0,0,0.25);
+}
+
+.login-image-footer {
+  display: flex;
+  align-items: center;
+}
+
+/* ---- Right Form Panel: 30% ---- */
+.login-form-panel {
+  flex: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 40px;
+  background: #f9f9fb;
+  min-height: 100vh;
+  overflow-y: auto;
 }
 
 /* Subtle decorative circle behind the panel */
@@ -2071,20 +2129,11 @@ input[type="checkbox"], input[type="radio"] {
   margin-top: 8px;
 }
 
-/* ---- Right Form Panel ---- */
-.login-form-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 40px;
-  background: transparent;
-  width: 100%;
-  max-width: 480px;
-}
+
 
 .login-card {
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   background: var(--bg-card);
   border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);

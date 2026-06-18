@@ -100,22 +100,31 @@
         <div id="view-login" class="view-container" style="padding:0; background:transparent;">
           <div class="login-page">
 
-            <!-- Animated Background -->
-            <div class="login-bg">
-              <div class="login-bg-orb orb1"></div>
-              <div class="login-bg-orb orb2"></div>
-              <div class="login-bg-orb orb3"></div>
-              <div class="login-bg-grid"></div>
+            <!-- LEFT: 70% Image Panel -->
+            <div class="login-image-panel">
+              <img src="Images/telkom_store.png" alt="Telkom Store" class="login-store-img">
+              <div class="login-image-overlay">
+                <div class="login-image-brand">
+                  <div style="background: rgba(0,47,93,0.82); padding: 8px 18px; border-radius: 10px; display: inline-flex; align-items: center; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                    <img src="Images/Logo_new.svg" alt="Telkom" style="height: 30px;">
+                  </div>
+                  <h1 class="login-image-title">Telkom Unified<br>Retail Portal</h1>
+                  <p class="login-image-sub">Your gateway to seamless customer journeys,<br>order management &amp; retail operations.</p>
+                </div>
+                <div class="login-image-footer">
+                  <div class="login-secure-badge">
+                    <span class="login-secure-dot"></span>
+                    Secure Enterprise Session
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- Centered Login Form Panel -->
+            <!-- RIGHT: 30% Form Panel -->
             <div class="login-form-panel">
               <div class="login-card">
 
                 <div class="login-card-header">
-                  <div class="login-logo-wrap" style="margin: 0 auto 16px; background: var(--telkom-blue-dark); padding: 8px 16px; border-radius: var(--radius-md); width: fit-content; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,47,93,0.18);">
-                    <img src="Images/Logo_new.svg" alt="Telkom" class="login-logo-img" style="height: 30px;">
-                  </div>
                   <h2 class="login-card-title">Welcome Back</h2>
                   <p class="login-card-sub">Sign in to your workspace</p>
                 </div>
@@ -186,8 +195,8 @@
 
                   <button type="submit" class="login-submit-btn" id="login-submit-btn">
                     <span class="login-btn-text">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                      Authenticate Session
+                      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M14 12H3"/></svg>
+                      Login
                     </span>
                     <span class="login-btn-loader" style="display:none;">
                       <span class="login-spinner"></span> Verifying...
