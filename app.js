@@ -592,6 +592,12 @@ function renderScreen(route) {
     case "order-stepper":
       try { renderStepper(); } catch(e) { console.error('renderStepper error:', e); }
       break;
+    case "payment":
+      try { renderPaymentScreen(); } catch(e) { console.error('renderPaymentScreen error:', e); }
+      break;
+    case "confirmation":
+      try { renderConfirmationReceipt(); } catch(e) { console.error('renderConfirmationReceipt error:', e); }
+      break;
     case "order-tracking":
       try { renderOrderTracking(); } catch(e) { console.error('renderOrderTracking error:', e); }
       break;
