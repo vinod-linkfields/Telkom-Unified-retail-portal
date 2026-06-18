@@ -2,11 +2,11 @@
 
 :root {
   /* Color Palette - Telkom SA Blue & Green Theme */
-  --telkom-blue: #00a3e0;
-  --telkom-blue-hover: #008dc2;
-  --telkom-blue-dark: #002f5d;
-  --telkom-blue-light: #e8f4fd;
-  --telkom-blue-border: #b3dfff;
+  --telkom-blue: #0099FF;
+  --telkom-blue-hover: #0080e5;
+  --telkom-blue-dark: #005288;
+  --telkom-blue-light: #B8E3FF;
+  --telkom-blue-border: #99c2ff;
   
   --bg-dark: #E3F8FF; /* Left menu background */
   --bg-dark-accent: #c5e4f3; /* Left menu border accents */
@@ -19,16 +19,16 @@
   --text-white: #ffffff;
   
   --border-color: #dcdfe6;
-  --border-focus: #00a3e0;
+  --border-focus: #0099FF;
   
-  --success: #96d113;
-  --success-light: #f2f9e6;
+  --success: #91E200;
+  --success-light: #eefae6;
   --warning: #faad14;
   --warning-light: #fffbe6;
   --danger: #ff4d4f;
   --danger-light: #fff2f0;
-  --info: #1890ff;
-  --info-light: #e6f7ff;
+  --info: #0099FF;
+  --info-light: #B8E3FF;
   
   /* Fonts */
   --font-primary: 'Inter', sans-serif;
@@ -1213,6 +1213,7 @@ input:checked + .uat-slider:before {
   font-weight: 700;
   letter-spacing: 0.5px;
   margin-bottom: 4px;
+  padding-right: 55px; /* Leave space for absolute promo badge */
 }
 
 .product-name {

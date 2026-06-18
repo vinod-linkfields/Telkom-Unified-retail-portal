@@ -1247,7 +1247,7 @@ function renderStepper() {
         renderStepperStockCheck(stepContainer);
       } else {
         stepContainer.innerHTML = `
-          <h3 style="margin-bottom: 16px;">Step 1: Availability Verification</h3>
+          <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Availability Verification")}</h3>
           <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
             Verification Skip: SIM-Only contracts do not require device stock allocation or GIS check. Please proceed.
           </div>
@@ -1261,7 +1261,7 @@ function renderStepper() {
 
     case 3: // Customer Details & Product Specs confirmation
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 3: Confirm Customer & Product Details</h3>
+        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(3, "Confirm Customer & Product Details")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Verify the customer profile and product details for this order.</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
@@ -1291,10 +1291,16 @@ function renderStepper() {
               <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">ALLOCATION</div>
               <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${product.allocation}</div>
             </div>
-            <div>
+            <div style="margin-bottom: 10px;">
               <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">MONTHLY COST</div>
               <div style="font-weight: 700; color: var(--telkom-blue); font-size: 18px;">R${product.price} pm <span style="font-size:12px; color:var(--text-secondary); font-weight:normal;">(${product.term} Months)</span></div>
             </div>
+            ${product.selectedColor ? `
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">SELECTED COLOR</div>
+              <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${product.selectedColor}</div>
+            </div>
+            ` : ''}
           </div>
         </div>
       `;
@@ -1302,7 +1308,7 @@ function renderStepper() {
 
     case 4: // CIM Interaction details
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 4: Log Visit Interaction in Amdocs CIM</h3>
+        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(4, "Log Visit Interaction in Amdocs CIM")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Capture customer's reason of visit for compliance reporting.</p>
         
         <div class="form-group">
@@ -1343,7 +1349,7 @@ function renderStepper() {
 
     case 8: // Customer Consent form (was step 6)
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 8: Capture Customer Consent & Sign-Off</h3>
+        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(8, "Capture Customer Consent & Sign-Off")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Legally required declarations for SA NCA compliance.</p>
         
         <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius-lg); font-size: 13px; color: var(--text-secondary); max-height: 250px; overflow-y: scroll; margin-bottom: 24px;">
@@ -1409,7 +1415,7 @@ function renderStepperBillingSelection(container) {
   });
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 5: Billing Account Selection</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(5, "Billing Account Selection")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Choose whether to bill this postpaid subscription to an existing account or register new Debit Check details.</p>
     
     <div style="display:flex; gap:24px; margin-bottom:20px; background-color: var(--bg-light); padding: 12px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
@@ -1636,7 +1642,7 @@ function renderStepperCreditVetting(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 6: Credit Vetting Check</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(6, "Credit Vetting Check")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">National Credit Regulator (NCR) risk evaluation scoring.</p>
     ${outcomeHtml}
   `;
@@ -1757,7 +1763,7 @@ function renderStepperSupportingDocs(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Supporting Documents (Optional)</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(9, "Supporting Documents")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Upload legally required supporting customer documents to verify identity and banking details.</p>
     
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom:20px; background-color: var(--bg-light); padding:16px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
@@ -1918,7 +1924,7 @@ function renderStepperCoverageCheck(container) {
   // Verify GIS API status outage override
   if (!APP_STATE.systemHealth.gis) {
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 4: GIS Fixed-Line Coverage Checker</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "GIS Fixed-Line Coverage Checker")}</h3>
       <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 16px; border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
         GIS API Offline: Connection to Telkom Coverage Checker timed out.
       </div>
@@ -1972,7 +1978,7 @@ function renderStepperCoverageCheck(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 1: GIS Fixed-Line Coverage Checker</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "GIS Fixed-Line Coverage Checker")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Address check must return 'Coverage available' for Exlight products.</p>
     
     <div class="gis-container">
@@ -1999,7 +2005,7 @@ function renderStepperStockCheck(container) {
   // Verify Transact API status outage
   if (!APP_STATE.systemHealth.transact) {
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 1: Transact Device Stock Allocation</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Transact Device Stock Allocation")}</h3>
       <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 16px; border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
         Transact Stock API Offline: Database communication failure.
       </div>
@@ -2033,7 +2039,7 @@ function renderStepperStockCheck(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 1: Transact Device Stock Allocation</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Transact Device Stock Allocation")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Verify device stock levels in POS branch prior to contract binding.</p>
     
     <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px;">
@@ -2080,12 +2086,11 @@ function renderStepperStockCheck(container) {
   `;
 }
 
-// Stepper Step 5: Contract Details Forms
 function renderStepperContractDetails(container, product) {
   if (product.category === 'Exlight broadband plans') {
     // Fixed Line Exlight Details Form
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 7: Capture Installation & Delivery Contact Details</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(7, "Capture Installation & Delivery Contact Details")}</h3>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">OMS requires physical contact metrics to assign field technicians.</p>
       
       <div class="form-group">
@@ -2113,7 +2118,7 @@ function renderStepperContractDetails(container, product) {
   } else {
     // Mobile Product Details Form
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 7: Capture Mobile Line & SIM Configuration</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(7, "Capture Mobile Line & SIM Configuration")}</h3>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Configure SIM connection parameters for cell provisioning.</p>
       
       <div class="form-group">
@@ -2136,30 +2141,6 @@ function renderStepperContractDetails(container, product) {
         <label class="form-label">Number to Port <span class="required">*</span></label>
         <input type="text" id="mobile-port-number" class="form-control" placeholder="e.g. 082 123 4567" value="${APP_STATE.cart.contractDetails.portInNumber || ''}" oninput="updateContractDetailsState()">
         <div class="input-helper">Please ensure port forms are signed.</div>
-      </div>
-
-      <!-- RICA Compliance validation -->
-      <div class="rica-compliance-panel">
-        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">RICA Validation Compliance</h5>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">Customer's SA ID/Passport and address details must be validated against the national RICA database.</p>
-        
-        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-sm btn-primary" id="btn-run-rica" onclick="runRicaValidation()" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); padding: 8px 16px; font-weight: 600;">
-            Run RICA Validation
-          </button>
-          <div id="rica-status-indicator" style="font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-            ${APP_STATE.cart.ricaStatus === 'verified' ? 
-              `<span style="color: var(--success); display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Status: Verified</span>` : 
-              `<span style="color: var(--warning); display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Status: Pending Validation</span>`}
-          </div>
-        </div>
-        
-        <div id="rica-progress-area" style="display: none; margin-top: 14px;">
-          <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 500;" id="rica-progress-text">Connecting to RICA verification gateway...</div>
-          <div class="rica-progress-container">
-            <div class="rica-progress-bar" id="rica-progress-bar"></div>
-          </div>
-        </div>
       </div>
     `;
   }
@@ -2234,7 +2215,7 @@ function renderStepperReviewChecklist(container) {
   const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 10: Final Validation Checklist</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(10, "Final Validation Checklist")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Pre-submission review. Ensure all required dependencies are validated.</p>
     
     <div style="margin-bottom: 24px;">
@@ -2344,6 +2325,41 @@ function renderOrderTracking() {
   if (!container) return;
 
   const tab = APP_STATE.activeTrackingTab || 'submitted';
+
+  // Calculate Submitted count (using current search filter & permissions)
+  let submittedFilteredForCount = APP_STATE.ordersList || [];
+  const searchValForCount = document.getElementById('tracking-search-ref') ? document.getElementById('tracking-search-ref').value.trim() : '';
+  if (searchValForCount) {
+    submittedFilteredForCount = submittedFilteredForCount.filter(o => o.orderRef.toLowerCase().includes(searchValForCount.toLowerCase()) || o.customerName.toLowerCase().includes(searchValForCount.toLowerCase()));
+  }
+  const viewAllNetworkForCount = document.getElementById('tracking-view-all') && document.getElementById('tracking-view-all').checked;
+  if (!viewAllNetworkForCount) {
+    if (APP_STATE.currentUser.role === 'agent') {
+      submittedFilteredForCount = submittedFilteredForCount.filter(o => o.agent === APP_STATE.currentUser.id);
+    } else if (APP_STATE.currentUser.role === 'manager') {
+      submittedFilteredForCount = submittedFilteredForCount.filter(o => o.store === APP_STATE.currentUser.branch);
+    }
+  }
+  const submittedCount = submittedFilteredForCount.length;
+
+  // Calculate Pending count (using permissions)
+  let pendingFilteredForCount = APP_STATE.draftOrders || [];
+  if (APP_STATE.currentUser.role === 'agent') {
+    pendingFilteredForCount = pendingFilteredForCount.filter(d => d.agentId === APP_STATE.currentUser.id);
+  } else if (APP_STATE.currentUser.role === 'manager') {
+    pendingFilteredForCount = pendingFilteredForCount.filter(d => d.branch === APP_STATE.currentUser.branch);
+  }
+  const pendingCount = pendingFilteredForCount.length;
+
+  // Render dynamic badges on the tab buttons
+  const submittedTabBtn = document.getElementById('tracking-tab-btn-submitted');
+  const pendingTabBtn = document.getElementById('tracking-tab-btn-pending');
+  if (submittedTabBtn) {
+    submittedTabBtn.innerHTML = `Submitted Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'submitted' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'submitted' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${submittedCount}</span>`;
+  }
+  if (pendingTabBtn) {
+    pendingTabBtn.innerHTML = `Pending Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'pending' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'pending' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${pendingCount}</span>`;
+  }
 
   if (tab === 'submitted') {
     let filtered = APP_STATE.ordersList || [];
@@ -6461,7 +6477,13 @@ function handleCustomerCreateBack() {
     saveCustomerCreateInputs();
     renderCustomerCreateStep(APP_STATE.customerCreateStep - 1);
   } else {
-    switchRoute('customer-search');
+    if (APP_STATE.openedCustomerWizardFromStepper) {
+      APP_STATE.openedCustomerWizardFromStepper = false;
+      APP_STATE.currentStep = 2; // return to Identify Cust step
+      switchRoute('order-stepper');
+    } else {
+      switchRoute('customer-search');
+    }
   }
 }
 
@@ -6797,7 +6819,7 @@ function renderStepperCustomerSearch(container) {
   
   if (cust) {
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">Step 2: Customer Identification</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(2, "Customer Identification")}</h3>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Customer session is active. Confirm or change the customer profile for this order.</p>
       
       <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -6849,14 +6871,15 @@ function renderStepperCustomerSearch(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">Step 2: Customer Identification</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(2, "Customer Identification")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Search for the customer in Clarify CRM to link them to this order.</p>
     
-    <div style="display: flex; gap: 12px;">
-      <input type="text" id="stepper-cust-search-input" class="form-control" placeholder="Search by SA ID or Passport Number..." value="${searchedKey}" style="height: 42px;" onkeydown="handleStepperCustSearchKeydown(event)">
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <input type="text" id="stepper-cust-search-input" class="form-control" placeholder="Search by SA ID or Passport Number..." value="${searchedKey}" style="height: 42px; flex: 1;" onkeydown="handleStepperCustSearchKeydown(event)">
       <button class="btn btn-primary" onclick="searchCustomerInStepper()" style="height: 42px; width: 120px; display: flex; align-items: center; justify-content: center;">Search</button>
+      <button class="btn btn-outline" onclick="openNewCustomerWizardFromStepper('')" style="height: 42px; display: flex; align-items: center; justify-content: center; border-color: var(--telkom-blue); color: var(--telkom-blue);">Add New Customer</button>
     </div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Enter 13-digit SA ID or Passport ID.</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Enter 13-digit SA ID or Passport ID. Or click 'Add New Customer' to register a new profile.</div>
 
     ${resultsHtml}
   `;
