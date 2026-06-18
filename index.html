@@ -302,7 +302,7 @@
               <div class="card-label">Total LDU's</div>
             </div>
             <div class="dashboard-card">
-              <div class="card-icon-wrapper orange" style="background-color: #f3e8ff; color: #a855f7;">
+              <div class="card-icon-wrapper orange">
                 <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
               </div>
               <div class="card-metric" id="agent-demo-units">0</div>
@@ -813,6 +813,16 @@
                 <div class="panel" id="c360-drafts-panel" style="display: none;">
                   <div class="panel-header"><span class="panel-title">Saved Order Drafts</span></div>
                   <div class="panel-body" id="c360-drafts-content">
+                    <!-- Populated dynamically in JS -->
+                  </div>
+                </div>
+
+                <!-- Pending Orders panel -->
+                <div class="panel" id="c360-pending-orders-panel" style="display: none;">
+                  <div class="panel-header">
+                    <span class="panel-title">⚠️ Pending Orders Requiring Attention</span>
+                  </div>
+                  <div class="panel-body" id="c360-pending-orders-content">
                     <!-- Populated dynamically in JS -->
                   </div>
                 </div>
@@ -1869,6 +1879,14 @@
                 <span id="view-order-prod">SIM Plan</span>
               </div>
               <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Contract Plan</span>
+                <span id="view-order-contract-plan">-</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Once-off Charge</span>
+                <span id="view-order-once-off">-</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
                 <span>Store branch</span>
                 <span id="view-order-store">PTA-001</span>
               </div>
@@ -1880,30 +1898,29 @@
                 <span>Date Captured</span>
                 <span id="view-order-date">2026-06-12</span>
               </div>
-              <div style="display:flex; justify-content:space-between; padding:8px 0;">
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
                 <span>Payment State</span>
                 <span class="badge badge-success" id="view-order-pay">Paid</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>RICA Status</span>
+                <span class="badge badge-warning" id="view-order-rica-status">Pending</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0;">
+                <span>SIM Activation</span>
+                <span class="badge badge-warning" id="view-order-sim-status">Pending</span>
               </div>
             </div>
           </div>
           <div>
             <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">OMS Lifecycle Tracker & Auditing</h5>
-            <div style="position:relative; padding-left: 24px; border-left: 2px solid var(--telkom-blue); font-size:13px;">
-              <div style="margin-bottom: 20px; position:relative;">
-                <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-                <strong>POS Card payment validation recorded</strong>
-                <div style="font-size:11px; color:var(--text-muted)">Completed successfully. POS terminal transaction validated.</div>
-              </div>
-              <div style="margin-bottom: 20px; position:relative;">
-                <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-                <strong>Order submitted to Amdocs OMS</strong>
-                <div style="font-size:11px; color:var(--text-muted)">Order reference generated and active.</div>
-              </div>
-              <div style="position:relative;">
-                <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-                <strong>CIM interaction log sync complete</strong>
-                <div style="font-size:11px; color:var(--text-muted)">Logged visitor reason of visit: New Product Capture.</div>
-              </div>
+            <div id="view-order-timeline" style="position:relative; padding-left: 24px; border-left: 2px solid var(--telkom-blue); font-size:13px; margin-bottom: 24px;">
+              <!-- Timeline injected dynamically -->
+            </div>
+            
+            <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">Supporting Documents</h5>
+            <div id="view-order-docs" style="font-size:13px;">
+              <!-- Documents injected dynamically -->
             </div>
           </div>
           <div id="order-details-rica-panel" style="grid-column: 1 / -1; display: none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;"></div>

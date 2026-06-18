@@ -475,23 +475,23 @@ button, input, select, textarea {
 }
 
 .card-icon-wrapper.blue {
-  background-color: var(--telkom-blue-light);
-  color: var(--telkom-blue);
+  background-color: #E6E6E6;
+  color: #3E4A59;
 }
 
 .card-icon-wrapper.green {
-  background-color: var(--success-light);
-  color: var(--success);
+  background-color: #E6E6E6;
+  color: #3E4A59;
 }
 
 .card-icon-wrapper.orange {
-  background-color: var(--warning-light);
-  color: var(--warning);
+  background-color: #E6E6E6;
+  color: #3E4A59;
 }
 
 .card-icon-wrapper.red {
-  background-color: var(--danger-light);
-  color: var(--danger);
+  background-color: #E6E6E6;
+  color: #3E4A59;
 }
 
 .card-metric {

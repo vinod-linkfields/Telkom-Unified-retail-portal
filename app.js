@@ -966,6 +966,55 @@ function renderCustomer360() {
       custDraftsPanel.style.display = 'none';
     }
   }
+
+  // Pending orders (submitted but awaiting RICA / SIM activation / Payment)
+  const pendingOrdersPanel = document.getElementById('c360-pending-orders-panel');
+  const pendingOrdersContent = document.getElementById('c360-pending-orders-content');
+  if (pendingOrdersPanel && pendingOrdersContent) {
+    const customerPendingOrders = (APP_STATE.ordersList || []).filter(o => {
+      if (o.accountNo !== cust.accountNumber) return false;
+      const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
+      const isActivationPending = o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber;
+      const isPaymentPending = !o.payment.includes('Complete');
+      return isRicaPending || isActivationPending || isPaymentPending;
+    });
+
+    if (customerPendingOrders.length > 0) {
+      pendingOrdersPanel.style.display = 'block';
+      pendingOrdersContent.innerHTML = customerPendingOrders.map(o => {
+        let pendingStatus = '';
+        let badgeClass = 'badge-warning';
+        if (!o.payment.includes('Complete')) {
+          pendingStatus = 'Payment Pending';
+          badgeClass = 'badge-danger';
+        } else if (o.isSimProduct && o.ricaStatus === 'Pending') {
+          pendingStatus = 'RICA Pending';
+          badgeClass = 'badge-warning';
+        } else if (o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber) {
+          pendingStatus = 'Activation Pending';
+          badgeClass = 'badge-warning';
+        }
+
+        return `
+          <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card);">
+            <div>
+              <div style="font-weight: 700; color: var(--telkom-blue-dark);">${o.product} <span style="font-size: 11px; font-weight: 400; color: var(--text-muted);">(${o.orderRef})</span></div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                Date: ${o.date} | Store: ${o.store}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="badge ${badgeClass}">${pendingStatus}</span>
+              <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')">Details</button>
+              <button class="btn btn-sm btn-primary" onclick="viewOrderDetails('${o.orderRef}')">Process</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      pendingOrdersPanel.style.display = 'none';
+    }
+  }
 }
 
 // Get selected term and calculated price for a product
@@ -1101,33 +1150,6 @@ function renderCatalogue() {
             <span class="product-device-spec-label">Model</span>
             <span class="product-device-spec-value">${p.deviceInfo.model}</span>
           </div>
-          <div class="product-device-spec-item">
-            <span class="product-device-spec-label">Colour</span>
-            <span class="product-device-spec-value">${p.deviceInfo.colour}</span>
-          </div>
-        </div>
-      `;
-    }
-
-    let colorSelectorHtml = '';
-    if (p.deviceInfo) {
-      let colors = [];
-      if (p.deviceInfo.name.includes("Samsung Galaxy S24")) {
-        colors = ["Phantom Black", "Marble Gray", "Cobalt Violet", "Amber Yellow"];
-      } else if (p.deviceInfo.name.includes("iPhone 15 Pro Max")) {
-        colors = ["Natural Titanium", "Blue Titanium", "White Titanium", "Black Titanium"];
-      } else {
-        colors = [p.deviceInfo.colour || "Standard Color", "Ceramic White", "Charcoal Gray", "Sleek Silver"];
-      }
-      
-      const selectedColor = APP_STATE.productColors[p.id] || colors[0];
-      
-      colorSelectorHtml = `
-        <div class="product-color-selector" style="margin-top: 8px;">
-          <label class="form-label" style="font-size: 11px; margin-bottom: 4px; font-weight: 600;">Handset Color</label>
-          <select id="color-select-${p.id}" class="form-control" onchange="updateProductColor('${p.id}', this.value)" style="font-size: 13px;">
-            ${colors.map(c => `<option value="${c}" ${c === selectedColor ? 'selected' : ''}>${c}</option>`).join('')}
-          </select>
         </div>
       `;
     }
@@ -1150,8 +1172,6 @@ function renderCatalogue() {
               <option value="36" ${term === 36 ? 'selected' : ''}>36 Months</option>
             </select>
           </div>
-          
-          ${colorSelectorHtml}
           
           <div class="product-allocation" style="margin-top: 12px;">
             <div class="allocation-row">
@@ -2029,7 +2049,17 @@ function renderStepperCoverageCheck(container) {
   `;
 }
 
-// Stepper Step 4: Transact Stock check
+// Update selected color for device in the order stepper
+function updateStepperColor(color) {
+  const p = APP_STATE.cart.product;
+  if (p) {
+    p.selectedColor = color;
+    APP_STATE.productColors[p.id] = color;
+    showToast(`Handset color updated to ${color}`, "info");
+  }
+}
+
+// Stepper Step 1: Transact Stock check
 function renderStepperStockCheck(container) {
   // Verify Transact API status outage
   if (!APP_STATE.systemHealth.transact) {
@@ -2067,12 +2097,38 @@ function renderStepperStockCheck(container) {
     }
   }
 
+  let colorSelectorHtml = '';
+  if (p.deviceInfo) {
+    let colors = [];
+    if (p.deviceInfo.name.includes("Samsung Galaxy S24")) {
+      colors = ["Phantom Black", "Marble Gray", "Cobalt Violet", "Amber Yellow"];
+    } else if (p.deviceInfo.name.includes("iPhone 15 Pro Max")) {
+      colors = ["Natural Titanium", "Blue Titanium", "White Titanium", "Black Titanium"];
+    } else {
+      colors = [p.deviceInfo.colour || "Standard Color", "Ceramic White", "Charcoal Gray", "Sleek Silver"];
+    }
+    
+    const selectedColor = p.selectedColor || APP_STATE.productColors[p.id] || colors[0];
+    p.selectedColor = selectedColor;
+
+    colorSelectorHtml = `
+      <div class="form-group" style="margin-bottom: 20px; max-width: 350px;">
+        <label class="form-label" style="font-weight: 600;">Select Available Color Variant</label>
+        <select id="stepper-color-select" class="form-control" onchange="updateStepperColor(this.value)">
+          ${colors.map(c => `<option value="${c}" ${c === selectedColor ? 'selected' : ''}>${c}</option>`).join('')}
+        </select>
+      </div>
+    `;
+  }
+
   container.innerHTML = `
     <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Transact Device Stock Allocation")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Verify device stock levels in POS branch prior to contract binding.</p>
     
     <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px;">
       <div>
+        ${colorSelectorHtml}
+        
         <table class="custom-table" style="margin-bottom: 20px;">
           <thead>
             <tr>
@@ -2371,14 +2427,27 @@ function renderOrderTracking() {
   }
   const submittedCount = submittedFilteredForCount.length;
 
-  // Calculate Pending count (using permissions)
-  let pendingFilteredForCount = APP_STATE.draftOrders || [];
+  // Calculate Pending count: drafts + submitted orders awaiting RICA/SIM/Payment
+  let pendingDrafts = APP_STATE.draftOrders || [];
   if (APP_STATE.currentUser.role === 'agent') {
-    pendingFilteredForCount = pendingFilteredForCount.filter(d => d.agentId === APP_STATE.currentUser.id);
+    pendingDrafts = pendingDrafts.filter(d => d.agentId === APP_STATE.currentUser.id);
   } else if (APP_STATE.currentUser.role === 'manager') {
-    pendingFilteredForCount = pendingFilteredForCount.filter(d => d.branch === APP_STATE.currentUser.branch);
+    pendingDrafts = pendingDrafts.filter(d => d.branch === APP_STATE.currentUser.branch);
   }
-  const pendingCount = pendingFilteredForCount.length;
+
+  let pendingSubmitted = (APP_STATE.ordersList || []).filter(o => {
+    const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
+    const isActivationPending = o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber;
+    const isPaymentPending = !o.payment.includes('Complete');
+    return isRicaPending || isActivationPending || isPaymentPending;
+  });
+  if (APP_STATE.currentUser.role === 'agent') {
+    pendingSubmitted = pendingSubmitted.filter(o => o.agent === APP_STATE.currentUser.id);
+  } else if (APP_STATE.currentUser.role === 'manager') {
+    pendingSubmitted = pendingSubmitted.filter(o => o.store === APP_STATE.currentUser.branch);
+  }
+
+  const pendingCount = pendingDrafts.length + pendingSubmitted.length;
 
   // Render dynamic badges on the tab buttons
   const submittedTabBtn = document.getElementById('tracking-tab-btn-submitted');
@@ -2450,21 +2519,61 @@ function renderOrderTracking() {
       </table>
     `;
   } else {
-    // pending (drafts) tab
-    let filtered = APP_STATE.draftOrders || [];
-
-    // Filter by currentUser details if agent/manager
+    // pending tab: drafts + submitted-but-incomplete orders
+    let draftRows = APP_STATE.draftOrders || [];
     if (APP_STATE.currentUser.role === 'agent') {
-      filtered = filtered.filter(d => d.agentId === APP_STATE.currentUser.id);
+      draftRows = draftRows.filter(d => d.agentId === APP_STATE.currentUser.id);
     } else if (APP_STATE.currentUser.role === 'manager') {
-      filtered = filtered.filter(d => d.branch === APP_STATE.currentUser.branch);
+      draftRows = draftRows.filter(d => d.branch === APP_STATE.currentUser.branch);
+    }
+
+    let submittedPendingRows = (APP_STATE.ordersList || []).filter(o => {
+      const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
+      const isActivationPending = o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber;
+      const isPaymentPending = !o.payment.includes('Complete');
+      return isRicaPending || isActivationPending || isPaymentPending;
+    });
+    if (APP_STATE.currentUser.role === 'agent') {
+      submittedPendingRows = submittedPendingRows.filter(o => o.agent === APP_STATE.currentUser.id);
+    } else if (APP_STATE.currentUser.role === 'manager') {
+      submittedPendingRows = submittedPendingRows.filter(o => o.store === APP_STATE.currentUser.branch);
     }
 
     let rowsHtml = '';
-    if (filtered.length === 0) {
-      rowsHtml = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending order drafts found.</td></tr>`;
+    const totalPending = draftRows.length + submittedPendingRows.length;
+
+    if (totalPending === 0) {
+      rowsHtml = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending orders found.</td></tr>`;
     } else {
-      filtered.forEach(d => {
+      // Render submitted-but-incomplete orders first
+      submittedPendingRows.forEach(o => {
+        let pendingStatus = '';
+        if (!o.payment.includes('Complete')) {
+          pendingStatus = 'Payment Pending';
+        } else if (o.isSimProduct && o.ricaStatus === 'Pending') {
+          pendingStatus = 'RICA Pending';
+        } else if (o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber) {
+          pendingStatus = 'Activation Pending';
+        }
+
+        rowsHtml += `
+          <tr>
+            <td><strong>${o.orderRef}</strong></td>
+            <td>${o.customerName}</td>
+            <td>${o.product}</td>
+            <td><code>${o.store}</code></td>
+            <td>${o.date}</td>
+            <td><span class="badge badge-warning">${pendingStatus}</span></td>
+            <td>
+              <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
+              <button class="btn btn-sm btn-primary" onclick="viewOrderDetails('${o.orderRef}')">Process</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      // Then render draft orders
+      draftRows.forEach(d => {
         const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
         const steps = getActiveStepsForProduct(d.cart.product);
         const stepIndex = steps.findIndex(s => s.id === d.currentStep);
@@ -2475,8 +2584,9 @@ function renderOrderTracking() {
             <td><strong>${d.draftId}</strong></td>
             <td>${d.customer ? d.customer.name : '<span style="color: var(--text-muted);">No Customer Linked</span>'}</td>
             <td>${prodName}</td>
-            <td><span class="badge badge-warning">${stepLabel}</span></td>
+            <td><code>${d.branch}</code></td>
             <td>${d.date}</td>
+            <td><span class="badge badge-secondary">${stepLabel}</span></td>
             <td>
               <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
             </td>
@@ -2489,12 +2599,13 @@ function renderOrderTracking() {
       <table class="custom-table">
         <thead>
           <tr>
-            <th>Draft ID</th>
+            <th>Reference</th>
             <th>Customer Name</th>
             <th>Selected Product</th>
-            <th>Last Saved Step</th>
-            <th>Saved Timestamp</th>
-            <th style="width: 100px;">Action</th>
+            <th>Store Node</th>
+            <th>Date</th>
+            <th>Pending Status</th>
+            <th style="width: 150px;">Action</th>
           </tr>
         </thead>
         <tbody id="pending-tracking-tbody">
@@ -5652,6 +5763,115 @@ function viewOrderDetails(orderRef) {
   document.getElementById('view-order-pay').innerText = order.payment;
   document.getElementById('view-order-pay').className = `badge ${order.payment.includes('Complete') ? 'badge-success' : 'badge-danger'}`;
 
+  // Populate Contract Details
+  const product = MOCK_DB.products.find(p => p.name === order.product);
+  const contractPlanEl = document.getElementById('view-order-contract-plan');
+  const onceOffEl = document.getElementById('view-order-once-off');
+  if (contractPlanEl) {
+    contractPlanEl.innerText = product ? `R${product.price} /mo (${product.term} Months)` : 'N/A';
+  }
+  if (onceOffEl) {
+    onceOffEl.innerText = product ? `R${product.onceOff}` : 'N/A';
+  }
+
+  // Populate RICA & SIM badges
+  const ricaStatusEl = document.getElementById('view-order-rica-status');
+  const simStatusEl = document.getElementById('view-order-sim-status');
+  if (ricaStatusEl) {
+    ricaStatusEl.innerText = order.ricaStatus || 'N/A';
+    ricaStatusEl.className = `badge ${order.ricaStatus === 'Verified' ? 'badge-success' : (order.ricaStatus === 'Pending' ? 'badge-warning' : 'badge-secondary')}`;
+  }
+  if (simStatusEl) {
+    simStatusEl.innerText = order.simActivationNumber ? 'Activated' : (order.isSimProduct ? 'Pending' : 'N/A');
+    simStatusEl.className = `badge ${order.simActivationNumber ? 'badge-success' : (order.isSimProduct ? 'badge-warning' : 'badge-secondary')}`;
+  }
+
+  // Populate dynamic timeline
+  const timelineEl = document.getElementById('view-order-timeline');
+  if (timelineEl) {
+    let timelineHtml = `
+      <div style="margin-bottom: 20px; position:relative;">
+        <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
+        <strong>Order captured & submitted to OMS</strong>
+        <div style="font-size:11px; color:var(--text-muted)">Completed successfully at ${order.date}. Order Ref: ${order.orderRef}</div>
+      </div>
+    `;
+
+    const isPaid = order.payment.includes('Complete');
+    timelineHtml += `
+      <div style="margin-bottom: 20px; position:relative;">
+        <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: ${isPaid ? 'var(--success)' : 'var(--danger)'}; border: 2px solid white;"></div>
+        <strong>POS Terminal Card Payment</strong>
+        <div style="font-size:11px; color:var(--text-muted)">State: ${order.payment}</div>
+      </div>
+    `;
+
+    if (order.isSimProduct) {
+      const isRicaVerified = order.ricaStatus === 'Verified';
+      timelineHtml += `
+        <div style="margin-bottom: 20px; position:relative;">
+          <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: ${isRicaVerified ? 'var(--success)' : 'var(--warning)'}; border: 2px solid white;"></div>
+          <strong>RICA Verification Gateway</strong>
+          <div style="font-size:11px; color:var(--text-muted)">Status: ${order.ricaStatus}</div>
+        </div>
+      `;
+
+      const isSimActivated = !!order.simActivationNumber;
+      timelineHtml += `
+        <div style="margin-bottom: 20px; position:relative;">
+          <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: ${isSimActivated ? 'var(--success)' : 'var(--warning)'}; border: 2px solid white;"></div>
+          <strong>HLR Network SIM Activation</strong>
+          <div style="font-size:11px; color:var(--text-muted)">ICCID: ${order.simActivationNumber || 'Awaiting activation'}</div>
+        </div>
+      `;
+    }
+
+    const isFulfilled = order.status === 'Fulfilled' || order.status === 'Active';
+    timelineHtml += `
+      <div style="position:relative;">
+        <div style="position:absolute; left:-29px; top:2px; width:12px; height:12px; border-radius:50%; background-color: ${isFulfilled ? 'var(--success)' : (order.status === 'Cancelled' ? 'var(--danger)' : 'var(--warning)')}; border: 2px solid white;"></div>
+        <strong>OMS Order Provisioning Finalization</strong>
+        <div style="font-size:11px; color:var(--text-muted)">Status: ${order.status}</div>
+      </div>
+    `;
+
+    timelineEl.innerHTML = timelineHtml;
+  }
+
+  // Populate dynamic documents list
+  const docsEl = document.getElementById('view-order-docs');
+  if (docsEl) {
+    const customer = MOCK_DB.crm.find(c => c.accountNumber === order.accountNo);
+    const docs = customer ? customer.documents : null;
+    let docsHtml = '';
+
+    if (docs && Object.keys(docs).length > 0) {
+      docsHtml += `<div style="display: flex; flex-direction: column; gap: 8px;">`;
+      const docLabels = {
+        idDoc: "Identity Document",
+        bankStatements: "Last 3 Months Bank Statements",
+        proofAddress: "Proof of Address",
+        companyReg: "Company Registration Document"
+      };
+      Object.keys(docs).forEach(key => {
+        const doc = docs[key];
+        docsHtml += `
+          <div style="display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-light); font-size: 12px;">
+            <div>
+              <strong>${docLabels[key] || key}</strong>
+              <div style="font-size: 10px; color: var(--text-secondary);">${doc.name} (${doc.size || '1.2 MB'})</div>
+            </div>
+            <span class="badge badge-success" style="font-size: 9px; padding: 2px 6px;">Uploaded</span>
+          </div>
+        `;
+      });
+      docsHtml += `</div>`;
+    } else {
+      docsHtml = `<div style="color: var(--text-muted); font-style: italic; font-size: 12px; padding: 4px 0;">No supporting documents uploaded for this customer profile.</div>`;
+    }
+    docsEl.innerHTML = docsHtml;
+  }
+
   const ricaPanel = document.getElementById('order-details-rica-panel');
   const isSim = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
   if (isSim && ricaPanel) {
@@ -7600,7 +7820,9 @@ window.handlePasswordResetSubmit = handlePasswordResetSubmit;
 window.runRicaValidation = runRicaValidation;
 window.updateSimActivationNumber = updateSimActivationNumber;
 window.updateProductColor = updateProductColor;
+window.updateStepperColor = updateStepperColor;
 window.clearCatalogueSearch = clearCatalogueSearch;
+window.viewOrderDetails = viewOrderDetails;
 
 // Draft Orders & Tabbed Order Tracking Implementation
 function handleSaveDraft() {
