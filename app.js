@@ -2125,30 +2125,32 @@ function renderStepperStockCheck(container) {
     <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Transact Device Stock Allocation")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Verify device stock levels in POS branch prior to contract binding.</p>
     
-    <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 32px;">
+    <div class="layout-2col">
       <div>
         ${colorSelectorHtml}
         
-        <table class="custom-table" style="margin-bottom: 20px;">
-          <thead>
-            <tr>
-              <th>Store Code</th>
-              <th>SKU Code</th>
-              <th>On Hand</th>
-              <th>Reserved</th>
-              <th>Available</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>${APP_STATE.currentUser.branch} (This Branch)</strong></td>
-              <td><code>${p.deviceSKU}</code></td>
-              <td>${stockInfo.onHand} units</td>
-              <td>${stockInfo.reserved}</td>
-              <td><span class="badge ${stockInfo.available > 0 ? 'badge-success' : 'badge-danger'}">${stockInfo.available}</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-container" style="margin-bottom: 20px;">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Store Code</th>
+                <th>SKU Code</th>
+                <th>On Hand</th>
+                <th>Reserved</th>
+                <th>Available</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>${APP_STATE.currentUser.branch} (This Branch)</strong></td>
+                <td><code>${p.deviceSKU}</code></td>
+                <td>${stockInfo.onHand} units</td>
+                <td>${stockInfo.reserved}</td>
+                <td><span class="badge ${stockInfo.available > 0 ? 'badge-success' : 'badge-danger'}">${stockInfo.available}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
         
         <button class="btn btn-primary" onclick="simulateStockCheckAction()">Check and Lock Stock</button>
         ${statusAlert}
@@ -6546,7 +6548,7 @@ function renderCustomerCreateStep(step) {
           <input type="text" id="new-cust-street" class="form-control ${address.street ? 'auto-populated-field' : ''}" placeholder="Street name..." value="${address.street || ''}" oninput="saveCustomerCreateInputs()">
         </div>
 
-        <div class="form-row" style="margin-top: 16px;">
+        <div class="form-row-3col" style="margin-top: 16px;">
           <div class="form-group">
             <label class="form-label">Suburb</label>
             <input type="text" id="new-cust-suburb" class="form-control ${address.suburb ? 'auto-populated-field' : ''}" placeholder="Suburb..." value="${address.suburb || ''}" oninput="saveCustomerCreateInputs()">
