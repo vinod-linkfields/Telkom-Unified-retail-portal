@@ -4790,17 +4790,48 @@ function submitOrderToOMS() {
 function renderPaymentScreen() {
   document.getElementById('pay-order-ref').innerText = APP_STATE.cart.orderRef;
   document.getElementById('pay-amount').innerText = `R${APP_STATE.cart.product.price + APP_STATE.cart.product.onceOff}`;
+  
+  const payBtn = document.getElementById('pay-init-btn');
+  if (payBtn) {
+    payBtn.disabled = false;
+    payBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Verify transaction`;
+  }
 }
 
 function handlePOSPaymentTrigger() {
+  const payBtn = document.getElementById('pay-init-btn');
+  if (!payBtn) return;
+
+  const outcomeSelect = document.getElementById('mock-payment-outcome');
+  const outcome = outcomeSelect ? outcomeSelect.value : 'Successful';
+
   // Verify POS terminal health outage override
-  if (!APP_STATE.systemHealth.pos) {
-    showToast("POS terminal handshake timed out. Payment initiation failed.", "danger");
+  if (!APP_STATE.systemHealth.pos || outcome === 'Timeout') {
+    payBtn.disabled = true;
+    payBtn.innerText = "Connecting terminal...";
+    setTimeout(() => {
+      showToast("POS terminal handshake timed out. Payment initiation failed.", "danger");
+      payBtn.disabled = false;
+      payBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Verify transaction`;
+    }, 300);
     return;
   }
 
-  // POS Loading simulate
-  const payBtn = document.getElementById('pay-init-btn');
+  if (outcome === 'Declined') {
+    payBtn.disabled = true;
+    payBtn.innerText = "Connecting terminal...";
+    setTimeout(() => {
+      payBtn.innerText = "Verifying transaction...";
+      setTimeout(() => {
+        showToast("POS transaction was declined by bank.", "danger");
+        payBtn.disabled = false;
+        payBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Verify transaction`;
+      }, 300);
+    }, 300);
+    return;
+  }
+
+  // POS Loading simulate (Successful path)
   payBtn.disabled = true;
   payBtn.innerText = "Connecting terminal...";
 

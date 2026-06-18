@@ -1021,9 +1021,18 @@
                   </select>
                 </div>
 
+                <div class="form-group" style="margin-top: 16px; margin-bottom: 20px;">
+                  <label class="form-label">Verification Status (UAT Simulation)</label>
+                  <select class="form-control" id="mock-payment-outcome">
+                    <option value="Successful">Success</option>
+                    <option value="Declined">Failed</option>
+                    <option value="Timeout">Timeout</option>
+                  </select>
+                </div>
+
                 <button class="btn btn-primary" id="pay-init-btn" onclick="handlePOSPaymentTrigger()" style="width: 100%; height: 46px; justify-content: center;">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
-                  Connect POS card swipe
+                  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Verify transaction
                 </button>
               </div>
             </div>
