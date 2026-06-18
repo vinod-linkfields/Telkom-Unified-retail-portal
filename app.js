@@ -3956,7 +3956,7 @@ function downloadPDFReport(category, store, data, fromDate, toDate) {
     <body>
       <div class="logo-area">
         <div>
-          <img src="Images/Logo_new.svg" alt="Telkom Retail" style="height: 40px; object-fit: contain; display: block; margin-bottom: 4px; filter: invert(1);">
+          <img src="Images/Logo_new.svg" alt="Telkom Retail" style="height: 40px; object-fit: contain; display: block; margin-bottom: 4px;">
           <div style="font-size: 12px; color: #0099ff; font-weight: 600;">Unified Digital Platform</div>
         </div>
         <div class="report-meta" style="text-align: right;">
@@ -5127,7 +5127,7 @@ function renderConfirmationContract(orderRef) {
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
           Email Contract
         </button>
-        <button class="btn btn-primary" onclick="printContractDocument('${orderRef}')" style="flex: 1; justify-content: center; height: 38px; background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark);">
+        <button class="btn btn-primary" onclick="printContractDocument('${orderRef}')" style="flex: 1; justify-content: center; height: 38px; background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); color: var(--text-white);">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
           Print Contract
         </button>
@@ -7941,7 +7941,7 @@ function renderOrderActivationWorkflow(order, container, isModal) {
       <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md); text-align: center;">
         <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">SIM Activation & RICA Workflow</h5>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">This order contains cellular lines that require mobile activation and RICA verification.</p>
-        <button class="btn btn-primary" onclick="setPostOrderActivationStep('${orderRef}', 'run_rica', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
+        <button class="btn btn-primary" onclick="setPostOrderActivationStep('${orderRef}', 'run_rica', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600; color: var(--text-white);">
           Proceed to RICA Verification
         </button>
       </div>
@@ -7953,7 +7953,7 @@ function renderOrderActivationWorkflow(order, container, isModal) {
         <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">Perform the national RICA database check for customer <strong>${order.customerName}</strong>.</p>
         
         <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-primary" id="btn-run-rica-activation" onclick="runRicaActivationWorkflow('${orderRef}', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
+          <button type="button" class="btn btn-primary" id="btn-run-rica-activation" onclick="runRicaActivationWorkflow('${orderRef}', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600; color: var(--text-white);">
             Perform RICA Verification
           </button>
         </div>
