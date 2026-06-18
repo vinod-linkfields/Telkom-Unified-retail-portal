@@ -4852,8 +4852,8 @@ function handlePOSPaymentTrigger() {
       
       // Render receipt view
       switchRoute('confirmation');
-    }, 1500);
-  }, 1500);
+    }, 300);
+  }, 300);
 }
 
 // Confirmation receipt render
