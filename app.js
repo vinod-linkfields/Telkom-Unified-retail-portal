@@ -5359,53 +5359,7 @@ function viewOrderDetails(orderRef) {
   const isSim = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
   if (isSim && ricaPanel) {
     ricaPanel.style.display = 'block';
-    const ricaVerified = order.ricaStatus === 'Verified';
-    const simActivated = !!order.simActivationNumber;
-    
-    ricaPanel.innerHTML = `
-      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px;">
-        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Order RICA & Activation</h5>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-          
-          <!-- RICA -->
-          <div style="background-color: var(--bg-card); padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <span style="font-weight: 600; font-size: 13px;">1. RICA status</span>
-              <span id="detail-rica-badge">
-                ${ricaVerified ? 
-                  `<span style="color: var(--success); font-weight: 700; font-size: 12px;">✓ Verified</span>` : 
-                  `<span style="color: var(--warning); font-weight: 700; font-size: 12px;">⚠ Pending</span>`}
-              </span>
-            </div>
-            ${!ricaVerified ? `
-              <button class="btn btn-sm btn-primary" id="btn-detail-rica" onclick="runDetailRicaValidation('${order.orderRef}')">Run RICA Validation</button>
-              <div id="detail-rica-progress-area" style="display: none; margin-top: 8px;">
-                <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 2px;" id="detail-rica-progress-text">Connecting...</div>
-                <div style="height: 4px; background-color: var(--border-color); border-radius: 2px; overflow: hidden;">
-                  <div id="detail-rica-progress-bar" style="height: 100%; width: 0%; background-color: var(--telkom-blue); transition: width 0.1s ease;"></div>
-                </div>
-              </div>
-            ` : `<div style="font-size: 12px; color: var(--success);">RICA requirements satisfied.</div>`}
-          </div>
-          
-          <!-- SIM Activation -->
-          <div style="background-color: var(--bg-card); padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); opacity: ${ricaVerified ? '1' : '0.5'}; pointer-events: ${ricaVerified ? 'auto' : 'none'};">
-            <span style="font-weight: 600; font-size: 13px; display: block; margin-bottom: 8px;">2. SIM ICCID Activation</span>
-            ${simActivated ? `
-              <div style="color: var(--success); font-weight: 700; font-size: 12px;">
-                ✓ Activated (ICCID: ${order.simActivationNumber})
-              </div>
-            ` : `
-              <div style="display: flex; gap: 8px;">
-                <input type="text" id="detail-sim-iccid" class="form-control" placeholder="19-digit ICCID" style="height: 32px; font-size: 12px; padding: 4px 8px;">
-                <button class="btn btn-sm btn-primary" onclick="submitDetailSimActivation('${order.orderRef}')" style="height: 32px; font-size: 12px; padding: 0 12px;">Activate</button>
-              </div>
-            `}
-          </div>
-          
-        </div>
-      </div>
-    `;
+    renderOrderActivationWorkflow(order, ricaPanel, true);
   } else if (ricaPanel) {
     ricaPanel.style.display = 'none';
   }
@@ -7443,6 +7397,167 @@ function switchTrackingTab(tabName) {
   renderOrderTracking();
 }
 
+function getOrderActivationStep(order) {
+  if (order.status === 'Active' || (order.simActivationNumber && order.ricaStatus === 'Verified')) {
+    return 'completed';
+  }
+  if (!order.activationStep) {
+    if (order.simActivationNumber) {
+      return 'run_rica';
+    }
+    return 'start';
+  }
+  return order.activationStep;
+}
+
+function renderOrderActivationWorkflow(order, container, isModal) {
+  const step = getOrderActivationStep(order);
+  const containerId = container.id;
+  const orderRef = order.orderRef;
+
+  if (step === 'start') {
+    container.innerHTML = `
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md); text-align: center;">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">SIM Activation & RICA Workflow</h5>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 14px;">This order contains cellular lines that require mobile activation and RICA verification.</p>
+        <button class="btn btn-primary" onclick="setPostOrderActivationStep('${orderRef}', 'enter_sim', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
+          Proceed for SIM activation
+        </button>
+      </div>
+    `;
+  } else if (step === 'enter_sim') {
+    container.innerHTML = `
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Enter SIM Serial Number</h5>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Provide the 19-digit ICCID SIM card number to continue.</p>
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+          <div style="flex: 1;">
+            <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${order.simActivationNumber || ''}">
+          </div>
+          <button class="btn btn-primary" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600;">
+            Proceed to RICA
+          </button>
+        </div>
+      </div>
+    `;
+  } else if (step === 'run_rica') {
+    container.innerHTML = `
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">RICA Verification</h5>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 14px;">Perform the national RICA database check for SIM <strong>${order.simActivationNumber}</strong>.</p>
+        
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary" id="btn-run-rica-activation" onclick="runRicaActivationWorkflow('${orderRef}', '${containerId}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 600;">
+            Perform RICA Verification
+          </button>
+        </div>
+        
+        <div id="activation-rica-progress-area" style="display: none; margin-top: 14px;">
+          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;" id="activation-rica-progress-text">Connecting to RICA verification gateway...</div>
+          <div class="rica-progress-container" style="height: 6px; background-color: var(--border-color); border-radius: 3px; overflow: hidden;">
+            <div id="activation-rica-progress-bar" style="height: 100%; width: 0%; background-color: var(--telkom-blue); transition: width 0.1s ease;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (step === 'completed') {
+    container.innerHTML = `
+      <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 18px; border-radius: var(--radius-md); text-align: center;">
+        <div style="width: 44px; height: 44px; border-radius: 50%; background-color: var(--success); color: var(--text-white); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 22px; font-weight: bold;">✓</div>
+        <h5 style="color: var(--success); font-weight: 700; margin-bottom: 6px;">sim activation is completed!</h5>
+        <p style="font-size: 13px; color: var(--text-secondary);">The SIM card (ICCID: <strong>${order.simActivationNumber}</strong>) is verified and active on the HLR network.</p>
+      </div>
+    `;
+  }
+}
+
+function setPostOrderActivationStep(orderRef, stepVal, containerId) {
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (order) {
+    order.activationStep = stepVal;
+    saveOrders();
+    const container = document.getElementById(containerId);
+    if (container) {
+      renderOrderActivationWorkflow(order, container, containerId === 'order-details-rica-panel');
+    }
+  }
+}
+
+function submitPostOrderSimNumber(orderRef, containerId) {
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+  const input = document.getElementById('activation-sim-iccid');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!/^\d{19}$/.test(val)) {
+    showToast("SIM serial number must be exactly 19 digits.", "danger");
+    return;
+  }
+  order.simActivationNumber = val;
+  order.activationStep = 'run_rica';
+  saveOrders();
+  const container = document.getElementById(containerId);
+  if (container) {
+    renderOrderActivationWorkflow(order, container, containerId === 'order-details-rica-panel');
+  }
+}
+
+function runRicaActivationWorkflow(orderRef, containerId) {
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (!order) return;
+
+  const btn = document.getElementById('btn-run-rica-activation');
+  const progressArea = document.getElementById('activation-rica-progress-area');
+  const progressBar = document.getElementById('activation-rica-progress-bar');
+  const progressText = document.getElementById('activation-rica-progress-text');
+
+  if (btn) btn.style.display = 'none';
+  if (progressArea) progressArea.style.display = 'block';
+
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += 10;
+    if (progressBar) progressBar.style.width = progress + '%';
+    if (progressText) {
+      if (progress < 40) progressText.innerText = "Querying Clarify CRM metadata...";
+      else if (progress < 80) progressText.innerText = "Verifying biometric check record...";
+      else progressText.innerText = "Finalizing gateway handshake...";
+    }
+
+    if (progress >= 100) {
+      clearInterval(interval);
+      order.ricaStatus = 'Verified';
+      order.status = 'Active';
+      order.activationStep = 'completed';
+      saveOrders();
+      
+      pushNotification(
+        "SIM Card Activated",
+        `SIM Serial ${order.simActivationNumber} activated successfully for order ${orderRef}.`,
+        "sim_activated",
+        "Normal"
+      );
+
+      showToast("RICA Verification Successful & SIM Activated!", "success");
+      
+      const container = document.getElementById(containerId);
+      if (container) {
+        renderOrderActivationWorkflow(order, container, containerId === 'order-details-rica-panel');
+      }
+      
+      // Update order details modal parent screen info if open
+      if (document.getElementById('order-details-modal').style.display !== 'none') {
+        viewOrderDetails(orderRef);
+      }
+      
+      // If we are on the order tracking view, update the rows
+      if (APP_STATE.activeRoute === 'order-tracking') {
+        renderOrderTracking();
+      }
+    }
+  }, 200);
+}
+
 function renderConfirmationRicaActivation() {
   const panel = document.getElementById('confirmation-rica-activation-panel');
   if (!panel) return;
@@ -7451,199 +7566,16 @@ function renderConfirmationRicaActivation() {
   const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
   if (!order) return;
 
-  const ricaVerified = order.ricaStatus === 'Verified';
-  const simActivated = !!order.simActivationNumber;
-
-  panel.innerHTML = `
-    <h4 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Post-Submission Activation Workflow</h4>
-    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">SIM card provisioning requires a verified RICA validation gateway handshake followed by HLR serial mapping.</p>
-    
-    <!-- RICA Section -->
-    <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); margin-bottom: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-        <div>
-          <strong style="font-size: 14px; color: var(--text-dark);">1. RICA Verification Gateway</strong>
-          <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Submit details to national database.</div>
-        </div>
-        <div id="post-rica-badge">
-          ${ricaVerified ? 
-            `<span style="color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Verified</span>` : 
-            `<span style="color: var(--warning); font-weight: 700; display: flex; align-items: center; gap: 4px;"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Pending Verification</span>`}
-        </div>
-      </div>
-      
-      ${!ricaVerified ? `
-        <div style="margin-top: 12px;">
-          <button type="button" class="btn btn-sm btn-primary" id="btn-post-rica" onclick="runPostOrderRicaValidation()" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark);">
-            Run RICA Validation
-          </button>
-        </div>
-        <div id="post-rica-progress-area" style="display: none; margin-top: 12px;">
-          <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 4px;" id="post-rica-progress-text">Connecting to gateway...</div>
-          <div class="rica-progress-container" style="height: 6px; background-color: var(--border-color); border-radius: 3px; overflow: hidden;">
-            <div class="rica-progress-bar" id="post-rica-progress-bar" style="height: 100%; width: 0%; background-color: var(--telkom-blue); transition: width 0.1s ease;"></div>
-          </div>
-        </div>
-      ` : ''}
-    </div>
-
-    <!-- SIM Activation Section -->
-    <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); opacity: ${ricaVerified ? '1' : '0.5'}; pointer-events: ${ricaVerified ? 'auto' : 'none'};">
-      <strong style="font-size: 14px; color: var(--text-dark); display: block; margin-bottom: 4px;">2. SIM Serial Code Activation (HLR Gateway)</strong>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Map the 19-digit SIM card ICCID to trigger cellular profile activation.</p>
-      
-      ${simActivated ? `
-        <div style="color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 4px; font-size: 13.5px;">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-          SIM Activated (ICCID: ${order.simActivationNumber})
-        </div>
-      ` : `
-        <div style="display: flex; gap: 12px; align-items: flex-end;">
-          <div style="flex: 1;">
-            <input type="text" id="post-sim-iccid" class="form-control" placeholder="19-digit SIM serial e.g. 892700..." style="height: 38px;">
-          </div>
-          <button class="btn btn-primary" onclick="submitPostOrderSimActivation()" style="height: 38px;">Activate SIM</button>
-        </div>
-      `}
-    </div>
-  `;
-}
-
-function runPostOrderRicaValidation() {
-  const orderRef = APP_STATE.cart.orderRef;
-  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
-  if (!order) return;
-
-  const btn = document.getElementById('btn-post-rica');
-  const progressArea = document.getElementById('post-rica-progress-area');
-  const progressBar = document.getElementById('post-rica-progress-bar');
-  const progressText = document.getElementById('post-rica-progress-text');
-
-  if (btn) btn.style.display = 'none';
-  if (progressArea) progressArea.style.display = 'block';
-
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += 10;
-    if (progressBar) progressBar.style.width = progress + '%';
-    if (progressText) {
-      if (progress < 40) progressText.innerText = "Querying Clarify CRM metadata...";
-      else if (progress < 80) progressText.innerText = "Verifying biometric check record...";
-      else progressText.innerText = "Finalizing gateway handshake...";
-    }
-
-    if (progress >= 100) {
-      clearInterval(interval);
-      order.ricaStatus = 'Verified';
-      saveOrders();
-      showToast("RICA Verification Successful.", "success");
-      renderConfirmationRicaActivation();
-      if (document.getElementById('order-details-modal').style.display !== 'none') {
-        viewOrderDetails(orderRef);
-      }
-    }
-  }, 200);
-}
-
-function submitPostOrderSimActivation() {
-  const orderRef = APP_STATE.cart.orderRef;
-  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
-  if (!order) return;
-
-  const iccidVal = document.getElementById('post-sim-iccid').value.trim();
-  if (!/^\d{19}$/.test(iccidVal)) {
-    showToast("SIM serial number must be exactly 19 digits.", "danger");
-    return;
-  }
-
-  order.simActivationNumber = iccidVal;
-  order.status = 'Active';
-  saveOrders();
-
-  pushNotification(
-    "SIM Card Activated",
-    `SIM Serial ${iccidVal} activated successfully for order ${orderRef}.`,
-    "sim_activated",
-    "Normal"
-  );
-
-  showToast("SIM card successfully activated! Provisioning complete.", "success");
-  renderConfirmationRicaActivation();
-  if (document.getElementById('order-details-modal').style.display !== 'none') {
-    viewOrderDetails(orderRef);
-  }
-}
-
-function runDetailRicaValidation(orderRef) {
-  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
-  if (!order) return;
-
-  const btn = document.getElementById('btn-detail-rica');
-  const progressArea = document.getElementById('detail-rica-progress-area');
-  const progressBar = document.getElementById('detail-rica-progress-bar');
-  const progressText = document.getElementById('detail-rica-progress-text');
-
-  if (btn) btn.style.display = 'none';
-  if (progressArea) progressArea.style.display = 'block';
-
-  let progress = 0;
-  const interval = setInterval(() => {
-    progress += 10;
-    if (progressBar) progressBar.style.width = progress + '%';
-    if (progressText) {
-      if (progress < 40) progressText.innerText = "Querying Clarify CRM metadata...";
-      else if (progress < 80) progressText.innerText = "Verifying biometric check record...";
-      else progressText.innerText = "Finalizing gateway handshake...";
-    }
-
-    if (progress >= 100) {
-      clearInterval(interval);
-      order.ricaStatus = 'Verified';
-      saveOrders();
-      showToast("RICA Verification Successful.", "success");
-      viewOrderDetails(orderRef);
-      if (APP_STATE.activeRoute === 'confirmation') {
-        renderConfirmationRicaActivation();
-      }
-    }
-  }, 200);
-}
-
-function submitDetailSimActivation(orderRef) {
-  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
-  if (!order) return;
-
-  const iccidVal = document.getElementById('detail-sim-iccid').value.trim();
-  if (!/^\d{19}$/.test(iccidVal)) {
-    showToast("SIM serial number must be exactly 19 digits.", "danger");
-    return;
-  }
-
-  order.simActivationNumber = iccidVal;
-  order.status = 'Active';
-  saveOrders();
-
-  pushNotification(
-    "SIM Card Activated",
-    `SIM Serial ${iccidVal} activated successfully for order ${orderRef}.`,
-    "sim_activated",
-    "Normal"
-  );
-
-  showToast("SIM card successfully activated! Provisioning complete.", "success");
-  viewOrderDetails(orderRef);
-  if (APP_STATE.activeRoute === 'confirmation') {
-    renderConfirmationRicaActivation();
-  }
+  panel.style.display = 'block';
+  renderOrderActivationWorkflow(order, panel, false);
 }
 
 // Bind to window
 window.handleSaveDraft = handleSaveDraft;
 window.resumeDraftOrder = resumeDraftOrder;
 window.switchTrackingTab = switchTrackingTab;
-window.runPostOrderRicaValidation = runPostOrderRicaValidation;
-window.submitPostOrderSimActivation = submitPostOrderSimActivation;
-window.runDetailRicaValidation = runDetailRicaValidation;
-window.submitDetailSimActivation = submitDetailSimActivation;
+window.setPostOrderActivationStep = setPostOrderActivationStep;
+window.submitPostOrderSimNumber = submitPostOrderSimNumber;
+window.runRicaActivationWorkflow = runRicaActivationWorkflow;
 window.renderConfirmationRicaActivation = renderConfirmationRicaActivation;
 
