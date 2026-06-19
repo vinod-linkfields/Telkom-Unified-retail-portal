@@ -1,5 +1,5 @@
 import { MOCK_DB, APP_STATE, saveOrders, saveDraftOrders } from './state.js';
-import { showToast, pushNotification, maskID, maskPassport, openModal, closeModal } from './utils.js';
+import { renderPaginatedRows, showToast, pushNotification, maskID, maskPassport, openModal, closeModal } from './utils.js';
 import { switchRoute } from './routing.js';
 import { renderStepper } from './stepper.js';
 
@@ -77,27 +77,20 @@ export function renderOrderTracking() {
       }
     }
 
-    let rowsHtml = '';
-    if (filtered.length === 0) {
-      rowsHtml = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No tracking orders found.</td></tr>`;
-    } else {
-      filtered.forEach(o => {
-        rowsHtml += `
-          <tr>
-            <td><strong>${o.orderRef}</strong></td>
-            <td>${o.customerName}</td>
-            <td>${o.product}</td>
-            <td><code>${o.store}</code></td>
-            <td>${o.date}</td>
-            <td><span class="badge ${o.status === 'Fulfilled' || o.status === 'Active' ? 'badge-success' : (o.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}">${o.status}</span></td>
-            <td>
-              <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
-              <button class="btn btn-sm btn-primary" onclick="downloadOrderReceipt('${o.orderRef}')" style="background-color: var(--telkom-blue); border-color: var(--telkom-blue);">Receipt</button>
-            </td>
-          </tr>
-        `;
-      });
-    }
+    const rows = filtered.map(o => `
+      <tr>
+        <td><strong>${o.orderRef}</strong></td>
+        <td>${o.customerName}</td>
+        <td>${o.product}</td>
+        <td><code>${o.store}</code></td>
+        <td>${o.date}</td>
+        <td><span class="badge ${o.status === 'Fulfilled' || o.status === 'Active' ? 'badge-success' : (o.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}">${o.status}</span></td>
+        <td>
+          <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
+          <button class="btn btn-sm btn-primary" onclick="downloadOrderReceipt('${o.orderRef}')" style="background-color: var(--telkom-blue); border-color: var(--telkom-blue);">Receipt</button>
+        </td>
+      </tr>
+    `);
 
     container.innerHTML = `
       <table class="custom-table">
@@ -113,10 +106,12 @@ export function renderOrderTracking() {
           </tr>
         </thead>
         <tbody id="tracking-table-body">
-          ${rowsHtml}
         </tbody>
       </table>
     `;
+    renderPaginatedRows(document.getElementById('tracking-table-body'), rows, {
+      emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No tracking orders found.</td></tr>`
+    });
   } else if (tab === 'pending') {
     let draftsFiltered = APP_STATE.draftOrders || [];
     if (APP_STATE.currentUser.role === 'agent') {
@@ -137,52 +132,47 @@ export function renderOrderTracking() {
       submittedPendingFiltered = submittedPendingFiltered.filter(o => o.store === APP_STATE.currentUser.branch);
     }
 
-    let rowsHtml = '';
-    if (draftsFiltered.length === 0 && submittedPendingFiltered.length === 0) {
-      rowsHtml = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending orders or drafts.</td></tr>`;
-    } else {
-      draftsFiltered.forEach(d => {
-        rowsHtml += `
-          <tr style="background-color: rgba(15, 48, 87, 0.02);">
-            <td><span class="badge badge-secondary" style="letter-spacing:0.5px;">DRAFT</span></td>
-            <td>${d.customerName || 'Anonymous Customer'}</td>
-            <td>${d.product ? d.product.name : 'Unknown Product'}</td>
-            <td><code>${d.branch}</code></td>
-            <td>${d.timestamp.replace('T', ' ').substring(0,16)}</td>
-            <td><span class="badge badge-secondary">Awaiting Completion</span></td>
-            <td>
-              <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Resume checkout</button>
-            </td>
-          </tr>
-        `;
-      });
+    const draftRows = draftsFiltered.map(d => `
+      <tr style="background-color: rgba(15, 48, 87, 0.02);">
+        <td><span class="badge badge-secondary" style="letter-spacing:0.5px;">DRAFT</span></td>
+        <td>${d.customerName || 'Anonymous Customer'}</td>
+        <td>${d.product ? d.product.name : 'Unknown Product'}</td>
+        <td><code>${d.branch}</code></td>
+        <td>${d.timestamp.replace('T', ' ').substring(0,16)}</td>
+        <td><span class="badge badge-secondary">Awaiting Completion</span></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Resume checkout</button>
+        </td>
+      </tr>
+    `);
 
-      submittedPendingFiltered.forEach(o => {
-        let actionBtnHtml = `<button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')">Resolve blocks</button>`;
-        let detailText = "Awaiting Action";
-        if (o.ricaStatus === 'Pending') {
-          detailText = "RICA Verification Required";
-        } else if (o.ricaStatus === 'Verified' && !o.simActivationNumber) {
-          detailText = "Awaiting SIM Serial Input";
-        } else if (!o.payment.includes('Complete')) {
-          detailText = "POS Payment Failure";
-        }
+    const submittedRows = submittedPendingFiltered.map(o => {
+      const actionBtnHtml = `<button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')">Resolve blocks</button>`;
+      let detailText = "Awaiting Action";
+      if (o.ricaStatus === 'Pending') {
+        detailText = "RICA Verification Required";
+      } else if (o.ricaStatus === 'Verified' && !o.simActivationNumber) {
+        detailText = "Awaiting SIM Serial Input";
+      } else if (!o.payment.includes('Complete')) {
+        detailText = "POS Payment Failure";
+      }
 
-        rowsHtml += `
-          <tr>
-            <td><strong>${o.orderRef}</strong></td>
-            <td>${o.customerName}</td>
-            <td>${o.product}</td>
-            <td><code>${o.store}</code></td>
-            <td>${o.date}</td>
-            <td><span class="badge badge-warning">${detailText}</span></td>
-            <td>
-              ${actionBtnHtml}
-            </td>
-          </tr>
-        `;
-      });
-    }
+      return `
+        <tr>
+          <td><strong>${o.orderRef}</strong></td>
+          <td>${o.customerName}</td>
+          <td>${o.product}</td>
+          <td><code>${o.store}</code></td>
+          <td>${o.date}</td>
+          <td><span class="badge badge-warning">${detailText}</span></td>
+          <td>
+            ${actionBtnHtml}
+          </td>
+        </tr>
+      `;
+    });
+
+    const rows = [...draftRows, ...submittedRows];
 
     container.innerHTML = `
       <table class="custom-table">
@@ -197,11 +187,13 @@ export function renderOrderTracking() {
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
-          ${rowsHtml}
+        <tbody id="tracking-pending-table-body">
         </tbody>
       </table>
     `;
+    renderPaginatedRows(document.getElementById('tracking-pending-table-body'), rows, {
+      emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending orders or drafts.</td></tr>`
+    });
   }
 }
 

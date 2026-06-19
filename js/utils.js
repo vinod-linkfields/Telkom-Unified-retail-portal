@@ -85,6 +85,118 @@ export function closeModal(modalId) {
   if (m) m.style.display = 'none';
 }
 
+const tablePaginationState = new Map();
+
+function getPaginationKey(tbody, tableId) {
+  if (tableId) return tableId;
+  if (tbody.id) return tbody.id;
+  const generatedId = `table-body-${Math.random().toString(36).slice(2, 9)}`;
+  tbody.id = generatedId;
+  return generatedId;
+}
+
+function getOrCreatePaginationControls(tbody, key) {
+  const tableWrap = tbody.closest('.table-container');
+  if (!tableWrap) return null;
+
+  const existing = tableWrap.nextElementSibling;
+  if (existing && existing.classList.contains('table-pagination') && existing.dataset.tableKey === key) {
+    return existing;
+  }
+  if (existing && existing.classList.contains('table-pagination')) {
+    existing.remove();
+  }
+
+  const controls = document.createElement('div');
+  controls.className = 'table-pagination';
+  controls.dataset.tableKey = key;
+  tableWrap.insertAdjacentElement('afterend', controls);
+  return controls;
+}
+
+export function renderPaginatedRows(tbody, rows, options = {}) {
+  if (!tbody) return;
+
+  const {
+    emptyRow = '',
+    pageSize = 5,
+    tableId,
+    itemLabel = 'entries',
+    infoElement = null
+  } = options;
+
+  const key = getPaginationKey(tbody, tableId);
+  const total = rows.length;
+  const controls = getOrCreatePaginationControls(tbody, key);
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(tablePaginationState.get(key) || 1, pageCount);
+  tablePaginationState.set(key, currentPage);
+
+  if (total === 0) {
+    tbody.innerHTML = emptyRow;
+    if (controls) controls.remove();
+    if (infoElement) infoElement.innerText = `Showing 0 ${itemLabel}`;
+    return;
+  }
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const visibleRows = rows.slice(startIndex, startIndex + pageSize);
+  tbody.innerHTML = visibleRows.join('');
+
+  const startCount = startIndex + 1;
+  const endCount = Math.min(startIndex + pageSize, total);
+  const rangeText = `Showing ${startCount}-${endCount} of ${total} ${itemLabel}`;
+  if (infoElement) infoElement.innerText = rangeText;
+
+  if (!controls) return;
+
+  const compactPages = [];
+  for (let i = 1; i <= pageCount; i++) {
+    if (i === 1 || i === pageCount || Math.abs(i - currentPage) <= 1) {
+      compactPages.push(i);
+    }
+  }
+
+  let lastPage = 0;
+  const pageButtons = compactPages.map(page => {
+    const gap = page - lastPage > 1 ? '<span class="table-pagination-gap">...</span>' : '';
+    lastPage = page;
+    return `${gap}<button type="button" class="table-page-btn ${page === currentPage ? 'active' : ''}" data-page="${page}" aria-label="Page ${page}">${page}</button>`;
+  }).join('');
+
+  const summaryHtml = infoElement ? '' : `<span class="table-pagination-summary">${rangeText}</span>`;
+  controls.innerHTML = `
+    ${summaryHtml}
+    <div class="table-pagination-actions">
+      <button type="button" class="table-page-btn" data-page="${currentPage - 1}" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
+      ${pageButtons}
+      <button type="button" class="table-page-btn" data-page="${currentPage + 1}" ${currentPage === pageCount ? 'disabled' : ''}>Next</button>
+    </div>
+  `;
+
+  controls.querySelectorAll('button[data-page]').forEach(button => {
+    button.addEventListener('click', () => {
+      const nextPage = Number(button.dataset.page);
+      if (!nextPage || nextPage < 1 || nextPage > pageCount || nextPage === currentPage) return;
+      tablePaginationState.set(key, nextPage);
+      renderPaginatedRows(tbody, rows, options);
+    });
+  });
+}
+
+export function paginateExistingTable(tbody, options = {}) {
+  if (!tbody) return;
+  const rowElements = Array.from(tbody.querySelectorAll('tr'));
+  const emptyRow = rowElements.length === 1 && rowElements[0].querySelector('td[colspan]')
+    ? rowElements[0].outerHTML
+    : options.emptyRow;
+  const rows = emptyRow ? [] : rowElements.map(row => row.outerHTML);
+  renderPaginatedRows(tbody, rows, {
+    ...options,
+    emptyRow
+  });
+}
+
 // Bind modal utilities to window for inline onclick handlers
 window.openModal = openModal;
 window.closeModal = closeModal;

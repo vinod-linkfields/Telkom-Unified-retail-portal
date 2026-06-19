@@ -1,5 +1,5 @@
 import { MOCK_DB, DEVICE_CATALOGUE, APP_STATE, saveStockRequests } from './state.js';
-import { showToast, pushNotification, openModal, closeModal } from './utils.js';
+import { paginateExistingTable, renderPaginatedRows, showToast, pushNotification, openModal, closeModal } from './utils.js';
 import { renderAgentDashboard, renderAreaDashboard } from './dashboards.js';
 
 let activeApprovalId = null;
@@ -8,7 +8,6 @@ let activeApprovalId = null;
 export function renderStockRequests() {
   const requestsBody = document.getElementById('stock-requests-tbody');
   if (!requestsBody) return;
-  requestsBody.innerHTML = '';
 
   let filtered = APP_STATE.stockRequests;
 
@@ -17,20 +16,15 @@ export function renderStockRequests() {
     filtered = filtered.filter(r => r.storeId === APP_STATE.currentUser.branch);
   }
 
-  if (filtered.length === 0) {
-    requestsBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">No stock requests found.</td></tr>`;
-    return;
-  }
-
-  filtered.forEach(r => {
-    let actionsHtml = `<button class="btn btn-sm btn-secondary" onclick="viewStockRequestDetails('${r.id}')" style="margin-right: 5px;">Details</button>`;
+  const rows = filtered.map(r => {
+    let actionsHtml = `<button class="btn btn-sm btn-secondary" onclick="viewStockRequestDetails('${r.id}')">Details</button>`;
     if (r.status === 'Submitted' && APP_STATE.currentUser.role === 'area_manager') {
       actionsHtml += `<button class="btn btn-sm btn-success" onclick="openApprovalModal('${r.id}')">Review</button>`;
     } else if (r.status === 'Draft' && (APP_STATE.currentUser.role === 'manager' || APP_STATE.currentUser.role === 'agent')) {
       actionsHtml += `<button class="btn btn-sm btn-primary" onclick="submitStockRequest('${r.id}')">Submit</button>`;
     }
 
-    requestsBody.innerHTML += `
+    return `
       <tr>
         <td><strong>${r.id}</strong></td>
         <td><code>${r.storeId}</code></td>
@@ -39,9 +33,13 @@ export function renderStockRequests() {
         <td><span class="badge ${r.priority === 'Urgent' ? 'badge-danger' : 'badge-warning'}">${r.priority}</span></td>
         <td>${r.date}</td>
         <td><span class="badge ${r.status === 'Approved' ? 'badge-success' : (r.status === 'Declined' ? 'badge-danger' : 'badge-warning')}">${r.status}</span></td>
-        <td>${actionsHtml}</td>
+        <td><div class="table-action-group">${actionsHtml}</div></td>
       </tr>
     `;
+  });
+
+  renderPaginatedRows(requestsBody, rows, {
+    emptyRow: `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">No stock requests found.</td></tr>`
   });
 }
 
@@ -334,6 +332,11 @@ export function renderStoreInventoryTab() {
   });
 
   panel.innerHTML = html;
+  panel.querySelectorAll('tbody').forEach((tbody, index) => {
+    paginateExistingTable(tbody, {
+      tableId: `store-inventory-${categories[index] || index}`
+    });
+  });
 }
 
 export function renderLowStockTab() {
@@ -397,6 +400,9 @@ export function renderLowStockTab() {
       </div>
     </div>
   `;
+  paginateExistingTable(panel.querySelector('tbody'), {
+    tableId: 'low-stock-alerts'
+  });
 }
 
 export function handleStockReqDeviceSelectChange(val) {

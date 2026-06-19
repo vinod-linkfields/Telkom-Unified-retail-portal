@@ -725,6 +725,94 @@ button, input, select, textarea {
   background-color: rgba(0, 153, 255, 0.02);
 }
 
+.table-action-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.table-pagination-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.table-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.table-page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.table-page-btn:hover:not(:disabled),
+.table-page-btn.active {
+  border-color: var(--telkom-blue);
+  background: var(--telkom-blue);
+  color: var(--text-white);
+}
+
+.table-page-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.table-pagination-gap {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .table-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .table-pagination-actions {
+    justify-content: flex-start;
+  }
+
+  .table-page-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+  }
+}
+
 /* Badge styles */
 .badge {
   display: inline-flex;
@@ -2976,4 +3064,3 @@ input[type="checkbox"], input[type="radio"] {
   width: 0%;
   transition: width 0.4s ease;
 }
-

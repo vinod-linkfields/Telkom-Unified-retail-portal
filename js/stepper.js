@@ -1,5 +1,5 @@
 import { MOCK_DB, APP_STATE, saveOrders, saveDraftOrders, BANK_OPTIONS } from './state.js';
-import { showToast, pushNotification, maskID, maskPassport } from './utils.js';
+import { paginateExistingTable, showToast, pushNotification, maskID, maskPassport } from './utils.js';
 import { switchRoute } from './routing.js';
 import { getProductTermAndPrice } from './catalogue.js';
 import { openNewCustomerWizard } from './customer.js';
@@ -1126,6 +1126,9 @@ export function renderStepperStockCheck(container) {
       </div>
     </div>
   `;
+  paginateExistingTable(container.querySelector('tbody'), {
+    tableId: 'stepper-stock-check'
+  });
 }
 
 export function renderStepperContractDetails(container, product) {

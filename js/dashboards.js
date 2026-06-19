@@ -1,6 +1,6 @@
 import { APP_STATE, MOCK_DB } from './state.js';
 import { switchRoute, updateSidebarMenuOptions } from './routing.js';
-import { showToast } from './utils.js';
+import { renderPaginatedRows, showToast } from './utils.js';
 
 export function renderAgentDashboard() {
   const recentOrders = APP_STATE.ordersList
@@ -9,22 +9,18 @@ export function renderAgentDashboard() {
 
   const tbody = document.getElementById('agent-recent-orders-tbody');
   if (tbody) {
-    tbody.innerHTML = '';
-    if (recentOrders.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No orders found.</td></tr>`;
-    } else {
-      recentOrders.forEach(o => {
-        tbody.innerHTML += `
-          <tr>
-            <td><strong>${o.orderRef}</strong></td>
-            <td>${o.customerName}</td>
-            <td>${o.product}</td>
-            <td>${o.date}</td>
-            <td><span class="badge ${o.status === 'Fulfilled' ? 'badge-success' : 'badge-warning'}">${o.status}</span></td>
-          </tr>
-        `;
-      });
-    }
+    const rows = recentOrders.map(o => `
+      <tr>
+        <td><strong>${o.orderRef}</strong></td>
+        <td>${o.customerName}</td>
+        <td>${o.product}</td>
+        <td>${o.date}</td>
+        <td><span class="badge ${o.status === 'Fulfilled' ? 'badge-success' : 'badge-warning'}">${o.status}</span></td>
+      </tr>
+    `);
+    renderPaginatedRows(tbody, rows, {
+      emptyRow: `<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No orders found.</td></tr>`
+    });
   }
 
   const agentTodayEl = document.getElementById('agent-today-count');
@@ -71,35 +67,33 @@ export function renderAgentDashboard() {
 
   const draftTbody = document.getElementById('agent-draft-orders-tbody');
   if (draftTbody) {
-    draftTbody.innerHTML = '';
     const myDrafts = APP_STATE.draftOrders.filter(d => d.agentId === APP_STATE.currentUser.id);
-    if (myDrafts.length === 0) {
-      draftTbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No saved drafts found.</td></tr>`;
-    } else {
-      myDrafts.forEach(d => {
-        const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
-        const getActiveStepsForProduct = window.getActiveStepsForProduct;
-        let stepLabel = `Step ${d.currentStep}`;
-        if (getActiveStepsForProduct) {
-          const steps = getActiveStepsForProduct(d.cart.product);
-          const stepIndex = steps.findIndex(s => s.id === d.currentStep);
-          stepLabel = stepIndex > -1 ? `Step ${stepIndex + 1}: ${steps[stepIndex].label}` : `Step ${d.currentStep}`;
-        }
-        
-        draftTbody.innerHTML += `
-          <tr>
-            <td><strong>${d.draftId}</strong></td>
-            <td>${d.customer ? d.customer.name : '<span style="color: var(--text-muted);">No Customer Linked</span>'}</td>
-            <td>${prodName}</td>
-            <td><span class="badge badge-warning">${stepLabel}</span></td>
-            <td>${d.date}</td>
-            <td>
-              <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
-            </td>
-          </tr>
-        `;
-      });
-    }
+    const rows = myDrafts.map(d => {
+      const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
+      const getActiveStepsForProduct = window.getActiveStepsForProduct;
+      let stepLabel = `Step ${d.currentStep}`;
+      if (getActiveStepsForProduct) {
+        const steps = getActiveStepsForProduct(d.cart.product);
+        const stepIndex = steps.findIndex(s => s.id === d.currentStep);
+        stepLabel = stepIndex > -1 ? `Step ${stepIndex + 1}: ${steps[stepIndex].label}` : `Step ${d.currentStep}`;
+      }
+
+      return `
+        <tr>
+          <td><strong>${d.draftId}</strong></td>
+          <td>${d.customer ? d.customer.name : '<span style="color: var(--text-muted);">No Customer Linked</span>'}</td>
+          <td>${prodName}</td>
+          <td><span class="badge badge-warning">${stepLabel}</span></td>
+          <td>${d.date}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
+          </td>
+        </tr>
+      `;
+    });
+    renderPaginatedRows(draftTbody, rows, {
+      emptyRow: `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No saved drafts found.</td></tr>`
+    });
   }
 }
 
@@ -123,7 +117,7 @@ export function renderManagerDashboard() {
 
   const agentsBody = document.getElementById('mgr-agents-tbody');
   if (agentsBody) {
-    agentsBody.innerHTML = `
+    renderPaginatedRows(agentsBody, [`
       <tr>
         <td>AGT-101</td>
         <td>Piet van Zyl</td>
@@ -136,7 +130,7 @@ export function renderManagerDashboard() {
         <td><span class="badge badge-success">Active</span></td>
         <td>${storeOrders.filter(o => o.agent === 'AGT-102').length}</td>
       </tr>
-    `;
+    `]);
   }
 }
 
@@ -148,29 +142,25 @@ export function renderAreaDashboard() {
 
   const pendingTbody = document.getElementById('am-pending-requests-tbody');
   if (!pendingTbody) return;
-  pendingTbody.innerHTML = '';
-  
+
   const pendingRequests = APP_STATE.stockRequests.filter(r => r.status === 'Submitted');
-  if (pendingRequests.length === 0) {
-    pendingTbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending stock requests require approval.</td></tr>`;
-  } else {
-    pendingRequests.forEach(r => {
-      pendingTbody.innerHTML += `
-        <tr>
-          <td><strong>${r.id}</strong></td>
-          <td>${r.storeId}</td>
-          <td>${r.product}</td>
-          <td><span class="badge badge-neutral">${r.qty} units</span></td>
-          <td><span class="badge ${r.priority === 'Urgent' ? 'badge-danger' : 'badge-warning'}">${r.priority}</span></td>
-          <td>${r.date}</td>
-          <td>
-            <button class="btn btn-sm btn-secondary" onclick="viewStockRequestDetails('${r.id}')" style="margin-right: 5px;">Details</button>
-            <button class="btn btn-sm btn-success" onclick="openApprovalModal('${r.id}')">Review & Decide</button>
-          </td>
-        </tr>
-      `;
-    });
-  }
+  const rows = pendingRequests.map(r => `
+    <tr>
+      <td><strong>${r.id}</strong></td>
+      <td>${r.storeId}</td>
+      <td>${r.product}</td>
+      <td><span class="badge badge-neutral">${r.qty} units</span></td>
+      <td><span class="badge ${r.priority === 'Urgent' ? 'badge-danger' : 'badge-warning'}">${r.priority}</span></td>
+      <td>${r.date}</td>
+      <td>
+        <button class="btn btn-sm btn-secondary" onclick="viewStockRequestDetails('${r.id}')" style="margin-right: 5px;">Details</button>
+        <button class="btn btn-sm btn-success" onclick="openApprovalModal('${r.id}')">Review & Decide</button>
+      </td>
+    </tr>
+  `);
+  renderPaginatedRows(pendingTbody, rows, {
+    emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending stock requests require approval.</td></tr>`
+  });
 }
 
 export function renderAdminDashboard() {
@@ -183,17 +173,15 @@ export function renderAdminDashboard() {
 
   const logTbody = document.getElementById('admin-logs-tbody');
   if (logTbody) {
-    logTbody.innerHTML = '';
-    integrationLogs.forEach(l => {
-      logTbody.innerHTML += `
-        <tr>
-          <td><code>${l.time}</code></td>
-          <td><strong>${l.api}</strong></td>
-          <td><span class="badge badge-success">${l.status}</span></td>
-          <td>${l.latency}</td>
-        </tr>
-      `;
-    });
+    const rows = integrationLogs.map(l => `
+      <tr>
+        <td><code>${l.time}</code></td>
+        <td><strong>${l.api}</strong></td>
+        <td><span class="badge badge-success">${l.status}</span></td>
+        <td>${l.latency}</td>
+      </tr>
+    `);
+    renderPaginatedRows(logTbody, rows);
   }
 
   for (const [key, val] of Object.entries(APP_STATE.systemHealth)) {

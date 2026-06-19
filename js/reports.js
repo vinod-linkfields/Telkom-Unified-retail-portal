@@ -1,5 +1,5 @@
 import { APP_STATE } from './state.js';
-import { showToast, openModal, closeModal } from './utils.js';
+import { paginateExistingTable, showToast, openModal, closeModal } from './utils.js';
 import { downloadOrderReceipt } from './tracking.js';
 
 
@@ -999,6 +999,12 @@ export function renderReports() {
     }
   }
 
+  // Paginate detailed records
+  paginateExistingTable(tableTbody, {
+    tableId: `report-table-${category}`,
+    infoElement: document.getElementById('report-table-count')
+  });
+
   // Draw donut
   drawSVGDonutChart('report-donut-chart-container', donutData);
 
@@ -1631,9 +1637,11 @@ export function renderRecordLogs() {
     }
   }
 
-  // Update count
   const countEl = document.getElementById('log-table-count');
-  if (countEl) countEl.innerText = `Showing ${filtered.length} entries`;
+  paginateExistingTable(tableTbody, {
+    tableId: `log-table-${category}`,
+    infoElement: countEl
+  });
 
   // Set Generation Timestamp
   const now = new Date();
@@ -1645,4 +1653,3 @@ export function renderRecordLogs() {
 window.handleLogFilterChange = handleLogFilterChange;
 window.resetLogFilters = resetLogFilters;
 window.renderRecordLogs = renderRecordLogs;
-

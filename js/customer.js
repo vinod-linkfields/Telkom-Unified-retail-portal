@@ -1,6 +1,6 @@
 import { APP_STATE, MOCK_DB } from './state.js';
 import { switchRoute } from './routing.js';
-import { showToast, maskID, maskPassport, openModal, closeModal } from './utils.js';
+import { renderPaginatedRows, showToast, maskID, maskPassport, openModal, closeModal } from './utils.js';
 
 const BANK_OPTIONS = [
   "ABSA",
@@ -74,11 +74,10 @@ export function handleCustomerSearch(e) {
   const resultsDiv = document.getElementById('search-results-panel');
   const resultsTbody = document.getElementById('search-results-tbody');
   
-  if (resultsTbody) resultsTbody.innerHTML = '';
   if (found) {
     if (resultsDiv) resultsDiv.style.display = 'block';
     if (resultsTbody) {
-      resultsTbody.innerHTML = `
+      renderPaginatedRows(resultsTbody, [`
         <tr>
           <td><strong>${found.name}</strong></td>
           <td>${found.id ? maskID(found.id) : maskPassport(found.passport)}</td>
@@ -89,12 +88,13 @@ export function handleCustomerSearch(e) {
             <button class="btn btn-sm btn-primary" onclick="identifyCustomer('${found.id || found.passport}', '${!!found.id ? 'id' : 'passport'}')">Select Profile</button>
           </td>
         </tr>
-      `;
+      `]);
     }
   } else {
     if (resultsDiv) resultsDiv.style.display = 'block';
     if (resultsTbody) {
-      resultsTbody.innerHTML = `
+      renderPaginatedRows(resultsTbody, [], {
+        emptyRow: `
         <tr>
           <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
             Customer record not found. 
@@ -102,7 +102,8 @@ export function handleCustomerSearch(e) {
             <button class="btn btn-sm btn-outline" onclick="openNewCustomerWizard()">Add New Customer</button>
           </td>
         </tr>
-      `;
+        `
+      });
     }
   }
 }
@@ -1345,4 +1346,3 @@ export function handleEditCustomerSubmit(e) {
   renderCustomer360();
 }
 window.handleEditCustomerSubmit = handleEditCustomerSubmit;
-
