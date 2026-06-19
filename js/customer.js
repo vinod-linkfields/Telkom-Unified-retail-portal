@@ -440,7 +440,7 @@ export function renderCustomerCreateStep(step) {
         
         <div class="accordion ${APP_STATE.employmentAccordionOpen ? 'open' : ''}" id="employment-accordion">
           <div class="accordion-header" onclick="toggleEmploymentAccordion()">
-            <span>Employment Details Questionnaire (Optional)</span>
+            <span>Employment Details</span>
             <span class="accordion-arrow">▼</span>
           </div>
           <div class="accordion-body">
@@ -491,16 +491,13 @@ export function renderCustomerCreateStep(step) {
           </div>
         </div>
 
-        <div style="background-color: var(--bg-light); border-left: 4px solid var(--telkom-blue); padding: 14px 18px; border-radius: var(--radius-md); font-size: 12px; color: var(--text-secondary); margin-top: 16px; font-weight: 500;">
-          📌 <strong>Business Rule:</strong> You can completely skip this step. Credit-related products (like handset contracts) may require the agent to collect these fields later in CRM.
-        </div>
+
       `;
       break;
 
     case 3:
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 3: Employer Physical Location Details</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Optional: Capture employer address location. Autocomplete will look up validated business coordinates.</p>
+        <h3 style="margin-bottom: 16px;">Step 3: Employer Address</h3>
         
         <div class="form-group" style="position: relative;">
           <label class="form-label">Employer Address Line 1</label>

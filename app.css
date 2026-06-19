@@ -827,7 +827,7 @@ button, input, select, textarea {
 
 .badge-success {
   background-color: var(--success-light);
-  color: var(--success);
+  color: #2e6600; /* Improved visibility & contrast */
 }
 
 .badge-warning {

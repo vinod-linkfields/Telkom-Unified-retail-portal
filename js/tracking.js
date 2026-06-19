@@ -87,7 +87,7 @@ export function renderOrderTracking() {
         <td><span class="badge ${o.status === 'Fulfilled' || o.status === 'Active' ? 'badge-success' : (o.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}">${o.status}</span></td>
         <td>
           <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
-          <button class="btn btn-sm btn-primary" onclick="downloadOrderReceipt('${o.orderRef}')" style="background-color: var(--telkom-blue); border-color: var(--telkom-blue);">Receipt</button>
+          <button class="btn btn-sm btn-success" onclick="downloadOrderReceipt('${o.orderRef}')">Receipt</button>
         </td>
       </tr>
     `);

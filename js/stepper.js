@@ -620,7 +620,6 @@ export function renderStepperCreditVetting(container) {
       if (!cv.depositPaid) {
         depositActionHtml = `
           <div style="margin-top: 12px;">
-            <p style="font-size: 12px; margin-bottom: 8px; font-weight:500;"><strong>Business Rule:</strong> Customer is required to pay a R 250.00 deposit before continuing.</p>
             <button class="btn btn-sm btn-outline" onclick="payCreditVettingDeposit()">Record Deposit Payment (R250)</button>
           </div>
         `;
