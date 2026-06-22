@@ -1,7 +1,6 @@
 import { APP_STATE, MOCK_DB } from './state.js';
 import { switchRoute, updateSidebarMenuOptions } from './routing.js';
-import { renderPaginatedRows, showToast, openModal, closeModal } from './utils.js';
-import { drawSVGDonutChart } from './reports.js';
+import { renderPaginatedRows, showToast, openModal, closeModal, drawSVGDonutChart } from './utils.js';
 
 export function renderAgentDashboard() {
   const recentOrders = APP_STATE.ordersList
@@ -111,7 +110,7 @@ export function renderAgentDashboard() {
   // Render Promotions & Best Sellers
   const promoContainer = document.getElementById('dashboard-promotions-list');
   if (promoContainer) {
-    const promoIds = ['p-dev-2', 'p-sim-2', 'p-broad-1'];
+    const promoIds = ['p-dev-2', 'p-sim-2', 'p-dev-1'];
     const promoProducts = promoIds.map(id => MOCK_DB.products.find(p => p.id === id)).filter(Boolean);
     
     promoContainer.innerHTML = promoProducts.map(p => {
@@ -309,73 +308,203 @@ export function renderAdminDashboard() {
   }
 }
 
+export function closeProductDrawer(event) {
+  if (event) event.preventDefault();
+  const drawer = document.getElementById('product-details-drawer');
+  if (!drawer) return;
+  const content = drawer.querySelector('.drawer-content');
+  if (content) {
+    content.style.animation = 'slideOutRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+    setTimeout(() => {
+      drawer.style.display = 'none';
+      content.style.animation = '';
+    }, 280);
+  } else {
+    drawer.style.display = 'none';
+  }
+}
+
 export function showProductDetails(productId) {
   const p = MOCK_DB.products.find(prod => prod.id === productId);
   if (!p) return;
   
-  document.getElementById('product-details-modal-title').innerText = p.name;
+  const titleEl = document.getElementById('product-details-drawer-title');
+  if (titleEl) titleEl.innerText = p.name;
   
-  let specsHtml = `
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px;">
-        <span style="font-weight: 600; color: var(--text-secondary);">Category</span>
-        <span style="color: var(--text-primary); font-weight: 700;">${p.category}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px;">
-        <span style="font-weight: 600; color: var(--text-secondary);">Deal ID</span>
-        <span style="font-family: monospace; color: var(--telkom-blue-dark); font-weight: 700;">${p.dealId}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px;">
-        <span style="font-weight: 600; color: var(--text-secondary);">Contract Term</span>
-        <span style="color: var(--text-primary); font-weight: 700;">${p.term || 24} Months</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px;">
-        <span style="font-weight: 600; color: var(--text-secondary);">Allocations / Specs</span>
-        <span style="color: var(--text-primary); text-align: right; max-width: 60%; font-weight: 600;">${p.allocation}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px;">
-        <span style="font-weight: 600; color: var(--text-secondary);">Once-off Fee</span>
-        <span style="color: var(--text-primary); font-weight: 700;">R ${p.onceOff}</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; padding-bottom: 6px; font-size: 13px;">
-        <span style="font-weight: 600; color: var(--text-secondary);">Monthly Charge</span>
-        <span style="color: var(--text-primary); font-weight: 800; font-size: 15px;">R ${p.price} /mo</span>
-      </div>
-  `;
+  let display = "N/A";
+  let storage = "N/A";
+  let dataBundle = "N/A";
+  let contractDuration = `${p.term || 24} Months`;
+  let battery = "N/A";
+  let highlights = [];
+  let accessories = [];
+  let imageSvg = "";
   
-  if (p.deviceInfo) {
-    specsHtml += `
-      <div style="margin-top: 10px; background-color: var(--bg-light); padding: 12px; border-radius: var(--radius-md); border-left: 4px solid var(--telkom-blue);">
-        <strong style="display: block; font-size: 11px; color: var(--telkom-blue-dark); margin-bottom: 6px; text-transform: uppercase;">Device Specifications</strong>
-        <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px;">
-          <span>Make:</span>
-          <strong>${p.deviceInfo.make}</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 4px;">
-          <span>Model:</span>
-          <strong>${p.deviceInfo.model}</strong>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 12.5px;">
-          <span>Default Color:</span>
-          <strong>${p.deviceInfo.colour}</strong>
-        </div>
-      </div>
+  if (p.id === 'p-sim-1') {
+    display = "N/A";
+    storage = "N/A";
+    dataBundle = "Unlimited @ 10Mbps";
+    highlights = ["Unlimited LTE Data", "100 Voice Minutes", "Free SIM Card & RICA"];
+    accessories = ["SIM card ejector", "Telkom welcome kit"];
+    imageSvg = `
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="10" width="70" height="80" rx="8" fill="var(--info-light)" stroke="var(--telkom-blue)" stroke-width="3"/>
+        <path d="M85 25 L70 10 L15 10 C11.7 10 9 12.7 9 16 L9 84 C9 87.3 11.7 90 15 90 L85 90 C88.3 90 91 87.3 91 84 L91 26 L85 25 Z" fill="var(--telkom-blue-light)" stroke="var(--telkom-blue)" stroke-width="3"/>
+        <rect x="25" y="40" width="40" height="30" rx="3" fill="#F4D03F" stroke="#D4AC0D" stroke-width="2"/>
+        <line x1="35" y1="40" x2="35" y2="70" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="45" y1="40" x2="45" y2="70" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="55" y1="40" x2="55" y2="70" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="25" y1="50" x2="65" y2="50" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="25" y1="60" x2="65" y2="60" stroke="#D4AC0D" stroke-width="1.5"/>
+      </svg>
+    `;
+  } else if (p.id === 'p-sim-2') {
+    display = "N/A";
+    storage = "N/A";
+    dataBundle = "10GB Data";
+    highlights = ["10GB High-speed LTE", "50 Voice Minutes", "100 SMSs included"];
+    accessories = ["SIM card ejector", "Telkom sticker pack"];
+    imageSvg = `
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M85 25 L70 10 L15 10 C11.7 10 9 12.7 9 16 L9 84 C9 87.3 11.7 90 15 90 L85 90 C88.3 90 91 87.3 91 84 L91 26 L85 25 Z" fill="#E8F8F5" stroke="#1ABC9C" stroke-width="3"/>
+        <rect x="25" y="40" width="40" height="30" rx="3" fill="#F4D03F" stroke="#D4AC0D" stroke-width="2"/>
+        <line x1="35" y1="40" x2="35" y2="70" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="45" y1="40" x2="45" y2="70" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="55" y1="40" x2="55" y2="70" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="25" y1="50" x2="65" y2="50" stroke="#D4AC0D" stroke-width="1.5"/>
+        <line x1="25" y1="60" x2="65" y2="60" stroke="#D4AC0D" stroke-width="1.5"/>
+      </svg>
+    `;
+  } else if (p.id === 'p-dev-1') {
+    display = "6.2 inches OLED";
+    storage = "128GB";
+    dataBundle = "10GB Data";
+    battery = "4000 mAh";
+    highlights = ["50MP Triple Camera with AI Zoom", "Super Fast charging 2.0", "Water & Dust Resistant (IP68)", "Exynos 2400 Deca-Core Processor"];
+    accessories = ["USB-C Charge Cable", "Silicon Protective Case", "Quick Start Guide"];
+    imageSvg = `
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="8" width="50" height="84" rx="10" fill="#2C3E50" stroke="#BDC3C7" stroke-width="3"/>
+        <rect x="28" y="11" width="44" height="78" rx="8" fill="#1C2833"/>
+        <circle cx="50" cy="15" r="2" fill="#5D6D7E"/>
+        <rect x="42" y="86" width="16" height="2" rx="1" fill="#BDC3C7"/>
+      </svg>
+    `;
+  } else if (p.id === 'p-dev-2') {
+    display = "6.7 inches Super Retina";
+    storage = "256GB";
+    dataBundle = "20GB Data";
+    battery = "4441 mAh";
+    highlights = ["Titanium Design & Action Button", "48MP Main Camera (5x Telephoto)", "A17 Pro chip with 6-core GPU", "Ceramic Shield front cover"];
+    accessories = ["USB-C Woven Charge Cable", "Clear Magsafe Case", "Apple Sticker"];
+    imageSvg = `
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="8" width="50" height="84" rx="12" fill="#1B2631" stroke="#AEB6BF" stroke-width="3"/>
+        <rect x="28" y="11" width="44" height="78" rx="10" fill="#0E1621"/>
+        <rect x="42" y="14" width="16" height="4" rx="2" fill="#000000"/>
+        <circle cx="45" cy="16" r="1.2" fill="#1A5276"/>
+      </svg>
+    `;
+  } else {
+    imageSvg = `
+      <svg width="80" height="80" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="20" width="60" height="60" rx="8" fill="var(--bg-light)" stroke="var(--border-color)" stroke-width="2"/>
+        <path d="M35 50 L45 60 L65 40" stroke="var(--telkom-blue)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     `;
   }
   
-  specsHtml += `</div>`;
+  let specsHtml = `
+    <div style="display: flex; gap: 20px; align-items: center; background: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); margin-bottom: 24px;">
+      <div style="flex-shrink: 0; background: white; padding: 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
+        ${imageSvg}
+      </div>
+      <div style="flex: 1;">
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <span class="badge badge-success" style="font-size: 10px; font-weight: 700;">BEST SELLER</span>
+          ${p.promo ? `<span class="badge badge-warning" style="font-size: 10px; font-weight: 700; background-color: var(--warning-light); color: var(--warning);">PROMO</span>` : ''}
+        </div>
+        <h3 style="font-size: 18px; margin: 0 0 4px 0; color: var(--telkom-blue-dark); font-family: var(--font-display);">${p.name}</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">
+          Category: <strong>${p.category}</strong>
+        </p>
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <span style="font-size: 22px; font-weight: 800; color: var(--text-primary);">R ${p.price}</span>
+          <span style="font-size: 12px; color: var(--text-muted);">/mo x ${p.term || 24} months</span>
+        </div>
+        ${p.onceOff > 0 ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Once-off fee: <strong>R ${p.onceOff}</strong></div>` : ''}
+      </div>
+    </div>
+    
+    <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 12px;">Key Specifications</h4>
+    <div class="spec-cards-grid">
+      <div class="spec-card">
+        <span class="spec-card-label">Display</span>
+        <span class="spec-card-value">${display}</span>
+      </div>
+      <div class="spec-card">
+        <span class="spec-card-label">Storage</span>
+        <span class="spec-card-value">${storage}</span>
+      </div>
+      <div class="spec-card">
+        <span class="spec-card-label">Data Bundle</span>
+        <span class="spec-card-value">${dataBundle}</span>
+      </div>
+      <div class="spec-card">
+        <span class="spec-card-label">Contract Term</span>
+        <span class="spec-card-value">${contractDuration}</span>
+      </div>
+      ${battery !== "N/A" ? `
+      <div class="spec-card">
+        <span class="spec-card-label">Battery Capacity</span>
+        <span class="spec-card-value">${battery}</span>
+      </div>
+      ` : ''}
+      <div class="spec-card">
+        <span class="spec-card-label">Deal ID</span>
+        <span class="spec-card-value" style="font-family: monospace; font-size: 11px;">${p.dealId}</span>
+      </div>
+    </div>
+    
+    ${highlights.length > 0 ? `
+    <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 8px; margin-top: 16px;">Key Highlights</h4>
+    <ul class="highlights-list">
+      ${highlights.map(h => `
+        <li class="highlight-item">
+          <span class="highlight-icon-check">✓</span>
+          <span>${h}</span>
+        </li>
+      `).join('')}
+    </ul>
+    ` : ''}
+    
+    ${accessories.length > 0 ? `
+    <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 8px; margin-top: 16px;">Included in the box</h4>
+    <div class="accessories-container">
+      ${accessories.map(a => `<span class="accessory-tag">${a}</span>`).join('')}
+    </div>
+    ` : ''}
+  `;
   
-  document.getElementById('product-details-modal-body').innerHTML = specsHtml;
+  const bodyEl = document.getElementById('product-details-drawer-body');
+  if (bodyEl) bodyEl.innerHTML = specsHtml;
   
-  const ctaBtn = document.getElementById('product-details-modal-cta');
+  const ctaBtn = document.getElementById('product-details-drawer-cta');
   if (ctaBtn) {
-    ctaBtn.onclick = function() {
-      closeModal('product-details-modal');
+    ctaBtn.onclick = function(e) {
+      closeProductDrawer(e);
       window.selectProductForStepper(p.id);
     };
   }
   
-  openModal('product-details-modal');
+  const drawer = document.getElementById('product-details-drawer');
+  if (drawer) {
+    drawer.style.display = 'flex';
+    const content = drawer.querySelector('.drawer-content');
+    if (content) {
+      content.style.animation = 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+    }
+  }
 }
 
 // Bind to window for UAT toggle handlers and inline HTML dashboard updates
@@ -385,6 +514,7 @@ window.renderAreaDashboard = renderAreaDashboard;
 window.renderAdminDashboard = renderAdminDashboard;
 window.handleUatRoleChange = handleUatRoleChange;
 window.showProductDetails = showProductDetails;
+window.closeProductDrawer = closeProductDrawer;
 
 export function handleUatRoleChange() {
   const role = document.getElementById('uat-role').value;

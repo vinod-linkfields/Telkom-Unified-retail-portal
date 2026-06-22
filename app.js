@@ -15,7 +15,8 @@ import {
   closeModal,
   updateNotificationsBadge,
   maskID,
-  maskPassport
+  maskPassport,
+  drawSVGDonutChart
 } from './js/utils.js';
 
 import {
@@ -154,7 +155,6 @@ import {
   getFilteredReportData,
   getFilteredReportDataByDates,
   drawSVGLineChart,
-  drawSVGDonutChart,
   renderLeaderboardChart,
   generateActionableInsights,
   renderReports,

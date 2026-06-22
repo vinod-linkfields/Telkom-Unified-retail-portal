@@ -302,9 +302,34 @@
             </div>
           </div>
 
+          <!-- Promotions & best sellers (Full-Width) -->
+          <div class="panel" style="margin-bottom: 20px;">
+            <div class="panel-header">
+              <span class="panel-title">Promotions & best sellers</span>
+            </div>
+            <div class="panel-body" style="padding: 20px;">
+              <div id="dashboard-promotions-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+                <!-- Best Selling Products Rendered here -->
+              </div>
+            </div>
+          </div>
+
           <div class="layout-2col">
             <!-- Left Column -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
+              <!-- Top products this week -->
+              <div class="panel">
+                <div class="panel-header">
+                  <span class="panel-title">Top products this week</span>
+                </div>
+                <div class="panel-body" style="padding: 20px;">
+                  <div id="dashboard-top-products-container" style="display: flex; flex-direction: column; gap: 14px;">
+                    <!-- Leaderboard of top products -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- My Recent Order Transactions -->
               <div class="panel">
                 <div class="panel-header">
                   <span class="panel-title">My Recent Order Transactions</span>
@@ -326,30 +351,6 @@
                         <!-- Rendered dynamically -->
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Promotions & best sellers -->
-              <div class="panel">
-                <div class="panel-header">
-                  <span class="panel-title">Promotions & best sellers</span>
-                </div>
-                <div class="panel-body" style="padding: 20px;">
-                  <div id="dashboard-promotions-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-                    <!-- Best Selling Products Rendered here -->
-                  </div>
-                </div>
-              </div>
-
-              <!-- Top products this week -->
-              <div class="panel">
-                <div class="panel-header">
-                  <span class="panel-title">Top products this week</span>
-                </div>
-                <div class="panel-body" style="padding: 20px;">
-                  <div id="dashboard-top-products-container" style="display: flex; flex-direction: column; gap: 14px;">
-                    <!-- Leaderboard of top products -->
                   </div>
                 </div>
               </div>
@@ -901,7 +902,7 @@
           <div class="screen-header">
             <div>
               <h2>Telkom Product Catalogue</h2>
-              <p class="screen-title-desc">Select customer contracts from available mobile data, postpaid contracts, and Exlight broadband fiber.</p>
+              <p class="screen-title-desc">Select customer contracts from available mobile data and postpaid contracts.</p>
             </div>
           </div>
 
@@ -926,10 +927,6 @@
                 <label class="filter-option">
                   <input type="checkbox" class="filter-type-checkbox" value="Handset contracts" onchange="renderCatalogue()" checked>
                   <span>Handset Contracts</span>
-                </label>
-                <label class="filter-option">
-                  <input type="checkbox" class="filter-type-checkbox" value="Exlight broadband plans" onchange="renderCatalogue()" checked>
-                  <span>Exlight Broadband</span>
                 </label>
               </div>
 
@@ -1311,7 +1308,6 @@
                     <option value="store_performance">Store Revenue & Performance Comparison</option>
                     <option value="stock_status">Stock Request Status & Ageing Trends</option>
                     <option value="payment_status">Payment Transaction Status & Failures</option>
-                    <option value="fixed_line">Fixed-line Coverage Outcome Analytics</option>
                   </select>
                 </div>
                 
@@ -1455,7 +1451,6 @@
                       <option value="store_performance">Store Performance Logs</option>
                       <option value="stock_status">Stock Request Lifecycle Logs</option>
                       <option value="payment_status">Payment Transaction Logs</option>
-                      <option value="fixed_line">Fixed-line Coverage Outcome Logs</option>
                     </select>
                   </div>
                   
@@ -2151,6 +2146,23 @@
       <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color);">
         <button class="btn btn-secondary" onclick="closeModal('product-details-modal')">Close</button>
         <button class="btn btn-primary" id="product-details-modal-cta">Start Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAWER: Product Details Slider -->
+  <div class="drawer-overlay" id="product-details-drawer" style="display: none;" onclick="closeProductDrawer(event)">
+    <div class="drawer-content" onclick="event.stopPropagation()">
+      <div class="drawer-header">
+        <h4 class="drawer-title" id="product-details-drawer-title">Product Details</h4>
+        <button class="drawer-close" onclick="closeProductDrawer(event)">&times;</button>
+      </div>
+      <div class="drawer-body" id="product-details-drawer-body">
+        <!-- Dynamically rendered specifications -->
+      </div>
+      <div class="drawer-footer">
+        <button class="btn btn-secondary" onclick="closeProductDrawer(event)" style="flex: 1;">Close</button>
+        <button class="btn btn-primary" id="product-details-drawer-cta" style="flex: 1;">Start Order</button>
       </div>
     </div>
   </div>

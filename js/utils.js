@@ -200,3 +200,64 @@ export function paginateExistingTable(tbody, options = {}) {
 // Bind modal utilities to window for inline onclick handlers
 window.openModal = openModal;
 window.closeModal = closeModal;
+
+// Draw Donut Chart
+export function drawSVGDonutChart(containerId, segmentData) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  const width = 150;
+  const height = 150;
+  const radius = 50;
+  const cx = width / 2;
+  const cy = height / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  const total = segmentData.reduce((sum, item) => sum + item.value, 0);
+
+  if (total === 0) {
+    container.innerHTML = `
+      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+        <circle cx="${cx}" cy="${cy}" r="${radius}" class="svg-donut-circle-bg" stroke-width="20" fill="none" stroke="var(--border-color)" />
+        <text class="svg-donut-text-val" x="${cx}" y="${cy}">0</text>
+        <text class="svg-donut-text-lbl" x="${cx}" y="${cy + 18}">Records</text>
+      </svg>
+    `;
+    return;
+  }
+
+  let currentOffset = 0;
+  let segmentHtml = '';
+
+  segmentData.forEach(seg => {
+    const pct = seg.value / total;
+    const strokeDash = pct * circumference;
+    const offset = circumference - currentOffset;
+    
+    segmentHtml += `
+      <circle cx="${cx}" cy="${cy}" r="${radius}" 
+              class="svg-donut-segment" 
+              stroke="${seg.color}"
+              stroke-width="20"
+              fill="none"
+              stroke-dasharray="${strokeDash} ${circumference - strokeDash}"
+              stroke-dashoffset="${offset}"
+              transform="rotate(-90 ${cx} ${cy})">
+        <title>${seg.label}: ${seg.value} (${Math.round(pct * 100)}%)</title>
+      </circle>
+    `;
+    
+    currentOffset += strokeDash;
+  });
+
+  const svg = `
+    <svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">
+      <circle cx="${cx}" cy="${cy}" r="${radius}" class="svg-donut-circle-bg" stroke-width="20" fill="none" stroke="var(--border-color)" />
+      ${segmentHtml}
+      <text class="svg-donut-text-val" x="${cx}" y="${cy - 3}">${total}</text>
+      <text class="svg-donut-text-lbl" x="${cx}" y="${cy + 18}">Total</text>
+    </svg>
+  `;
+
+  container.innerHTML = svg;
+}

@@ -20,9 +20,8 @@ export function getActiveStepsForProduct(product) {
   ];
   
   if (product) {
-    const needsGis = product.category === 'Exlight broadband plans';
     const needsStock = !!product.deviceSKU;
-    if (!needsGis && !needsStock) {
+    if (!needsStock) {
       return steps.filter(s => s.id !== 1);
     }
   }
@@ -97,16 +96,14 @@ export function renderStepper() {
   }
 
   switch (APP_STATE.currentStep) {
-    case 1: // Coverage Check (Fixed Line) or Stock Check (Handset)
-      if (product.category === 'Exlight broadband plans') {
-        renderStepperCoverageCheck(stepContainer);
-      } else if (product.deviceSKU) {
+    case 1: // Stock Check (Handset)
+      if (product.deviceSKU) {
         renderStepperStockCheck(stepContainer);
       } else {
         stepContainer.innerHTML = `
           <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Availability Verification")}</h3>
           <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
-            Verification Skip: SIM-Only contracts do not require device stock allocation or GIS check. Please proceed.
+            Verification Skip: SIM-Only contracts do not require device stock allocation. Please proceed.
           </div>
         `;
       }
@@ -352,10 +349,7 @@ export function linkCustomerInStepper(idVal, type) {
       timestamp: new Date().toISOString(),
       notes: ""
     };
-    
-    if (APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans') {
-      simulateGisAddressCheck();
-    }
+
 
     showToast(`Linked customer: ${cust.name}`, "success");
     renderStepper();
@@ -1131,61 +1125,32 @@ export function renderStepperStockCheck(container) {
 }
 
 export function renderStepperContractDetails(container, product) {
-  if (product.category === 'Exlight broadband plans') {
-    container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(7, "Capture Installation & Delivery Contact Details")}</h3>
-      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">OMS requires physical contact metrics to assign field technicians.</p>
-      
-      <div class="form-group">
-        <label class="form-label">Physical Installation Address</label>
-        <input type="text" class="form-control" value="${APP_STATE.selectedCustomer.address}" disabled>
-      </div>
+  container.innerHTML = `
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(7, "Capture Mobile Line & SIM Configuration")}</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Configure SIM connection parameters for cell provisioning.</p>
+    
+    <div class="form-group">
+      <label class="form-label">SIM Type Option <span class="required">*</span></label>
+      <select id="mobile-sim-type" class="form-control" onchange="updateContractDetailsState()">
+        <option value="eSIM" ${APP_STATE.cart.contractDetails.simType === 'eSIM' ? 'selected' : ''}>eSIM (Instant QR Provisioning)</option>
+        <option value="Physical SIM" ${APP_STATE.cart.contractDetails.simType === 'Physical SIM' ? 'selected' : ''}>Standard Physical Nano SIM</option>
+      </select>
+    </div>
 
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Installation Contact Name <span class="required">*</span></label>
-          <input type="text" id="billing-contact-name" class="form-control" placeholder="Enter contact name..." value="${APP_STATE.cart.contractDetails.installationContactName || APP_STATE.selectedCustomer.name}" oninput="updateContractDetailsState()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Installation Contact Number <span class="required">*</span></label>
-          <input type="text" id="billing-contact-phone" class="form-control" placeholder="e.g. 0821234567" value="${APP_STATE.cart.contractDetails.installationContactPhone || APP_STATE.selectedCustomer.mobile}" oninput="updateContractDetailsState()">
-        </div>
-      </div>
+    <div class="form-group" style="margin-top: 12px;">
+      <label class="form-label">Mobile Number Routing <span class="required">*</span></label>
+      <select id="mobile-number-opt" class="form-control" onchange="updateContractDetailsState()">
+        <option value="New Number" ${APP_STATE.cart.contractDetails.numberOption === 'New Number' ? 'selected' : ''}>Provision New Telkom MSISDN</option>
+        <option value="Port In" ${APP_STATE.cart.contractDetails.numberOption === 'Port In' ? 'selected' : ''}>Port existing number from CellC/Vodacom/MTN</option>
+      </select>
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">Preferred Installation Date</label>
-        <input type="date" id="billing-install-date" class="form-control" value="${APP_STATE.cart.contractDetails.preferredInstallationDate || ''}" onchange="updateContractDetailsState()">
-        <div class="input-helper">Dates must not be in the past.</div>
-      </div>
-    `;
-  } else {
-    container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(7, "Capture Mobile Line & SIM Configuration")}</h3>
-      <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Configure SIM connection parameters for cell provisioning.</p>
-      
-      <div class="form-group">
-        <label class="form-label">SIM Type Option <span class="required">*</span></label>
-        <select id="mobile-sim-type" class="form-control" onchange="updateContractDetailsState()">
-          <option value="eSIM" ${APP_STATE.cart.contractDetails.simType === 'eSIM' ? 'selected' : ''}>eSIM (Instant QR Provisioning)</option>
-          <option value="Physical SIM" ${APP_STATE.cart.contractDetails.simType === 'Physical SIM' ? 'selected' : ''}>Standard Physical Nano SIM</option>
-        </select>
-      </div>
-
-      <div class="form-group" style="margin-top: 12px;">
-        <label class="form-label">Mobile Number Routing <span class="required">*</span></label>
-        <select id="mobile-number-opt" class="form-control" onchange="updateContractDetailsState()">
-          <option value="New Number" ${APP_STATE.cart.contractDetails.numberOption === 'New Number' ? 'selected' : ''}>Provision New Telkom MSISDN</option>
-          <option value="Port In" ${APP_STATE.cart.contractDetails.numberOption === 'Port In' ? 'selected' : ''}>Port existing number from CellC/Vodacom/MTN</option>
-        </select>
-      </div>
-
-      <div class="form-group" id="port-in-wrapper" style="display: ${APP_STATE.cart.contractDetails.numberOption === 'Port In' ? 'block' : 'none'}; margin-top: 12px;">
-        <label class="form-label">Number to Port <span class="required">*</span></label>
-        <input type="text" id="mobile-port-number" class="form-control" placeholder="e.g. 082 123 4567" value="${APP_STATE.cart.contractDetails.portInNumber || ''}" oninput="updateContractDetailsState()">
-        <div class="input-helper">Please ensure port forms are signed.</div>
-      </div>
-    `;
-  }
+    <div class="form-group" id="port-in-wrapper" style="display: ${APP_STATE.cart.contractDetails.numberOption === 'Port In' ? 'block' : 'none'}; margin-top: 12px;">
+      <label class="form-label">Number to Port <span class="required">*</span></label>
+      <input type="text" id="mobile-port-number" class="form-control" placeholder="e.g. 082 123 4567" value="${APP_STATE.cart.contractDetails.portInNumber || ''}" oninput="updateContractDetailsState()">
+      <div class="input-helper">Please ensure port forms are signed.</div>
+    </div>
+  `;
 }
 
 // -----------------------------------------
@@ -1196,11 +1161,6 @@ export function renderStepperReviewChecklist(container) {
   const interactionValid = !!APP_STATE.activeCIMInteraction && APP_STATE.activeCIMInteraction.notes.trim().length >= 10;
   const productValid = !!APP_STATE.cart.product;
   
-  let coverageValid = true;
-  if (APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans') {
-    coverageValid = APP_STATE.cart.gisStatus === 'Coverage available';
-  }
-
   let stockValid = true;
   if (APP_STATE.cart.product && APP_STATE.cart.product.deviceSKU) {
     stockValid = APP_STATE.cart.stockChecked && APP_STATE.cart.stockStatus === 'In Stock';
@@ -1229,9 +1189,7 @@ export function renderStepperReviewChecklist(container) {
     }
   }
 
-  const detailsValid = APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans' ?
-    (!!APP_STATE.cart.contractDetails.installationContactName && !!APP_STATE.cart.contractDetails.installationContactPhone) : true;
-  
+  const detailsValid = true;
   const consentValid = APP_STATE.cart.consent;
 
   let docsValid = false;
@@ -1248,7 +1206,7 @@ export function renderStepperReviewChecklist(container) {
   }
 
   const roleValid = APP_STATE.currentUser.role === 'agent' || APP_STATE.currentUser.role === 'manager';
-  const submissionAllowed = customerValid && interactionValid && productValid && coverageValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
+  const submissionAllowed = customerValid && interactionValid && productValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
 
   container.innerHTML = `
     <h3 style="margin-bottom: 16px;">${getStepperStepTitle(10, "Final Validation Checklist")}</h3>
@@ -1278,16 +1236,6 @@ export function renderStepperReviewChecklist(container) {
         </div>
         <span class="badge ${productValid ? 'badge-success' : 'badge-danger'}">${productValid ? 'Pass' : 'Fail'}</span>
       </div>
-
-      ${APP_STATE.cart.product && APP_STATE.cart.product.category === 'Exlight broadband plans' ? `
-      <div class="checklist-item ${coverageValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${coverageValid ? 'pass' : 'fail'}">${coverageValid ? '✓' : '✗'}</div>
-          <div><strong>GIS fixed line coverage check</strong> - Required for Exlight broadband.</div>
-        </div>
-        <span class="badge ${coverageValid ? 'badge-success' : 'badge-danger'}">${coverageValid ? 'Pass' : 'Fail'}</span>
-      </div>
-      ` : ''}
 
       ${APP_STATE.cart.product && APP_STATE.cart.product.deviceSKU ? `
       <div class="checklist-item ${stockValid ? 'pass' : 'fail'}">
@@ -1436,12 +1384,7 @@ export function selectProductForStepper(prodId) {
 
   const p = MOCK_DB.products.find(prod => prod.id === prodId);
   if (p) {
-    if (p.category === 'Exlight broadband plans') {
-      APP_STATE.cart.gisStatus = "Not checked";
-      APP_STATE.cart.gisRef = "";
-    } else {
-      APP_STATE.cart.gisStatus = "Skip";
-    }
+    APP_STATE.cart.gisStatus = "Skip";
 
     if (p.deviceSKU) {
       APP_STATE.cart.stockChecked = false;
@@ -1492,23 +1435,8 @@ export function handleStepperBack() {
 export function handleStepperNext() {
   const step = APP_STATE.currentStep;
 
-  // Validate Step 1: Check Availability
   if (step === 1) {
-    if (APP_STATE.cart.product.category === 'Exlight broadband plans') {
-      const tempAddrInput = document.getElementById('stepper-temp-address');
-      if (tempAddrInput) {
-        APP_STATE.cart.tempCoverageAddress = tempAddrInput.value.trim();
-      }
-      const addr = APP_STATE.selectedCustomer ? APP_STATE.selectedCustomer.address : APP_STATE.cart.tempCoverageAddress;
-      if (!addr || addr.trim().length === 0) {
-        showToast("Please enter a service address.", "warning");
-        return;
-      }
-      if (APP_STATE.cart.gisStatus !== 'Coverage available') {
-        showToast("GIS check must return 'Coverage available' to proceed.", "warning");
-        return;
-      }
-    } else if (APP_STATE.cart.product.deviceSKU) {
+    if (APP_STATE.cart.product.deviceSKU) {
       if (!APP_STATE.cart.stockChecked || APP_STATE.cart.stockStatus !== 'In Stock') {
         showToast("Device stock must be locked and verified available to proceed.", "warning");
         return;
@@ -1568,31 +1496,18 @@ export function handleStepperNext() {
 
   // Validate Step 7: Connection details
   if (step === 7) {
-    const p = APP_STATE.cart.product;
-    if (p.category === 'Exlight broadband plans') {
-      const name = document.getElementById('billing-contact-name').value.trim();
-      const phone = document.getElementById('billing-contact-phone').value.trim();
-      if (!name || !phone) {
-        showToast("Please complete all mandatory installation contact fields.", "warning");
+    const simType = document.getElementById('mobile-sim-type').value;
+    const numOpt = document.getElementById('mobile-number-opt').value;
+    APP_STATE.cart.contractDetails.simType = simType;
+    APP_STATE.cart.contractDetails.numberOption = numOpt;
+    
+    if (numOpt === 'Port In') {
+      const portNum = document.getElementById('mobile-port-number').value.trim();
+      if (!portNum) {
+        showToast("Port in phone number must be supplied.", "warning");
         return;
       }
-      APP_STATE.cart.contractDetails.installationContactName = name;
-      APP_STATE.cart.contractDetails.installationContactPhone = phone;
-      APP_STATE.cart.contractDetails.preferredInstallationDate = document.getElementById('billing-install-date').value;
-    } else {
-      const simType = document.getElementById('mobile-sim-type').value;
-      const numOpt = document.getElementById('mobile-number-opt').value;
-      APP_STATE.cart.contractDetails.simType = simType;
-      APP_STATE.cart.contractDetails.numberOption = numOpt;
-      
-      if (numOpt === 'Port In') {
-        const portNum = document.getElementById('mobile-port-number').value.trim();
-        if (!portNum) {
-          showToast("Port in phone number must be supplied.", "warning");
-          return;
-        }
-        APP_STATE.cart.contractDetails.portInNumber = portNum;
-      }
+      APP_STATE.cart.contractDetails.portInNumber = portNum;
     }
   }
 
@@ -1652,24 +1567,17 @@ export function updateCIMNotesCount() {
 }
 
 export function updateContractDetailsState() {
-  const p = APP_STATE.cart.product;
-  if (p.category === 'Exlight broadband plans') {
-    APP_STATE.cart.contractDetails.installationContactName = document.getElementById('billing-contact-name').value;
-    APP_STATE.cart.contractDetails.installationContactPhone = document.getElementById('billing-contact-phone').value;
-    APP_STATE.cart.contractDetails.preferredInstallationDate = document.getElementById('billing-install-date').value;
+  APP_STATE.cart.contractDetails.simType = document.getElementById('mobile-sim-type').value;
+  const numOpt = document.getElementById('mobile-number-opt').value;
+  APP_STATE.cart.contractDetails.numberOption = numOpt;
+  
+  const portEl = document.getElementById('port-in-wrapper');
+  if (numOpt === 'Port In') {
+    if (portEl) portEl.style.display = 'block';
+    APP_STATE.cart.contractDetails.portInNumber = document.getElementById('mobile-port-number').value;
   } else {
-    APP_STATE.cart.contractDetails.simType = document.getElementById('mobile-sim-type').value;
-    const numOpt = document.getElementById('mobile-number-opt').value;
-    APP_STATE.cart.contractDetails.numberOption = numOpt;
-    
-    const portEl = document.getElementById('port-in-wrapper');
-    if (numOpt === 'Port In') {
-      if (portEl) portEl.style.display = 'block';
-      APP_STATE.cart.contractDetails.portInNumber = document.getElementById('mobile-port-number').value;
-    } else {
-      if (portEl) portEl.style.display = 'none';
-      APP_STATE.cart.contractDetails.portInNumber = '';
-    }
+    if (portEl) portEl.style.display = 'none';
+    APP_STATE.cart.contractDetails.portInNumber = '';
   }
 }
 

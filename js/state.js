@@ -90,9 +90,7 @@ export const MOCK_DB = {
     { id: "p-sim-1", category: "SIM-only", name: "Infinite Pay-Month SIM Only", type: "Mobile", price: 199, onceOff: 99, term: 24, allocation: "Unlimited Data @ 10Mbps, 100 Mins", promo: false, dealId: "DEAL-SIM-01" },
     { id: "p-sim-2", category: "SIM-only", name: "Flexi SIM 10GB Promo", type: "Mobile", price: 99, onceOff: 99, term: 12, allocation: "10GB Data, 50 Mins, 100 SMSs", promo: true, dealId: "DEAL-SIM-02" },
     { id: "p-dev-1", category: "Handset contracts", name: "Samsung Galaxy S24 Contract", type: "Mobile", price: 699, onceOff: 199, term: 24, allocation: "Samsung S24, 10GB Data, 100 Mins", deviceSKU: "SKU-S24-128", promo: false, dealId: "DEAL-S24-24", deviceInfo: { name: "Samsung Galaxy S24", make: "Samsung", model: "Galaxy S24 128GB", colour: "Phantom Black" } },
-    { id: "p-dev-2", category: "Handset contracts", name: "iPhone 15 Pro Max Contract", type: "Mobile", price: 999, onceOff: 499, term: 24, allocation: "iPhone 15 Pro Max 256GB, 20GB Data, 200 Mins", deviceSKU: "SKU-IP15-256", promo: true, dealId: "DEAL-IP15-24", deviceInfo: { name: "iPhone 15 Pro Max", make: "Apple", model: "iPhone 15 Pro Max 256GB", colour: "Natural Titanium" } },
-    { id: "p-broad-1", category: "Exlight broadband plans", name: "Exlight Broadband 50Mbps", type: "Fixed Line", price: 499, onceOff: 0, term: 24, allocation: "50/25 Mbps Unlimited Fiber, Free Router & Install", promo: false, dealId: "DEAL-FIB-50" },
-    { id: "p-broad-2", category: "Exlight broadband plans", name: "Exlight Ultra 100Mbps", type: "Fixed Line", price: 699, onceOff: 0, term: 24, allocation: "100/50 Mbps Unlimited Fiber, Free Router & Install", promo: false, dealId: "DEAL-FIB-100" }
+    { id: "p-dev-2", category: "Handset contracts", name: "iPhone 15 Pro Max Contract", type: "Mobile", price: 999, onceOff: 499, term: 24, allocation: "iPhone 15 Pro Max 256GB, 20GB Data, 200 Mins", deviceSKU: "SKU-IP15-256", promo: true, dealId: "DEAL-IP15-24", deviceInfo: { name: "iPhone 15 Pro Max", make: "Apple", model: "iPhone 15 Pro Max 256GB", colour: "Natural Titanium" } }
   ],
 
   // GIS Coverage Check Coordinates
@@ -280,9 +278,6 @@ export function generateMockData() {
     }
 
     let coverage = "N/A";
-    if (prod.category === "Exlight broadband plans") {
-      coverage = coverageOutcomesList[i % coverageOutcomesList.length];
-    }
 
     const handlingTime = 12 + (i * 13) % 35;
     const revenue = prod.price * (prod.term || 1) + prod.onceOff;

@@ -1,5 +1,5 @@
 import { APP_STATE } from './state.js';
-import { paginateExistingTable, showToast, openModal, closeModal } from './utils.js';
+import { paginateExistingTable, showToast, openModal, closeModal, drawSVGDonutChart } from './utils.js';
 import { downloadOrderReceipt } from './tracking.js';
 
 
@@ -148,65 +148,7 @@ export function drawSVGLineChart(containerId, dataPoints, labels) {
   container.innerHTML = svg;
 }
 
-// Draw Donut Chart
-export function drawSVGDonutChart(containerId, segmentData) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  
-  const width = 150;
-  const height = 150;
-  const radius = 50;
-  const cx = width / 2;
-  const cy = height / 2;
-  const circumference = 2 * Math.PI * radius;
 
-  const total = segmentData.reduce((sum, item) => sum + item.value, 0);
-
-  if (total === 0) {
-    container.innerHTML = `
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-        <circle cx="${cx}" cy="${cy}" r="${radius}" class="svg-donut-circle-bg" />
-        <text class="svg-donut-text-val" x="${cx}" y="${cy}">0</text>
-        <text class="svg-donut-text-lbl" x="${cx}" y="${cy + 18}">Records</text>
-      </svg>
-    `;
-    return;
-  }
-
-  let currentOffset = 0;
-  let segmentHtml = '';
-
-  segmentData.forEach(seg => {
-    const pct = seg.value / total;
-    const strokeDash = pct * circumference;
-    const offset = circumference - currentOffset;
-    
-    segmentHtml += `
-      <circle cx="${cx}" cy="${cy}" r="${radius}" 
-              class="svg-donut-segment" 
-              stroke="${seg.color}"
-              stroke-dasharray="${strokeDash} ${circumference - strokeDash}"
-              stroke-dashoffset="${offset}"
-              transform="rotate(-90 ${cx} ${cy})">
-        <title>${seg.label}: ${seg.value} (${Math.round(pct * 100)}%)</title>
-      </circle>
-    `;
-    
-    currentOffset += strokeDash;
-  });
-
-  const svg = `
-    <svg width="100%" height="100%" viewBox="0 0 \dots \dots">
-      <circle cx="${cx}" cy="${cy}" r="${radius}" class="svg-donut-circle-bg" />
-      ${segmentHtml}
-      <text class="svg-donut-text-val" x="${cx}" y="${cy - 3}">${total}</text>
-      <text class="svg-donut-text-lbl" x="${cx}" y="${cy + 18}">Total</text>
-    </svg>
-  `;
-
-  // Workaround for literal replacement string issues
-  container.innerHTML = svg.replace('\\dots', width).replace('\\dots', height);
-}
 
 // Render Leaderboard Chart
 export function renderLeaderboardChart(containerId, items) {
@@ -678,42 +620,40 @@ export function renderReports() {
       }
     } else if (category === 'product_sales') {
       const orders = filtered;
-      const dataSales = orders.filter(o => o.type === 'Mobile Data');
-      const voiceSales = orders.filter(o => o.type === 'Mobile' || o.type === 'SIM-only');
-      const broadbandSales = orders.filter(o => o.type === 'Fixed Line');
+      const dataSales = orders.filter(o => o.productCategory === 'Handset contracts');
+      const voiceSales = orders.filter(o => o.productCategory === 'SIM-only');
 
       if (kpiGrid) {
         kpiGrid.innerHTML = `
           <div class="metric-card">
-            <div class="metric-title">Broadband Fiber</div>
+            <div class="metric-title">Handset Contracts</div>
             <div class="metric-value">\dots</div>
-            <div class="metric-trend text-secondary">Exlight connections</div>
+            <div class="metric-trend text-success">Device contracts</div>
           </div>
           <div class="metric-card">
-            <div class="metric-title">LTE Router Data</div>
+            <div class="metric-title">SIM-only Plans</div>
             <div class="metric-value">\dots</div>
-            <div class="metric-trend text-success">Mobile data router deals</div>
+            <div class="metric-trend text-success">SIM deals</div>
           </div>
           <div class="metric-card">
-            <div class="metric-title">Voice SIM Plans</div>
+            <div class="metric-title">Total Orders</div>
             <div class="metric-value">\dots</div>
-            <div class="metric-trend text-success">SIM-only contracts</div>
+            <div class="metric-trend text-success">Sales volume</div>
           </div>
           <div class="metric-card">
             <div class="metric-title">Avg Order ZAR</div>
             <div class="metric-value">R \dots</div>
             <div class="metric-trend text-success">Monthly projection</div>
           </div>
-        `.replace('\dots', broadbandSales.length)
-         .replace('\dots', dataSales.length)
+        `.replace('\dots', dataSales.length)
          .replace('\dots', voiceSales.length)
+         .replace('\dots', orders.length)
          .replace('\dots', total > 0 ? Math.round(totalRevenue / total) : 0);
       }
 
       donutData = [
-        { label: "Fixed Line Fiber", value: broadbandSales.length, color: "#a2d829" },
-        { label: "Mobile Data LTE", value: dataSales.length, color: "#0099ff" },
-        { label: "Voice SIM Plans", value: voiceSales.length, color: "#ff4d4f" }
+        { label: "Handset Contracts", value: dataSales.length, color: "#0099ff" },
+        { label: "SIM-only Plans", value: voiceSales.length, color: "#ff4d4f" }
       ];
 
       const prodCount = {};
