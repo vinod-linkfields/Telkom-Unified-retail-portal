@@ -3064,3 +3064,44 @@ input[type="checkbox"], input[type="radio"] {
   width: 0%;
   transition: width 0.4s ease;
 }
+
+/* Quick Actions Dashboard Grid */
+.quick-link-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.quick-link-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 90px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  color: var(--telkom-blue-dark);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.quick-link-btn:hover {
+  background: var(--telkom-blue-light);
+  border-color: var(--telkom-blue);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-link-btn svg {
+  stroke: var(--telkom-blue);
+  transition: stroke 0.2s ease;
+}
+
+.quick-link-btn:hover svg {
+  stroke: var(--telkom-blue-dark);
+}
