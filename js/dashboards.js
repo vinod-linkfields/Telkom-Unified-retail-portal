@@ -333,11 +333,20 @@ export function closeProductDrawer(event) {
 }
 
 export function showProductDetails(productId) {
+  console.log("showProductDetails called with ID:", productId);
   const p = MOCK_DB.products.find(prod => prod.id === productId);
-  if (!p) return;
+  if (!p) {
+    console.error("Product not found in MOCK_DB for ID:", productId);
+    return;
+  }
+  console.log("Found product object:", p);
   
   const titleEl = document.getElementById('product-details-modal-title');
-  if (titleEl) titleEl.innerText = p.name;
+  if (titleEl) {
+    titleEl.innerText = p.name;
+  } else {
+    console.warn("Element product-details-modal-title not found!");
+  }
   
   let display = "N/A";
   let storage = "N/A";
@@ -500,16 +509,24 @@ export function showProductDetails(productId) {
   `;
   
   const bodyEl = document.getElementById('product-details-modal-body');
-  if (bodyEl) bodyEl.innerHTML = specsHtml;
+  if (bodyEl) {
+    bodyEl.innerHTML = specsHtml;
+  } else {
+    console.warn("Element product-details-modal-body not found!");
+  }
   
   const ctaBtn = document.getElementById('product-details-modal-cta');
   if (ctaBtn) {
     ctaBtn.onclick = function(e) {
+      console.log("Modal CTA clicked for product:", p.id);
       closeModal('product-details-modal');
       window.selectProductForStepper(p.id);
     };
+  } else {
+    console.warn("Element product-details-modal-cta not found!");
   }
   
+  console.log("Opening product details modal...");
   openModal('product-details-modal');
 }
 
