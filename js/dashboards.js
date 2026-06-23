@@ -336,7 +336,7 @@ export function showProductDetails(productId) {
   const p = MOCK_DB.products.find(prod => prod.id === productId);
   if (!p) return;
   
-  const titleEl = document.getElementById('product-details-drawer-title');
+  const titleEl = document.getElementById('product-details-modal-title');
   if (titleEl) titleEl.innerText = p.name;
   
   let display = "N/A";
@@ -499,25 +499,18 @@ export function showProductDetails(productId) {
     ` : ''}
   `;
   
-  const bodyEl = document.getElementById('product-details-drawer-body');
+  const bodyEl = document.getElementById('product-details-modal-body');
   if (bodyEl) bodyEl.innerHTML = specsHtml;
   
-  const ctaBtn = document.getElementById('product-details-drawer-cta');
+  const ctaBtn = document.getElementById('product-details-modal-cta');
   if (ctaBtn) {
     ctaBtn.onclick = function(e) {
-      closeProductDrawer(e);
+      closeModal('product-details-modal');
       window.selectProductForStepper(p.id);
     };
   }
   
-  const drawer = document.getElementById('product-details-drawer');
-  if (drawer) {
-    drawer.style.display = 'flex';
-    const content = drawer.querySelector('.drawer-content');
-    if (content) {
-      content.style.animation = 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
-    }
-  }
+  openModal('product-details-modal');
 }
 
 // Bind to window for UAT toggle handlers and inline HTML dashboard updates
