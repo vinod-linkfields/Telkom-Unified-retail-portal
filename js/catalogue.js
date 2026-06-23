@@ -51,7 +51,16 @@ export function renderCatalogue() {
   const checkedPriceRadio = document.querySelector('.filter-price-radio:checked');
   const priceFilter = checkedPriceRadio ? checkedPriceRadio.value : 'all'; // all, 0-200, 200-500, 500+
 
+  const promoOnlyEl = document.getElementById('filter-promotions-only');
+  const promoOnly = promoOnlyEl ? promoOnlyEl.checked : false;
+
   let filtered = MOCK_DB.products;
+
+  // Promotions & Best Sellers filter
+  if (promoOnly) {
+    const promoIds = ['p-dev-2', 'p-sim-2', 'p-dev-1'];
+    filtered = filtered.filter(p => p.promo || promoIds.includes(p.id));
+  }
 
   // Category filters
   if (typeFilter.length > 0) {
@@ -137,11 +146,19 @@ export function renderCatalogue() {
       `;
     }
 
+    const imgPath = p.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (p.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
+    const imageHtml = imgPath ? `
+      <div class="product-image-container" style="text-align: center; margin-bottom: 12px; background-color: var(--bg-light); border-radius: var(--radius-md); padding: 12px; height: 140px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+        <img src="${imgPath}" alt="${p.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+      </div>
+    ` : '';
+
     listEl.innerHTML += `
       <div class="product-card">
         ${p.promo ? `<div class="product-badge-promo">PROMO</div>` : ''}
         <div class="product-info-area">
           <div class="product-category">${p.category} ${stockBadgeHtml}</div>
+          ${imageHtml}
           <div style="font-size: 11px; color: var(--text-muted); font-weight: 700; margin-top: 4px;">DEAL ID: ${p.dealId}</div>
           <div class="product-name" style="margin-top: 4px;">${p.name}</div>
           

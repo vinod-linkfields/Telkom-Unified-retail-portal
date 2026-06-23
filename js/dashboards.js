@@ -114,6 +114,13 @@ export function renderAgentDashboard() {
     const promoProducts = promoIds.map(id => MOCK_DB.products.find(p => p.id === id)).filter(Boolean);
     
     promoContainer.innerHTML = promoProducts.map(p => {
+      const imgPath = p.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (p.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
+      const imageHtml = imgPath ? `
+        <div style="text-align: center; margin-bottom: 12px; background-color: var(--bg-light); border-radius: var(--radius-md); padding: 12px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+          <img src="${imgPath}" alt="${p.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+        </div>
+      ` : '';
+
       return `
         <div class="product-card" style="margin: 0; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card);">
           <div>
@@ -121,6 +128,7 @@ export function renderAgentDashboard() {
               <span class="badge badge-success" style="font-size: 10px;">BEST SELLER</span>
               ${p.promo ? `<span class="badge badge-warning" style="font-size: 10px; background-color: var(--warning-light); color: var(--warning);">PROMO</span>` : ''}
             </div>
+            ${imageHtml}
             <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">${p.category}</div>
             <div style="font-size: 14px; font-weight: 700; color: var(--telkom-blue-dark); margin: 6px 0; font-family: var(--font-display);">${p.name}</div>
             <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${p.allocation}</div>
@@ -414,10 +422,15 @@ export function showProductDetails(productId) {
     `;
   }
   
+  const imgPath = p.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (p.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
+  const imageDisplayHtml = imgPath ? `
+    <img src="${imgPath}" alt="${p.name}" style="max-height: 80px; max-width: 80px; object-fit: contain;">
+  ` : imageSvg;
+
   let specsHtml = `
     <div style="display: flex; gap: 20px; align-items: center; background: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); margin-bottom: 24px;">
-      <div style="flex-shrink: 0; background: white; padding: 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
-        ${imageSvg}
+      <div style="flex-shrink: 0; background: white; padding: 10px; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); height: 100px; width: 100px; display: flex; align-items: center; justify-content: center;">
+        ${imageDisplayHtml}
       </div>
       <div style="flex: 1;">
         <div style="display: flex; gap: 6px; margin-bottom: 8px;">

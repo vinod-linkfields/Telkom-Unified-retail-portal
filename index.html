@@ -306,6 +306,7 @@
           <div class="panel" style="margin-bottom: 20px;">
             <div class="panel-header">
               <span class="panel-title">Promotions & best sellers</span>
+              <button class="btn btn-sm btn-outline" onclick="switchRoute('catalogue')">view product catalogue</button>
             </div>
             <div class="panel-body" style="padding: 20px;">
               <div id="dashboard-promotions-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
@@ -927,6 +928,14 @@
                 <label class="filter-option">
                   <input type="checkbox" class="filter-type-checkbox" value="Handset contracts" onchange="renderCatalogue()" checked>
                   <span>Handset Contracts</span>
+                </label>
+              </div>
+
+              <div class="filter-section">
+                <div class="filter-title">Deals & Promotions</div>
+                <label class="filter-option">
+                  <input type="checkbox" id="filter-promotions-only" onchange="renderCatalogue()">
+                  <span>Promotions & Best Sellers</span>
                 </label>
               </div>
 
@@ -1887,7 +1896,14 @@
         <button class="modal-close" onclick="closeModal('order-details-modal')">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px;">
+        <!-- Tabs Navigation -->
+        <div class="tab-navigation" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; padding-bottom: 0;">
+          <button class="tab-btn active" id="modal-tab-btn-oms" onclick="switchModalTab('oms')" style="padding: 10px 16px; border: none; background: none; font-weight: 700; cursor: pointer; border-bottom: 3px solid var(--telkom-blue); color: var(--telkom-blue-dark); font-size: 14px;">OMS Lifecycle Tracker</button>
+          <button class="tab-btn" id="modal-tab-btn-debicheck" onclick="switchModalTab('debicheck')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-size: 14px;">DebiCheck Mandate Details</button>
+        </div>
+
+        <!-- OMS PANEL -->
+        <div id="modal-panel-oms" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px;">
           <div>
             <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">Order Header</h5>
             <div style="font-size:13px; color:var(--text-secondary)">
@@ -1957,6 +1973,11 @@
             </div>
           </div>
           <div id="order-details-rica-panel" style="grid-column: 1 / -1; display: none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;"></div>
+        </div>
+
+        <!-- DEBICHECK PANEL -->
+        <div id="modal-panel-debicheck" style="display: none;">
+          <!-- Content populated dynamically by viewOrderDetails in js/tracking.js -->
         </div>
       </div>
     </div>

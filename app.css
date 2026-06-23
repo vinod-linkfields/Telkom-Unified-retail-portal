@@ -3191,6 +3191,11 @@ input[type="checkbox"], input[type="radio"] {
   to { transform: translateX(0); }
 }
 
+@keyframes slideOutRight {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+
 /* Spec cards grid for product details sliding drawer */
 .spec-cards-grid {
   display: grid;

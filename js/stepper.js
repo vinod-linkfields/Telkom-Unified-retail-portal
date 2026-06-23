@@ -10,7 +10,6 @@ export function getActiveStepsForProduct(product) {
     { id: 1, label: "Check Avail" },
     { id: 2, label: "Identify Cust" },
     { id: 3, label: "Confirm Details" },
-    { id: 4, label: "Log CIM" },
     { id: 5, label: "Billing Selection" },
     { id: 6, label: "Credit Vetting" },
     { id: 7, label: "Connection Form" },
@@ -113,7 +112,14 @@ export function renderStepper() {
       renderStepperCustomerSearch(stepContainer);
       break;
 
-    case 3: // Customer Details & Product Specs confirmation
+    case 3: { // Customer Details & Product Specs confirmation
+      const imgPath = product.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (product.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
+      const imageHtml = imgPath ? `
+        <div style="text-align: center; margin-bottom: 16px; background-color: var(--bg-card); border-radius: var(--radius-md); padding: 12px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+          <img src="${imgPath}" alt="${product.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+        </div>
+      ` : '';
+
       stepContainer.innerHTML = `
         <h3 style="margin-bottom: 16px;">${getStepperStepTitle(3, "Confirm Customer & Product Details")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Verify the customer profile and product details for this order.</p>
@@ -137,6 +143,7 @@ export function renderStepper() {
           
           <div style="background-color: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
             <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">PRODUCT DETAILS</h5>
+            ${imageHtml}
             <div style="margin-bottom: 10px;">
               <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">NAME</div>
               <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${product.name}</div>
@@ -159,6 +166,7 @@ export function renderStepper() {
         </div>
       `;
       break;
+    }
 
     case 4: // CIM Interaction details
       stepContainer.innerHTML = `
@@ -1068,6 +1076,13 @@ export function renderStepperStockCheck(container) {
       </div>
     `;
   }
+  
+  const imgPath = p.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (p.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
+  const imageHtml = imgPath ? `
+    <div style="text-align: center; margin-bottom: 16px; background-color: var(--bg-light); border-radius: var(--radius-lg); padding: 16px; height: 160px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
+      <img src="${imgPath}" alt="${p.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+    </div>
+  ` : '';
 
   container.innerHTML = `
     <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Transact Device Stock Allocation")}</h3>
@@ -1105,6 +1120,7 @@ export function renderStepperStockCheck(container) {
       </div>
       
       <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px;">
+        ${imageHtml}
         <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px;">Alternative Branch Stock</h5>
         <div style="font-size: 13px;">
           <div style="display:flex; justify-content:space-between; padding: 8px 0; border-bottom:1px solid var(--border-color);">
@@ -1158,7 +1174,7 @@ export function renderStepperContractDetails(container, product) {
 // -----------------------------------------
 export function renderStepperReviewChecklist(container) {
   const customerValid = !!APP_STATE.selectedCustomer;
-  const interactionValid = !!APP_STATE.activeCIMInteraction && APP_STATE.activeCIMInteraction.notes.trim().length >= 10;
+  const interactionValid = true;
   const productValid = !!APP_STATE.cart.product;
   
   let stockValid = true;
@@ -1219,14 +1235,6 @@ export function renderStepperReviewChecklist(container) {
           <div><strong>Customer Account Identification</strong> - Found from CRM database.</div>
         </div>
         <span class="badge ${customerValid ? 'badge-success' : 'badge-danger'}">${customerValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      <div class="checklist-item ${interactionValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${interactionValid ? 'pass' : 'fail'}">${interactionValid ? '✓' : '✗'}</div>
-          <div><strong>Amdocs CIM Interaction Log</strong> - Notes minimum requirement satisfied.</div>
-        </div>
-        <span class="badge ${interactionValid ? 'badge-success' : 'badge-danger'}">${interactionValid ? 'Pass' : 'Fail'}</span>
       </div>
 
       <div class="checklist-item ${productValid ? 'pass' : 'fail'}">
