@@ -187,8 +187,9 @@ export function renderCatalogue() {
           </div>
           <div class="price-onceoff">Once-off Connection Fee: R${p.onceOff}</div>
           
-          <div style="margin-top: 16px;">
-            <button class="btn btn-primary product-cta-btn" onclick="selectProductForStepper('${p.id}')">Select Product</button>
+          <div style="margin-top: 16px; display: flex; gap: 8px;">
+            <button class="btn btn-primary product-cta-btn" onclick="selectProductForStepper('${p.id}')" style="flex: 1;">Select Product</button>
+            <button class="btn btn-outline" onclick="showProductDetails('${p.id}')" style="padding: 0 12px; font-size: 13px;">View Details</button>
           </div>
         </div>
       </div>

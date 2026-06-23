@@ -33,7 +33,9 @@ import {
   renderManagerDashboard,
   renderAreaDashboard,
   renderAdminDashboard,
-  handleUatRoleChange
+  handleUatRoleChange,
+  showProductDetails,
+  closeProductDrawer
 } from './js/dashboards.js';
 
 import {
@@ -132,7 +134,8 @@ import {
   renderOrderActivationWorkflow,
   setPostOrderActivationStep,
   submitPostOrderSimNumber,
-  runRicaActivationWorkflow
+  runRicaActivationWorkflow,
+  switchModalTab
 } from './js/tracking.js';
 
 import {
@@ -475,6 +478,8 @@ window.renderManagerDashboard = renderManagerDashboard;
 window.renderAreaDashboard = renderAreaDashboard;
 window.renderAdminDashboard = renderAdminDashboard;
 window.handleUatRoleChange = handleUatRoleChange;
+window.showProductDetails = showProductDetails;
+window.closeProductDrawer = closeProductDrawer;
 
 // Customer
 window.handleCustomerSearch = handleCustomerSearch;
@@ -560,6 +565,7 @@ window.renderConfirmationRicaActivation = renderConfirmationRicaActivation;
 window.renderOrderTracking = renderOrderTracking;
 window.switchTrackingTab = switchTrackingTab;
 window.viewOrderDetails = viewOrderDetails;
+window.switchModalTab = switchModalTab;
 window.downloadOrderReceipt = downloadOrderReceipt;
 window.emailContractToCustomer = emailContractToCustomer;
 window.printContractDocument = printContractDocument;
