@@ -1,8 +1,6 @@
 {
-  "outputDirectory": ".",
-  "buildCommand": "",
-  "installCommand": "",
-  "framework": null,
+  "outputDirectory": "dist",
+  "buildCommand": "vite build",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
