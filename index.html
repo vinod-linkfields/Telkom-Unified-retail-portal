@@ -904,7 +904,7 @@
           <div class="screen-header">
             <div>
               <h2>Telkom Product Catalogue</h2>
-              <p class="screen-title-desc">Select customer contracts from available mobile data and postpaid contracts.</p>
+              <p class="screen-title-desc">Select customer contracts from available mobile data and postpaid contracts. <span id="catalogue-results-count" style="font-weight: 700; color: var(--telkom-blue);"></span></p>
             </div>
           </div>
 
@@ -915,7 +915,7 @@
               <div class="filter-section">
                 <div class="filter-title">Search Catalogue</div>
                 <div style="position: relative; display: flex; align-items: center; margin-bottom: 12px;">
-                  <input type="text" id="catalogue-search-input" class="form-control" placeholder="Search name, model, Deal ID..." oninput="renderCatalogue()" style="font-size: 12px; padding-right: 30px;">
+                  <input type="text" id="catalogue-search-input" class="form-control" placeholder="Search name, device, Deal ID..." oninput="_currentCatPage=1;renderCatalogue()" style="font-size: 12px; padding-right: 30px;">
                   <button id="catalogue-search-clear" class="search-input-clear-btn" onclick="clearCatalogueSearch()" style="position: absolute; right: 4px; display: none; background: none; border: none; font-size: 16px; color: var(--text-muted); cursor: pointer;">&times;</button>
                 </div>
               </div>
@@ -923,40 +923,76 @@
               <div class="filter-section">
                 <div class="filter-title">Product Category</div>
                 <label class="filter-option">
-                  <input type="checkbox" class="filter-type-checkbox" value="SIM-only" onchange="renderCatalogue()" checked>
-                  <span>SIM-only Plans</span>
+                  <input type="checkbox" class="filter-type-checkbox" value="Handset" onchange="_currentCatPage=1;renderCatalogue()" checked>
+                  <span>Handset Contracts</span>
                 </label>
                 <label class="filter-option">
-                  <input type="checkbox" class="filter-type-checkbox" value="Handset contracts" onchange="renderCatalogue()" checked>
-                  <span>Handset Contracts</span>
+                  <input type="checkbox" class="filter-type-checkbox" value="SIM Only" onchange="_currentCatPage=1;renderCatalogue()" checked>
+                  <span>SIM-Only Plans</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" class="filter-type-checkbox" value="Mobile Data" onchange="_currentCatPage=1;renderCatalogue()" checked>
+                  <span>Mobile Data</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" class="filter-type-checkbox" value="Tablets" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>Tablets</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" class="filter-type-checkbox" value="Laptops" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>Laptops</span>
                 </label>
               </div>
 
               <div class="filter-section">
-                <div class="filter-title">Deals & Promotions</div>
+                <div class="filter-title">Contract Term</div>
                 <label class="filter-option">
-                  <input type="checkbox" id="filter-promotions-only" onchange="renderCatalogue()">
-                  <span>Promotions & Best Sellers</span>
+                  <input type="radio" name="term-filter" class="filter-term-radio" value="0" onchange="_currentCatPage=1;renderCatalogue()" checked>
+                  <span>All Terms</span>
+                </label>
+                <label class="filter-option">
+                  <input type="radio" name="term-filter" class="filter-term-radio" value="12" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>12 Months</span>
+                </label>
+                <label class="filter-option">
+                  <input type="radio" name="term-filter" class="filter-term-radio" value="24" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>24 Months</span>
+                </label>
+                <label class="filter-option">
+                  <input type="radio" name="term-filter" class="filter-term-radio" value="36" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>36 Months</span>
+                </label>
+              </div>
+
+              <div class="filter-section">
+                <div class="filter-title">Deals &amp; Promotions</div>
+                <label class="filter-option">
+                  <input type="checkbox" id="filter-promotions-only" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>Promotions Only</span>
                 </label>
               </div>
 
               <div class="filter-section">
                 <div class="filter-title">Monthly Price</div>
                 <label class="filter-option">
-                  <input type="radio" name="price-range" class="filter-price-radio" value="all" onchange="renderCatalogue()" checked>
+                  <input type="radio" name="price-range" class="filter-price-radio" value="all" onchange="_currentCatPage=1;renderCatalogue()" checked>
                   <span>All Prices</span>
                 </label>
                 <label class="filter-option">
-                  <input type="radio" name="price-range" class="filter-price-radio" value="0-200" onchange="renderCatalogue()">
+                  <input type="radio" name="price-range" class="filter-price-radio" value="0-200" onchange="_currentCatPage=1;renderCatalogue()">
                   <span>Under R200 /mo</span>
                 </label>
                 <label class="filter-option">
-                  <input type="radio" name="price-range" class="filter-price-radio" value="200-500" onchange="renderCatalogue()">
-                  <span>R200 - R500 /mo</span>
+                  <input type="radio" name="price-range" class="filter-price-radio" value="200-500" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>R200 – R500 /mo</span>
                 </label>
                 <label class="filter-option">
-                  <input type="radio" name="price-range" class="filter-price-radio" value="500+" onchange="renderCatalogue()">
-                  <span>Over R500 /mo</span>
+                  <input type="radio" name="price-range" class="filter-price-radio" value="500-1000" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>R500 – R1 000 /mo</span>
+                </label>
+                <label class="filter-option">
+                  <input type="radio" name="price-range" class="filter-price-radio" value="1000+" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>Over R1 000 /mo</span>
                 </label>
               </div>
             </aside>

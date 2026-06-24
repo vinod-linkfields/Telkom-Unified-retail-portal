@@ -1,6 +1,7 @@
 import { APP_STATE, MOCK_DB } from './state.js';
 import { switchRoute, updateSidebarMenuOptions } from './routing.js';
 import { renderPaginatedRows, showToast, openModal, closeModal, drawSVGDonutChart } from './utils.js';
+import { findProductById, PRODUCTS_REGISTRY } from './catalogue.js';
 
 export function renderAgentDashboard() {
   const recentOrders = APP_STATE.ordersList
@@ -61,7 +62,7 @@ export function renderAgentDashboard() {
     stockAlertContainer.innerHTML = '';
     for (const [sku, detail] of Object.entries(branchStock)) {
       if (detail.available === 0) {
-        const p = MOCK_DB.products.find(prod => prod.deviceSKU === sku);
+        const p = MOCK_DB.products.find(prod => prod.deviceSKU === sku) || findProductById(sku);
         stockAlertContainer.innerHTML += `
           <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
             <div>
@@ -110,31 +111,30 @@ export function renderAgentDashboard() {
   // Render Promotions & Best Sellers
   const promoContainer = document.getElementById('dashboard-promotions-list');
   if (promoContainer) {
-    const promoIds = ['p-dev-2', 'p-sim-2', 'p-dev-1'];
-    const promoProducts = promoIds.map(id => MOCK_DB.products.find(p => p.id === id)).filter(Boolean);
+    // Show top promo products from the real catalogue registry
+    const promoProducts = PRODUCTS_REGISTRY.filter(p => p.promo).slice(0, 3);
+    const fallbackPromos = MOCK_DB.products.filter(p => p.promo || ['p-dev-2','p-sim-2','p-dev-1'].includes(p.id));
+    const displayPromos = promoProducts.length > 0 ? promoProducts : fallbackPromos;
     
-    promoContainer.innerHTML = promoProducts.map(p => {
-      const imgPath = p.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (p.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
-      const imageHtml = imgPath ? `
-        <div style="text-align: center; margin-bottom: 12px; background-color: var(--bg-light); border-radius: var(--radius-md); padding: 12px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
-          <img src="${imgPath}" alt="${p.name}" style="max-height: 100%; max-width: 100%; object-fit: contain;">
-        </div>
-      ` : '';
+    promoContainer.innerHTML = displayPromos.map(p => {
+      const monthlyFee = p.monthlyFee ?? p.price ?? 0;
+      const catColors = { 'Handset': '#0066cc', 'SIM Only': '#00875a', 'Mobile Data': '#7b2d8b', 'Tablets': '#d14900', 'Laptops': '#505050' };
+      const accent = catColors[p.category] || '#0066cc';
 
       return `
         <div class="product-card" style="margin: 0; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card);">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-              <span class="badge badge-success" style="font-size: 10px;">BEST SELLER</span>
-              ${p.promo ? `<span class="badge badge-warning" style="font-size: 10px; background-color: var(--warning-light); color: var(--warning);">PROMO</span>` : ''}
+              <span class="badge badge-success" style="font-size: 10px;">PROMO</span>
+              <span style="font-size: 10px; color: var(--text-muted); font-family: monospace;">${p.dealId}</span>
             </div>
-            ${imageHtml}
-            <div style="font-size: 11px; color: var(--text-muted); font-weight: 700;">${p.category}</div>
-            <div style="font-size: 14px; font-weight: 700; color: var(--telkom-blue-dark); margin: 6px 0; font-family: var(--font-display);">${p.name}</div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">${p.allocation}</div>
+            <div style="font-size: 11px; color: ${accent}; font-weight: 700; margin-bottom: 4px;">${p.category}</div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--telkom-blue-dark); margin: 4px 0; font-family: var(--font-display); line-height: 1.3;">${p.name}</div>
+            ${p.additionalData ? `<div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">+ ${p.additionalData}</div>` : ''}
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">${p.term} months contract</div>
           </div>
           <div>
-            <div style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px;">R ${p.price}<span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">/mo</span></div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px;">R ${monthlyFee.toFixed(0)}<span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">/mo</span></div>
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-sm btn-primary" onclick="selectProductForStepper('${p.id}')" style="flex: 1; font-size: 12px;">Start Order</button>
               <button class="btn btn-sm btn-outline" onclick="showProductDetails('${p.id}')" style="font-size: 12px; padding: 0 10px;">Details</button>
@@ -154,7 +154,7 @@ export function renderAgentDashboard() {
     });
     const sortedProducts = Object.entries(productSales)
       .map(([name, count]) => {
-        const prod = MOCK_DB.products.find(p => p.name === name);
+        const prod = MOCK_DB.products.find(p => p.name === name) || PRODUCTS_REGISTRY.find(p => p.name === name);
         return { name, count, category: prod ? prod.category : 'Catalogue' };
       })
       .sort((a, b) => b.count - a.count)
@@ -334,9 +334,9 @@ export function closeProductDrawer(event) {
 
 export function showProductDetails(productId) {
   console.log("showProductDetails called with ID:", productId);
-  const p = MOCK_DB.products.find(prod => prod.id === productId);
+  const p = findProductById(productId);
   if (!p) {
-    console.error("Product not found in MOCK_DB for ID:", productId);
+    console.error("Product not found for ID:", productId);
     return;
   }
   console.log("Found product object:", p);
@@ -348,9 +348,10 @@ export function showProductDetails(productId) {
     console.warn("Element product-details-modal-title not found!");
   }
   
+  const monthlyFee = p.monthlyFee ?? p.price ?? 0;
   let display = "N/A";
   let storage = "N/A";
-  let dataBundle = "N/A";
+  let dataBundle = p.additionalData || "N/A";
   let contractDuration = `${p.term || 24} Months`;
   let battery = "N/A";
   let highlights = [];
@@ -443,48 +444,47 @@ export function showProductDetails(productId) {
       </div>
       <div style="flex: 1;">
         <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-          <span class="badge badge-success" style="font-size: 10px; font-weight: 700;">BEST SELLER</span>
           ${p.promo ? `<span class="badge badge-warning" style="font-size: 10px; font-weight: 700; background-color: var(--warning-light); color: var(--warning);">PROMO</span>` : ''}
+          <span style="font-size: 10px; color: var(--text-muted); font-family: monospace; padding: 2px 6px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 4px;">DEAL ID: ${p.dealId}</span>
         </div>
         <h3 style="font-size: 18px; margin: 0 0 4px 0; color: var(--telkom-blue-dark); font-family: var(--font-display);">${p.name}</h3>
         <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 12px 0;">
           Category: <strong>${p.category}</strong>
+          ${p.tag ? ` &nbsp;·&nbsp; <span style="color: var(--warning);">${p.tag}</span>` : ''}
         </p>
         <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="font-size: 22px; font-weight: 800; color: var(--text-primary);">R ${p.price}</span>
+          <span style="font-size: 22px; font-weight: 800; color: var(--text-primary);">R ${monthlyFee.toFixed(0)}</span>
           <span style="font-size: 12px; color: var(--text-muted);">/mo x ${p.term || 24} months</span>
         </div>
-        ${p.onceOff > 0 ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Once-off fee: <strong>R ${p.onceOff}</strong></div>` : ''}
+        ${(p.onceOff ?? 0) > 0 ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Once-off fee: <strong>R ${p.onceOff}</strong></div>` : ''}
       </div>
     </div>
     
     <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 12px;">Key Specifications</h4>
     <div class="spec-cards-grid">
       <div class="spec-card">
-        <span class="spec-card-label">Display</span>
-        <span class="spec-card-value">${display}</span>
+        <span class="spec-card-label">Device</span>
+        <span class="spec-card-value">${p.device || 'SIM Only'}</span>
       </div>
       <div class="spec-card">
-        <span class="spec-card-label">Storage</span>
-        <span class="spec-card-value">${storage}</span>
-      </div>
-      <div class="spec-card">
-        <span class="spec-card-label">Data Bundle</span>
+        <span class="spec-card-label">Additional Data</span>
         <span class="spec-card-value">${dataBundle}</span>
       </div>
       <div class="spec-card">
         <span class="spec-card-label">Contract Term</span>
         <span class="spec-card-value">${contractDuration}</span>
       </div>
-      ${battery !== "N/A" ? `
       <div class="spec-card">
-        <span class="spec-card-label">Battery Capacity</span>
-        <span class="spec-card-value">${battery}</span>
+        <span class="spec-card-label">Monthly Fee</span>
+        <span class="spec-card-value">R ${monthlyFee.toFixed(0)}</span>
       </div>
-      ` : ''}
       <div class="spec-card">
-        <span class="spec-card-label">Deal ID</span>
-        <span class="spec-card-value" style="font-family: monospace; font-size: 11px;">${p.dealId}</span>
+        <span class="spec-card-label">Once-off Fee</span>
+        <span class="spec-card-value">R ${p.onceOff ?? 99}</span>
+      </div>
+      <div class="spec-card">
+        <span class="spec-card-label">Valid Until</span>
+        <span class="spec-card-value">${p.endDate || 'N/A'}</span>
       </div>
     </div>
     

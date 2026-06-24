@@ -1,7 +1,7 @@
 import { MOCK_DB, APP_STATE, saveOrders, saveDraftOrders, BANK_OPTIONS } from './state.js';
 import { paginateExistingTable, showToast, pushNotification, maskID, maskPassport, openModal, closeModal } from './utils.js';
 import { switchRoute, updateSessionBanner } from './routing.js';
-import { getProductTermAndPrice } from './catalogue.js';
+import { getProductTermAndPrice, findProductById } from './catalogue.js';
 import { openNewCustomerWizard } from './customer.js';
 import { renderOrderActivationWorkflow } from './tracking.js';
 
@@ -1521,7 +1521,7 @@ export function selectProductForStepper(prodId) {
     return;
   }
 
-  const p = MOCK_DB.products.find(prod => prod.id === prodId);
+  const p = findProductById(prodId) || MOCK_DB.products.find(prod => prod.id === prodId);
   if (p) {
     APP_STATE.cart.gisStatus = "Skip";
 
@@ -1534,7 +1534,7 @@ export function selectProductForStepper(prodId) {
     }
 
     const { term, price } = getProductTermAndPrice(p);
-    const selectedColor = APP_STATE.productColors[prodId] || (p.deviceInfo ? p.deviceInfo.colour : "");
+    const selectedColor = APP_STATE.productColors[prodId] || (p.deviceInfo ? p.deviceInfo.colour : (p.device ? '' : ''));
     APP_STATE.cart.product = {
       ...p,
       price: price,

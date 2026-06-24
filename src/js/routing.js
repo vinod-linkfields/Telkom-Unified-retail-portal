@@ -2,7 +2,7 @@ import { APP_STATE, clearAuthSession, saveAuthSession, saveNotifications } from 
 import { showToast, updateNotificationsBadge } from './utils.js';
 import { renderAgentDashboard, renderManagerDashboard, renderAreaDashboard, renderAdminDashboard } from './dashboards.js';
 import { renderCustomerCreateStep, renderCustomer360 } from './customer.js';
-import { renderCatalogue } from './catalogue.js';
+import { renderCatalogue, loadProductsFromJSON } from './catalogue.js';
 import { renderStepper, renderPaymentScreen, renderConfirmationReceipt } from './stepper.js';
 import { renderOrderTracking } from './tracking.js';
 import { switchStockTab } from './stock.js';
@@ -172,7 +172,10 @@ export function renderScreen(route) {
       try { renderCustomer360(); } catch(e) { console.error('renderCustomer360 error:', e); }
       break;
     case "catalogue":
-      try { renderCatalogue(); } catch(e) { console.error('renderCatalogue error:', e); }
+      // Preload products then render
+      loadProductsFromJSON().then(() => {
+        try { renderCatalogue(); } catch(e) { console.error('renderCatalogue error:', e); }
+      });
       break;
     case "order-stepper":
       try { renderStepper(); } catch(e) { console.error('renderStepper error:', e); }
