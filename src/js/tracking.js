@@ -459,7 +459,7 @@ export function viewOrderDetails(orderRef) {
   const contractPlanEl = document.getElementById('view-order-contract-plan');
   const onceOffEl = document.getElementById('view-order-once-off');
   const downloadBtn = document.getElementById('modal-download-contract-btn');
-  const isSimProduct = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
+  const isSimProduct = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract') || order.product.toLowerCase().includes('lte'));
 
   if (contractPlanEl) {
     contractPlanEl.innerText = product ? `R${product.price} /mo (${product.term} Months)` : 'N/A';
@@ -577,7 +577,7 @@ export function viewOrderDetails(orderRef) {
   }
 
   const ricaPanel = document.getElementById('order-details-rica-panel');
-  const isSim = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
+  const isSim = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract') || order.product.toLowerCase().includes('lte'));
   if (isSim && order.status !== 'Cancelled' && ricaPanel) {
     ricaPanel.style.display = 'block';
     renderOrderActivationWorkflow(order, ricaPanel, true);

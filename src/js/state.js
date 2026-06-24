@@ -2,6 +2,23 @@
 // MOCK DATABASE & STATE CONFIGURATION
 // ==========================================
 
+export function isSimOrLteProduct(product) {
+  if (!product) return false;
+  const cat = (product.category || '').toLowerCase();
+  const pkg = (product.package || '').toLowerCase();
+  const name = (product.name || '').toLowerCase();
+  return (
+    cat.includes('sim') ||
+    cat.includes('handset') ||
+    cat.includes('mobile') ||
+    cat.includes('tablet') ||
+    pkg.includes('lte') ||
+    name.includes('lte') ||
+    pkg.includes('sim') ||
+    name.includes('sim')
+  );
+}
+
 export const MOCK_DB = {
   // Amdocs Clarify CRM Customers
   crm: [
@@ -200,6 +217,7 @@ export const APP_STATE = {
   draftOrders: [],
   activeTrackingTab: "submitted",
   customerCreateStep: 1,
+  isEditingCustomer: false,
   newCustomerData: {
     personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
     employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
@@ -282,7 +300,7 @@ export function generateMockData() {
     const handlingTime = 12 + (i * 13) % 35;
     const revenue = prod.price * (prod.term || 1) + prod.onceOff;
 
-    const isSimProduct = prod.category === 'SIM-only' || prod.category === 'Handset contracts';
+    const isSimProduct = isSimOrLteProduct(prod);
     const ricaStatus = isSimProduct ? (status === 'Fulfilled' ? 'Verified' : 'Pending') : 'N/A';
     const simActivationNumber = isSimProduct && status === 'Fulfilled' ? '892700000000' + (1000000 + i) : '';
 

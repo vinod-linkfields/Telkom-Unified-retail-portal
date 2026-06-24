@@ -63,6 +63,12 @@ import {
 } from './js/catalogue.js';
 
 import {
+  renderCheckCoverageScreen,
+  checkStandaloneCoverage,
+  proceedFromCoverageToCatalogue
+} from './js/coverage.js';
+
+import {
   getActiveStepsForProduct,
   getStepperStepTitle,
   renderStepperHeader,
@@ -438,6 +444,30 @@ document.addEventListener('click', function(e) {
 // ==========================================
 // BOOTSTRAP INITIALIZATION
 // ==========================================
+export function startNewOrderFlow() {
+  APP_STATE.selectedCustomer = null;
+  APP_STATE.activeCIMInteraction = null;
+  APP_STATE.cart = {
+    product: null,
+    contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+    consent: false,
+    gisRef: "",
+    gisStatus: "Not checked",
+    stockChecked: false,
+    stockStatus: "",
+    ricaStatus: "",
+    simActivationNumber: "",
+    paymentStatus: "Pending",
+    posTxnRef: "",
+    receiptNo: "",
+    orderRef: "",
+    draftId: ""
+  };
+  APP_STATE.currentStep = 1;
+  
+  showToast("Initiated a new order journey.", "success");
+  switchRoute('catalogue');
+}
 
 // Load local mock database states
 loadStateFromStorage();
@@ -489,6 +519,7 @@ window.closeProductDrawer = closeProductDrawer;
 window.handleCustomerSearch = handleCustomerSearch;
 window.renderCustomer360 = renderCustomer360;
 window.closeCustomerSession = closeCustomerSession;
+window.startNewOrderFlow = startNewOrderFlow;
 window.openNewCustomerWizard = openNewCustomerWizard;
 window.handleCustomerCreateNext = handleCustomerCreateNext;
 window.handleCustomerCreateBack = handleCustomerCreateBack;
@@ -506,6 +537,11 @@ window.getProductTermAndPrice = getProductTermAndPrice;
 window.updateProductTermPrice = updateProductTermPrice;
 window.updateProductColor = updateProductColor;
 window.clearCatalogueSearch = clearCatalogueSearch;
+
+// Standalone Coverage check
+window.renderCheckCoverageScreen = renderCheckCoverageScreen;
+window.checkStandaloneCoverage = checkStandaloneCoverage;
+window.proceedFromCoverageToCatalogue = proceedFromCoverageToCatalogue;
 
 // Stepper
 window.getActiveStepsForProduct = getActiveStepsForProduct;

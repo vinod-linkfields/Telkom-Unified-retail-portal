@@ -181,6 +181,155 @@ export function renderCustomer360() {
   document.getElementById('c360-mobile').innerText = cust.mobile;
   document.getElementById('c360-address').innerText = cust.address;
 
+  // Onboarding profile details parsing with safe realistic fallbacks for pre-seeded customers
+  const personal = cust.personalDetails || {
+    idType: cust.id ? 'SA ID' : 'Passport',
+    idNum: cust.id || cust.passport || '9304125091087',
+    firstName: cust.name.split(' ')[0] || 'Jan',
+    lastName: cust.name.split(' ').slice(1).join(' ') || 'du Toit',
+    email: cust.email,
+    mobile: cust.mobile,
+    altContact: '0829876543',
+    marketingConsent: true
+  };
+
+  const employment = cust.employmentDetails || {
+    status: 'Employed',
+    type: 'Permanent',
+    occupation: 'Corporate Professional',
+    employerName: 'Unified Retail Corp',
+    employerContact: '0112345678',
+    startDate: '2020-03-01'
+  };
+
+  const address = cust.addressDetails || {
+    line1: cust.address ? cust.address.split(',')[0] : '12 Main Rd',
+    street: cust.address ? cust.address.split(',')[0] : 'Main Rd',
+    suburb: cust.address && cust.address.split(',')[1] ? cust.address.split(',')[1].trim() : 'Rosebank',
+    city: cust.address && cust.address.split(',')[2] ? cust.address.split(',')[2].trim() : 'Johannesburg',
+    postalCode: cust.address && cust.address.split(',')[3] ? cust.address.split(',')[3].trim() : '2196'
+  };
+
+  const financial = cust.financialDetails || {
+    grossIncome: '45000',
+    netIncome: '32000',
+    expenses: '18000'
+  };
+
+  const banking = cust.bankingDetails || {
+    bankName: 'FNB',
+    branchCode: '250655',
+    accountType: 'Cheque',
+    accountNumber: '62000001234',
+    branchName: 'Johannesburg Corporate',
+    debitDate: '25th',
+    debiCheckConsent: true,
+    creditConsent: true
+  };
+
+  const onboardingContent = document.getElementById('c360-onboarding-content');
+  if (onboardingContent) {
+    onboardingContent.innerHTML = `
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px;">
+        
+        <!-- Column 1: Personal & Marketing -->
+        <div>
+          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">PERSONAL & MARKETING</h4>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">ALT CONTACT</div>
+            <div style="font-weight:600; font-size:13px;">${personal.altContact || 'N/A'}</div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">MARKETING CONSENT</div>
+            <div style="margin-top: 2px;">
+              <span class="badge ${personal.marketingConsent ? 'badge-success' : 'badge-neutral'}" style="font-size: 10px; padding: 2px 6px;">
+                ${personal.marketingConsent ? 'Opted In' : 'Opted Out'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Employment Info -->
+        <div>
+          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">EMPLOYMENT DETAILS</h4>
+          <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">STATUS</div>
+              <div style="font-weight:600; font-size:12px;">${employment.status || 'N/A'}</div>
+            </div>
+            <div>
+              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">TYPE</div>
+              <div style="font-weight:600; font-size:12px;">${employment.type || 'N/A'}</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">OCCUPATION</div>
+            <div style="font-weight:600; font-size:12px;">${employment.occupation || 'N/A'}</div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">EMPLOYER</div>
+            <div style="font-weight:600; font-size:12px;">${employment.employerName || 'N/A'} (${employment.employerContact || 'N/A'})</div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">START DATE</div>
+            <div style="font-weight:600; font-size:12px;">${employment.startDate || 'N/A'}</div>
+          </div>
+        </div>
+
+        <!-- Column 3: Financial Details -->
+        <div>
+          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">FINANCIAL PROFILE</h4>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">GROSS MONTHLY INCOME</div>
+            <div style="font-weight:600; font-size:13px; color: var(--success);">R${financial.grossIncome ? parseFloat(financial.grossIncome).toLocaleString() : '0'}</div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">NET MONTHLY INCOME</div>
+            <div style="font-weight:600; font-size:13px; color: var(--success);">R${financial.netIncome ? parseFloat(financial.netIncome).toLocaleString() : '0'}</div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">MONTHLY EXPENSES</div>
+            <div style="font-weight:600; font-size:13px; color: var(--danger);">R${financial.expenses ? parseFloat(financial.expenses).toLocaleString() : '0'}</div>
+          </div>
+        </div>
+
+        <!-- Column 4: Banking Information -->
+        <div>
+          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">BANKING & DEBICHECK</h4>
+          <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">BANK</div>
+              <div style="font-weight:600; font-size:12px;">${banking.bankName || 'N/A'}</div>
+            </div>
+            <div>
+              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">TYPE</div>
+              <div style="font-weight:600; font-size:12px;">${banking.accountType || 'N/A'}</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">ACCOUNT NUMBER</div>
+            <div style="font-weight:600; font-size:12px; font-family: monospace;">${banking.accountNumber ? '••••' + banking.accountNumber.slice(-4) : 'N/A'}</div>
+          </div>
+          <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBIT DATE</div>
+              <div style="font-weight:600; font-size:12px;">${banking.debitDate || 'N/A'}</div>
+            </div>
+            <div>
+              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBICHECK</div>
+              <div style="margin-top: 2px;">
+                <span class="badge ${banking.debiCheckConsent ? 'badge-success' : 'badge-danger'}" style="font-size: 10px; padding: 2px 6px;">
+                  ${banking.debiCheckConsent ? 'Authorized' : 'Refused'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
   const prodContainer = document.getElementById('c360-active-products');
   if (prodContainer) {
     prodContainer.innerHTML = '';
@@ -318,6 +467,7 @@ export function renderCustomer360() {
 }
 
 export function openNewCustomerWizard() {
+  APP_STATE.isEditingCustomer = false;
   APP_STATE.customerCreateStep = 1;
   APP_STATE.employmentAccordionOpen = false;
   APP_STATE.accountNumberVisible = false;
@@ -345,9 +495,23 @@ export function openNewCustomerWizard() {
 
   switchRoute('customer-create');
 }
-
 export function renderCustomerCreateStep(step) {
   APP_STATE.customerCreateStep = step;
+
+  const viewContainer = document.getElementById('view-customer-create');
+  if (viewContainer) {
+    const h2 = viewContainer.querySelector('h2');
+    const desc = viewContainer.querySelector('.screen-title-desc');
+    if (h2 && desc) {
+      if (APP_STATE.isEditingCustomer) {
+        h2.innerText = "Edit Customer Profile";
+        desc.innerText = "Review, update, and finalize the customer profile parameters in Clarify CRM.";
+      } else {
+        h2.innerText = "Create New Customer Profile";
+        desc.innerText = "Register new consumer accounts in Amdocs Clarify CRM and configure billing parameters.";
+      }
+    }
+  }
   
   document.querySelectorAll('#cust-create-stepper .stepper-step').forEach((el, index) => {
     el.className = 'stepper-step';
@@ -374,7 +538,7 @@ export function renderCustomerCreateStep(step) {
 
   if (backBtn) backBtn.style.visibility = 'visible';
   if (nextBtn) {
-    nextBtn.innerText = step === 6 ? 'Create Profile & Proceed' : 'Continue';
+    nextBtn.innerText = step === 6 ? (APP_STATE.isEditingCustomer ? 'Update Profile' : 'Create Profile & Proceed') : 'Continue';
     nextBtn.className = 'btn btn-primary';
   }
 
@@ -634,7 +798,7 @@ export function renderCustomerCreateStep(step) {
 
     case 6:
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 6: Review & Finalize Customer Registration</h3>
+        <h3 style="margin-bottom: 16px;">Step 6: ${APP_STATE.isEditingCustomer ? 'Review & Finalize Customer Profile Updates' : 'Review & Finalize Customer Registration'}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Confirm all captured customer specifications before sending the profile transaction payload to Clarify CRM.</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -912,7 +1076,10 @@ export function handleCustomerCreateBack() {
     saveCustomerCreateInputs();
     renderCustomerCreateStep(APP_STATE.customerCreateStep - 1);
   } else {
-    if (APP_STATE.openedCustomerWizardFromStepper) {
+    if (APP_STATE.isEditingCustomer) {
+      APP_STATE.isEditingCustomer = false;
+      switchRoute('customer-360');
+    } else if (APP_STATE.openedCustomerWizardFromStepper) {
       APP_STATE.openedCustomerWizardFromStepper = false;
       APP_STATE.currentStep = 2;
       switchRoute('order-stepper');
@@ -954,7 +1121,12 @@ export function handleCustomerCreateNext() {
       document.getElementById('cust-mobile-error').style.display = 'none';
     }
 
-    const exists = MOCK_DB.crm.some(c => (c.id === personal.idNum || (c.passport && c.passport === personal.idNum)));
+    const exists = MOCK_DB.crm.some(c => {
+      if (APP_STATE.isEditingCustomer && APP_STATE.selectedCustomer && c.accountNumber === APP_STATE.selectedCustomer.accountNumber) {
+        return false;
+      }
+      return (c.id === personal.idNum || (c.passport && c.passport === personal.idNum));
+    });
     if (exists) {
       showToast(`Conflict: Customer with ID/Passport ${personal.idNum} already exists in CRM database.`, "danger");
       return;
@@ -995,27 +1167,62 @@ export function handleCustomerCreateNext() {
 
 export function submitNewCustomerProfile() {
   const personal = APP_STATE.newCustomerData.personal;
+  const employment = APP_STATE.newCustomerData.employment;
   const address = APP_STATE.newCustomerData.address;
+  const financial = APP_STATE.newCustomerData.financial;
+  const banking = APP_STATE.newCustomerData.banking;
   const formattedAddress = address.line1 ? `${address.line1}, ${address.suburb}, ${address.city}, ${address.postalCode}` : "12 Main Rd, Rosebank, Johannesburg, 2196";
 
-  const newCust = {
-    id: personal.idType === 'SA ID' ? personal.idNum : "",
-    passport: personal.idType === 'Passport' ? personal.idNum : "",
-    accountNumber: "TEL-" + Math.floor(10000000 + Math.random() * 90000000),
-    name: `${personal.firstName} ${personal.lastName}`,
-    status: "Active",
-    segment: "Consumer",
-    mobile: personal.mobile,
-    email: personal.email,
-    address: formattedAddress,
-    billingAddress: formattedAddress,
-    preferredContact: "SMS",
-    activeProducts: [],
-    interactions: []
-  };
+  let targetCust;
 
-  newCust.documents = {};
-  MOCK_DB.crm.push(newCust);
+  if (APP_STATE.isEditingCustomer) {
+    targetCust = APP_STATE.selectedCustomer;
+    if (targetCust) {
+      targetCust.id = personal.idType === 'SA ID' ? personal.idNum : "";
+      targetCust.passport = personal.idType === 'Passport' ? personal.idNum : "";
+      targetCust.name = `${personal.firstName} ${personal.lastName}`;
+      targetCust.mobile = personal.mobile;
+      targetCust.email = personal.email;
+      targetCust.address = formattedAddress;
+      targetCust.billingAddress = formattedAddress;
+      
+      targetCust.personalDetails = { ...personal };
+      targetCust.employmentDetails = { ...employment };
+      targetCust.addressDetails = { ...address };
+      targetCust.financialDetails = { ...financial };
+      targetCust.bankingDetails = { ...banking };
+
+      // Update reference inside MOCK_DB.crm
+      const idx = MOCK_DB.crm.findIndex(c => c.accountNumber === targetCust.accountNumber);
+      if (idx !== -1) {
+        MOCK_DB.crm[idx] = targetCust;
+      }
+    }
+  } else {
+    targetCust = {
+      id: personal.idType === 'SA ID' ? personal.idNum : "",
+      passport: personal.idType === 'Passport' ? personal.idNum : "",
+      accountNumber: "TEL-" + Math.floor(10000000 + Math.random() * 90000000),
+      name: `${personal.firstName} ${personal.lastName}`,
+      status: "Active",
+      segment: "Consumer",
+      mobile: personal.mobile,
+      email: personal.email,
+      address: formattedAddress,
+      billingAddress: formattedAddress,
+      preferredContact: "SMS",
+      activeProducts: [],
+      interactions: [],
+      
+      personalDetails: { ...personal },
+      employmentDetails: { ...employment },
+      addressDetails: { ...address },
+      financialDetails: { ...financial },
+      bankingDetails: { ...banking }
+    };
+    targetCust.documents = {};
+    MOCK_DB.crm.push(targetCust);
+  }
   
   const content = document.getElementById('customer-create-content');
   const backBtn = document.getElementById('cust-back-btn');
@@ -1025,48 +1232,80 @@ export function submitNewCustomerProfile() {
   if (nextBtn) nextBtn.style.display = 'none';
 
   if (content) {
-    if (APP_STATE.openedCustomerWizardFromStepper) {
+    if (APP_STATE.isEditingCustomer) {
       content.innerHTML = `
         <div style="text-align: center; padding: 40px 20px;">
           <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
-          <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
+          <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Profile Updated Successfully</h3>
           <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
-            The customer profile for <strong>${newCust.name}</strong> has been created. Click below to return and continue configuring the order.
+            The customer profile for <strong>${targetCust.name}</strong> has been successfully updated in Clarify CRM.
           </p>
           
           <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
-            Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${newCust.accountNumber}</strong>
+            Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${targetCust.accountNumber}</strong>
           </div>
 
           <div style="display: flex; justify-content: center; gap: 16px;">
-            <button class="btn btn-primary" onclick="linkCustomerAndReturnToStepper('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">Link & Return to Stepper</button>
+            <button class="btn btn-primary" onclick="returnToCustomer360FromEdit()">Return to Customer 360</button>
           </div>
         </div>
       `;
+      showToast("CRM Customer profile updated successfully.", "success");
     } else {
-      content.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
-          <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
-          <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
-            The customer profile for <strong>${newCust.name}</strong> has been created and is now available in the system.
-          </p>
-          
-          <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
-            Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${newCust.accountNumber}</strong>
-          </div>
+      if (APP_STATE.openedCustomerWizardFromStepper) {
+        content.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
+            <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
+              The customer profile for <strong>${targetCust.name}</strong> has been created. Click below to return and continue configuring the order.
+            </p>
+            
+            <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
+              Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${targetCust.accountNumber}</strong>
+            </div>
 
-          <div style="display: flex; justify-content: center; gap: 16px;">
-            <button class="btn btn-secondary" onclick="identifyCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">View Customer Profile</button>
-            <button class="btn btn-primary" onclick="proceedToCatalogueForCustomer('${newCust.id || newCust.passport}', '${!!newCust.id ? 'id' : 'passport'}')">Proceed to Product Selection</button>
+            <div style="display: flex; justify-content: center; gap: 16px;">
+              <button class="btn btn-primary" onclick="linkCustomerAndReturnToStepper('${targetCust.id || targetCust.passport}', '${!!targetCust.id ? 'id' : 'passport'}')">Link & Return to Stepper</button>
+            </div>
           </div>
-        </div>
-      `;
+        `;
+      } else {
+        content.innerHTML = `
+          <div style="text-align: center; padding: 40px 20px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
+            <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
+              The customer profile for <strong>${targetCust.name}</strong> has been created and is now available in the system.
+            </p>
+            
+            <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
+              Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${targetCust.accountNumber}</strong>
+            </div>
+
+            <div style="display: flex; justify-content: center; gap: 16px;">
+              <button class="btn btn-secondary" onclick="identifyCustomer('${targetCust.id || targetCust.passport}', '${!!targetCust.id ? 'id' : 'passport'}')">View Customer Profile</button>
+              <button class="btn btn-primary" onclick="proceedToCatalogueForCustomer('${targetCust.id || targetCust.passport}', '${!!targetCust.id ? 'id' : 'passport'}')">Proceed to Product Selection</button>
+            </div>
+          </div>
+        `;
+      }
+      showToast("CRM Customer profile created successfully.", "success");
     }
   }
-
-  showToast("CRM Customer profile created successfully.", "success");
 }
+
+export function returnToCustomer360FromEdit() {
+  APP_STATE.isEditingCustomer = false;
+  
+  const backBtn = document.getElementById('cust-back-btn');
+  const nextBtn = document.getElementById('cust-next-btn');
+  if (backBtn) backBtn.style.visibility = 'visible';
+  if (nextBtn) nextBtn.style.display = 'block';
+
+  switchRoute('customer-360');
+}
+window.returnToCustomer360FromEdit = returnToCustomer360FromEdit;
 
 export function proceedToCatalogueForCustomer(idVal, type) {
   identifyCustomer(idVal, type);
@@ -1313,18 +1552,73 @@ export function handleCreateCustomerSubmit(e) {
 }
 window.handleCreateCustomerSubmit = handleCreateCustomerSubmit;
 
-// Edit existing customer modal
+// Edit existing customer profile using the onboarding stepper
 export function openEditCustomerModal() {
   const cust = APP_STATE.selectedCustomer;
   if (!cust) return;
 
-  document.getElementById('edit-cust-email').value = cust.email;
-  document.getElementById('edit-cust-mobile').value = cust.mobile;
-  document.getElementById('edit-cust-address').value = cust.address;
-  document.getElementById('edit-cust-billing').value = cust.billingAddress;
-  document.getElementById('edit-cust-pref').value = cust.preferredContact;
+  APP_STATE.isEditingCustomer = true;
+  APP_STATE.customerCreateStep = 1;
+  APP_STATE.employmentAccordionOpen = false;
+  APP_STATE.accountNumberVisible = false;
 
-  openModal('customer-edit-modal');
+  // Extract customer data with fallbacks (same logic as Customer 360 view)
+  const personal = cust.personalDetails || {
+    idType: cust.id ? 'SA ID' : 'Passport',
+    idNum: cust.id || cust.passport || '9304125091087',
+    firstName: cust.name.split(' ')[0] || 'Jan',
+    lastName: cust.name.split(' ').slice(1).join(' ') || 'du Toit',
+    email: cust.email,
+    mobile: cust.mobile,
+    altContact: '0829876543',
+    marketingConsent: true
+  };
+
+  const employment = cust.employmentDetails || {
+    status: 'Employed',
+    type: 'Permanent',
+    occupation: 'Corporate Professional',
+    employerName: 'Unified Retail Corp',
+    employerContact: '0112345678',
+    startDate: '2020-03-01'
+  };
+
+  const address = cust.addressDetails || {
+    line1: cust.address ? cust.address.split(',')[0] : '12 Main Rd',
+    street: cust.address ? cust.address.split(',')[0] : 'Main Rd',
+    suburb: cust.address && cust.address.split(',')[1] ? cust.address.split(',')[1].trim() : 'Rosebank',
+    city: cust.address && cust.address.split(',')[2] ? cust.address.split(',')[2].trim() : 'Johannesburg',
+    postalCode: cust.address && cust.address.split(',')[3] ? cust.address.split(',')[3].trim() : '2196'
+  };
+
+  const financial = cust.financialDetails || {
+    grossIncome: '45000',
+    netIncome: '32000',
+    expenses: '18000'
+  };
+
+  const banking = cust.bankingDetails || {
+    bankName: 'FNB',
+    branchCode: '250655',
+    accountType: 'Cheque',
+    accountNumber: '62000001234',
+    branchName: 'Johannesburg Corporate',
+    debitDate: '25th',
+    debiCheckConsent: true,
+    creditConsent: true
+  };
+
+  // Populate newCustomerData with deep copy
+  APP_STATE.newCustomerData = {
+    personal: { ...personal },
+    employment: { ...employment },
+    address: { ...address },
+    financial: { ...financial },
+    banking: { ...banking }
+  };
+
+  // Switch view to customer-create
+  switchRoute('customer-create');
 }
 window.openEditCustomerModal = openEditCustomerModal;
 

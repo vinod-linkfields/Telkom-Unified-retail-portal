@@ -26,17 +26,31 @@ export function requiresCoverageCheck(product) {
   );
 }
 
+export function isSimOrLteProduct(product) {
+  if (!product) return false;
+  const cat = (product.category || '').toLowerCase();
+  const pkg = (product.package || '').toLowerCase();
+  const name = (product.name || '').toLowerCase();
+  return (
+    cat.includes('sim') ||
+    cat.includes('handset') ||
+    cat.includes('mobile') ||
+    cat.includes('tablet') ||
+    pkg.includes('lte') ||
+    name.includes('lte') ||
+    pkg.includes('sim') ||
+    name.includes('sim')
+  );
+}
+
 export function getActiveStepsForProduct(product) {
   const steps = [
     { id: 1, label: "Check Avail" },
     { id: 2, label: "Identify Cust" },
     { id: 3, label: "Confirm Details" },
-    { id: 5, label: "Billing Selection" },
-    { id: 6, label: "Credit Vetting" },
-    { id: 7, label: "Connection Form" },
-    { id: 8, label: "Consent Check" },
+    { id: 5, label: "Billing & Credit Vetting" },
     { id: 9, label: "Supporting Docs" },
-    { id: 10, label: "Pre-Sub Review" }
+    { id: 10, label: "Order Summary & Sign-off" }
   ];
   
   if (product) {
@@ -130,14 +144,52 @@ export function renderStepper() {
     cancelBtn.style.display = 'inline-block';
   }
 
+  // Sticky product details summary banner
+  const onceOffFee = product.onceOff ?? 99;
+  const productBannerHtml = `
+    <div class="stepper-product-summary-banner" style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid var(--border-color, #e2e8f0); color: var(--text-primary, #1e293b); padding: 14px 20px; border-radius: var(--radius-md, 8px); margin-bottom: 20px; box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05)); flex-wrap: wrap; gap: 12px; border-left: 5px solid var(--telkom-blue, #0066cc);">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="font-size: 20px; background: var(--bg-light, #f8fafc); border: 1px solid var(--border-color, #e2e8f0); color: var(--telkom-blue, #0066cc); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+          ${(product.category || '').includes('SIM') ? '📡' : ((product.deviceInfo || product.device) ? '📱' : '💻')}
+        </div>
+        <div>
+          <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary, #64748b); letter-spacing: 0.5px; text-transform: uppercase;">Selected Order Product</div>
+          <div style="font-size: 14px; font-weight: 700; font-family: var(--font-display, inherit); color: var(--telkom-blue-dark, #004b93);">${product.name}</div>
+          ${product.selectedColor ? `<div style="font-size: 11px; color: var(--text-secondary, #64748b); margin-top: 2px;">Color: <strong>${product.selectedColor}</strong></div>` : ''}
+        </div>
+      </div>
+      <div style="display: flex; gap: 20px; align-items: center;">
+        <div style="text-align: right;">
+          <div style="font-size: 9px; color: var(--text-muted, #94a3b8); font-weight: 600;">CONTRACT TERM</div>
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-primary, #1e293b);">${product.term} Months</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 9px; color: var(--text-muted, #94a3b8); font-weight: 600;">MONTHLY PRICE</div>
+          <div style="font-size: 15px; font-weight: 800; color: var(--telkom-blue, #0066cc);">R${product.price} <span style="font-size:10px; font-weight:normal; color: var(--text-secondary, #64748b);">pm</span></div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 9px; color: var(--text-muted, #94a3b8); font-weight: 600;">ONCE-OFF FEE</div>
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-primary, #1e293b);">R${onceOffFee}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  stepContainer.innerHTML = `
+    ${productBannerHtml}
+    <div id="stepper-step-body-wrapper"></div>
+  `;
+
+  const stepBodyWrapper = document.getElementById('stepper-step-body-wrapper');
+
   switch (APP_STATE.currentStep) {
     case 1: // Step 1 — Stock Check (Handset) OR Coverage Check (LTE/Fibre)
       if (requiresCoverageCheck(product)) {
-        renderStepperCoverageCheck(stepContainer);
+        renderStepperCoverageCheck(stepBodyWrapper);
       } else if (product.deviceSKU) {
-        renderStepperStockCheck(stepContainer);
+        renderStepperStockCheck(stepBodyWrapper);
       } else {
-        stepContainer.innerHTML = `
+        stepBodyWrapper.innerHTML = `
           <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Availability Verification")}</h3>
           <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
             Verification Skip: SIM-Only contracts do not require device stock allocation. Please proceed.
@@ -147,7 +199,7 @@ export function renderStepper() {
       break;
 
     case 2: // Customer Search & Identification
-      renderStepperCustomerSearch(stepContainer);
+      renderStepperCustomerSearch(stepBodyWrapper);
       break;
 
     case 3: { // Customer Details & Product Specs confirmation
@@ -158,7 +210,7 @@ export function renderStepper() {
         </div>
       ` : '';
 
-      stepContainer.innerHTML = `
+      stepBodyWrapper.innerHTML = `
         <h3 style="margin-bottom: 16px;">${getStepperStepTitle(3, "Confirm Customer & Product Details")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Verify the customer profile and product details for this order.</p>
         
@@ -207,7 +259,7 @@ export function renderStepper() {
     }
 
     case 4: // CIM Interaction details
-      stepContainer.innerHTML = `
+      stepBodyWrapper.innerHTML = `
         <h3 style="margin-bottom: 16px;">${getStepperStepTitle(4, "Log Visit Interaction in Amdocs CIM")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Capture customer's reason of visit for compliance reporting.</p>
         
@@ -235,20 +287,12 @@ export function renderStepper() {
       updateCIMNotesCount();
       break;
 
-    case 5: // Billing Account Selection [New]
-      renderStepperBillingSelection(stepContainer);
-      break;
-
-    case 6: // Credit Vetting Check [New]
-      renderStepperCreditVetting(stepContainer);
-      break;
-
-    case 7: // Connection details & forms
-      renderStepperContractDetails(stepContainer, product);
+    case 5: // Billing & Credit Vetting
+      renderStepperBillingSelection(stepBodyWrapper);
       break;
 
     case 8: // Customer Consent form (was step 6)
-      stepContainer.innerHTML = `
+      stepBodyWrapper.innerHTML = `
         <h3 style="margin-bottom: 16px;">${getStepperStepTitle(8, "Capture Customer Consent & Sign-Off")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Legally required declarations for SA NCA compliance.</p>
         
@@ -272,11 +316,11 @@ export function renderStepper() {
       break;
 
     case 9: // Supporting Documents [New]
-      renderStepperSupportingDocs(stepContainer);
+      renderStepperSupportingDocs(stepBodyWrapper);
       break;
 
     case 10: // Review & Validation Checklist (was step 7)
-      renderStepperReviewChecklist(stepContainer);
+      renderStepperReviewChecklist(stepBodyWrapper);
       break;
   }
 }
@@ -308,6 +352,7 @@ export function renderStepperCustomerSearch(container) {
 
   const searchResults = APP_STATE.stepperCustomerSearchResults || null;
   const searchedKey = APP_STATE.stepperCustomerSearchedKey || "";
+  const searchType = APP_STATE.stepperCustomerSearchType || "id";
   
   let resultsHtml = '';
   if (searchResults !== null) {
@@ -332,7 +377,7 @@ export function renderStepperCustomerSearch(container) {
           <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
           <h4 style="color: var(--telkom-blue-dark); margin-bottom: 6px;">Customer Not Found</h4>
           <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; max-width: 400px; margin-left: auto; margin-right: auto;">
-            No records matched "${searchedKey}". Double check the ID/Passport digits or register a new profile.
+            No records matched "${searchedKey}". Double check the search value or register a new profile.
           </p>
           <button class="btn btn-primary" onclick="openNewCustomerWizardFromStepper('${searchedKey}')">Add New Customer Profile</button>
         </div>
@@ -344,29 +389,61 @@ export function renderStepperCustomerSearch(container) {
     <h3 style="margin-bottom: 16px;">${getStepperStepTitle(2, "Customer Identification")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Search for the customer in Clarify CRM to link them to this order.</p>
     
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <input type="text" id="stepper-cust-search-input" class="form-control" placeholder="Search by SA ID or Passport Number..." value="${searchedKey}" style="height: 42px; flex: 1;" onkeydown="handleStepperCustSearchKeydown(event)">
-      <button class="btn btn-primary" onclick="searchCustomerInStepper()" style="height: 42px; width: 120px; display: flex; align-items: center; justify-content: center;">Search</button>
-      <button class="btn btn-outline" onclick="openNewCustomerWizardFromStepper('')" style="height: 42px; display: flex; align-items: center; justify-content: center; border-color: var(--telkom-blue); color: var(--telkom-blue);">Add New Customer</button>
+    <div style="display: grid; grid-template-columns: 180px 1fr auto auto; gap: 12px; align-items: flex-end;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Search Criteria</label>
+        <select id="stepper-cust-search-type" class="form-control" style="height: 42px;">
+          <option value="id" ${searchType === 'id' ? 'selected' : ''}>South African ID</option>
+          <option value="passport" ${searchType === 'passport' ? 'selected' : ''}>Passport Number</option>
+          <option value="account" ${searchType === 'account' ? 'selected' : ''}>Account Number</option>
+          <option value="mobile" ${searchType === 'mobile' ? 'selected' : ''}>Mobile Number</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 0; flex: 1;">
+        <label class="form-label" style="font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-bottom: 4px;">Identifier Value</label>
+        <input type="text" id="stepper-cust-search-input" class="form-control" placeholder="Enter query value..." value="${searchedKey}" style="height: 42px;" onkeydown="handleStepperCustSearchKeydown(event)">
+      </div>
+      <button class="btn btn-primary" onclick="searchCustomerInStepper()" style="height: 42px; width: 120px; display: flex; align-items: center; justify-content: center; font-weight: 600;">Search</button>
+      <button class="btn btn-outline" onclick="openNewCustomerWizardFromStepper('')" style="height: 42px; display: flex; align-items: center; justify-content: center; border-color: var(--telkom-blue); color: var(--telkom-blue); font-weight: 600;">Add New Customer</button>
     </div>
-    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Enter 13-digit SA ID or Passport ID. Or click 'Add New Customer' to register a new profile.</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Select search criteria and enter the corresponding identifier value.</div>
 
     ${resultsHtml}
   `;
 }
 
 export function searchCustomerInStepper() {
+  const selectType = document.getElementById('stepper-cust-search-type');
   const input = document.getElementById('stepper-cust-search-input');
-  if (!input) return;
+  if (!input || !selectType) return;
+  const type = selectType.value;
   const query = input.value.trim();
+  
+  APP_STATE.stepperCustomerSearchType = type;
+  APP_STATE.stepperCustomerSearchedKey = query;
+  
   if (!query) {
-    showToast("Please enter an ID or Passport number.", "warning");
+    showToast("Please enter a search value.", "warning");
+    return;
+  }
+
+  if (type === 'id' && !/^\d{13}$/.test(query)) {
+    showToast("South African ID number must be exactly 13 digits.", "warning");
     return;
   }
   
-  const results = MOCK_DB.crm.filter(c => (c.id === query || c.passport === query));
+  let results = [];
+  if (type === 'id') {
+    results = MOCK_DB.crm.filter(c => c.id === query);
+  } else if (type === 'passport') {
+    results = MOCK_DB.crm.filter(c => c.passport && c.passport.toLowerCase() === query.toLowerCase());
+  } else if (type === 'account') {
+    results = MOCK_DB.crm.filter(c => c.accountNumber && c.accountNumber.toLowerCase() === query.toLowerCase());
+  } else if (type === 'mobile') {
+    results = MOCK_DB.crm.filter(c => c.mobile === query);
+  }
+  
   APP_STATE.stepperCustomerSearchResults = results;
-  APP_STATE.stepperCustomerSearchedKey = query;
   renderStepper();
 }
 
@@ -462,6 +539,14 @@ export function renderStepperBillingSelection(container) {
     };
   }
 
+  if (!APP_STATE.cart.creditVetting) {
+    APP_STATE.cart.creditVetting = {
+      outcome: "",
+      ran: false,
+      depositPaid: false
+    };
+  }
+
   const bill = APP_STATE.cart.billingSelection;
   const isNew = bill.option === 'new';
 
@@ -491,14 +576,90 @@ export function renderStepperBillingSelection(container) {
 
   const vettingStatus = APP_STATE.cart.creditVetting && APP_STATE.cart.creditVetting.ran ? 
     `<span class="badge badge-success">${APP_STATE.cart.creditVetting.outcome}</span>` : 
-    `<span class="badge badge-warning">Pending Credit Assessment (Step 6)</span>`;
+    `<span class="badge badge-warning">Pending Assessment (Card 5)</span>`;
 
   const authStatus = `<span class="badge badge-warning">Pending Customer Auth</span>`;
   const dbcRef = APP_STATE.cart.draftId ? `DBC-DFT-${APP_STATE.cart.draftId}` : "DBC-PENDING";
 
+  // Render credit vetting panel
+  const cv = APP_STATE.cart.creditVetting;
+  let creditVettingHtml = '';
+  if (cv.ran) {
+    if (cv.outcome === 'Successful') {
+      creditVettingHtml = `
+        <div class="vetting-panel vetting-success" style="margin: 0; display: flex; align-items: center; gap: 16px;">
+          <div class="vetting-panel-icon" style="flex-shrink:0;">✓</div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-weight:700; font-size:14px; color:#3f8000;">Credit Assessment Successful</h4>
+            <p style="margin: 0; font-size: 12px; color:var(--text-secondary);">Credit vetting completed successfully. Postpaid provisioning is authorized.</p>
+          </div>
+        </div>
+      `;
+    } else if (cv.outcome === 'Declined') {
+      creditVettingHtml = `
+        <div class="vetting-panel vetting-danger" style="margin: 0; display: flex; align-items: center; gap: 16px;">
+          <div class="vetting-panel-icon" style="flex-shrink:0;">✗</div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-weight:700; font-size:14px; color:var(--danger);">Credit Assessment Declined</h4>
+            <p style="margin: 0; font-size: 12px; color:var(--text-secondary);">Credit vetting was unsuccessful. Postpaid deal cannot proceed.</p>
+          </div>
+        </div>
+      `;
+      // Disable Continue button
+      const nextBtn = document.getElementById('stepper-next-btn');
+      if (nextBtn) nextBtn.disabled = true;
+    } else if (cv.outcome === 'Referral') {
+      let depositActionHtml = '';
+      if (!cv.depositPaid) {
+        depositActionHtml = `
+          <div style="margin-top: 10px;">
+            <button type="button" class="btn btn-sm btn-outline" onclick="payBillingCreditVettingDeposit()" style="height: 32px;">Record Deposit Payment (R250)</button>
+          </div>
+        `;
+        // Disable Continue button until paid
+        const nextBtn = document.getElementById('stepper-next-btn');
+        if (nextBtn) nextBtn.disabled = true;
+      } else {
+        depositActionHtml = `
+          <div style="margin-top: 10px; color: var(--success-dark); font-weight: 600; font-size: 12px;">
+            ✓ Refundable Deposit of R250.00 Paid (Receipt Ref: DEP-8902). Assessment lock cleared.
+          </div>
+        `;
+      }
+      creditVettingHtml = `
+        <div class="vetting-panel vetting-warning" style="margin: 0; display: flex; align-items: center; gap: 16px;">
+          <div class="vetting-panel-icon" style="flex-shrink:0;">!</div>
+          <div>
+            <h4 style="margin: 0 0 4px 0; font-weight:700; font-size:14px; color:var(--warning-dark);">Credit Assessment Referral</h4>
+            <p style="margin: 0; font-size: 12px; color:var(--text-secondary);">Additional review is required before proceeding.</p>
+            ${depositActionHtml}
+          </div>
+        </div>
+      `;
+    }
+  } else {
+    creditVettingHtml = `
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div style="font-size: 12px; color: var(--text-secondary);">
+          Initiate credit risk evaluation scoring through NCR-approved credit bureaus.
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <select id="mock-billing-vetting-outcome" class="form-control" style="width:140px; height:36px; font-size:12px; padding:4px 8px; margin:0;">
+            <option value="Successful">Successful</option>
+            <option value="Declined">Declined</option>
+            <option value="Referral">Referral</option>
+          </select>
+          <button type="button" class="btn btn-primary" onclick="runBillingCreditVettingCheck()" style="height: 36px; padding: 0 16px; margin:0;">
+            Execute Vetting
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(5, "Billing Account Selection")}</h3>
-    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Choose whether to bill this postpaid subscription to an existing account or register new Debit Check details.</p>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(5, "Billing & Credit Vetting")}</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Choose whether to bill this postpaid subscription to an existing account or register new Debit Check details, and perform NCR credit vetting.</p>
     
     <div style="display:flex; gap:24px; margin-bottom:20px; background-color: var(--bg-light); padding: 12px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
       <label class="checkbox-group" style="margin:0; align-items:center;">
@@ -656,6 +817,14 @@ export function renderStepperBillingSelection(container) {
             Fields marked with (*) are required to proceed.
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- 5. Credit Bureau Vetting Assessment -->
+    <div style="margin-top: 24px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; border-left: 5px solid var(--telkom-blue);">
+      <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">5. Credit Bureau Vetting Assessment</h6>
+      <div id="billing-credit-vetting-container">
+        ${creditVettingHtml}
       </div>
     </div>
   `;
@@ -1085,6 +1254,48 @@ export function simulateDocUpload(docType, fileName) {
 // -----------------------------------------
 // STEP 1 GEOGRAPHIC COVERAGE CHECK
 // -----------------------------------------
+function loadLeaflet(callback) {
+  if (window.L) {
+    callback(null);
+    return;
+  }
+  
+  if (!document.getElementById('leaflet-css-link')) {
+    const css = document.createElement('link');
+    css.id = 'leaflet-css-link';
+    css.rel = 'stylesheet';
+    css.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(css);
+  }
+  
+  if (!document.getElementById('leaflet-js-script')) {
+    const js = document.createElement('script');
+    js.id = 'leaflet-js-script';
+    js.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.onload = () => callback(null);
+    js.onerror = (err) => callback(err);
+    document.head.appendChild(js);
+  } else {
+    const script = document.getElementById('leaflet-js-script');
+    const prevOnload = script.onload;
+    script.onload = () => {
+      if (prevOnload) prevOnload();
+      callback(null);
+    };
+  }
+}
+
+function renderMockMapFallback(mapEl, gisStatus, isFibre) {
+  mapEl.innerHTML = `
+    <div class="gis-map-inner" style="position: absolute; inset: 0; background: var(--bg-light);">
+      <div class="gis-grid-lines"></div>
+      <div class="gis-map-marker ${gisStatus === 'Coverage available' ? 'success' : (gisStatus === 'Coverage unavailable' ? 'danger' : '')}"></div>
+      <div style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">${isFibre ? '🔌 FIBRE' : '📡 LTE'}</div>
+      <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">GIS GEOLOCATION ENGINE</div>
+    </div>
+  `;
+}
+
 export function renderStepperCoverageCheck(container) {
   const product = APP_STATE.cart.product;
   // Determine product type label
@@ -1199,18 +1410,87 @@ export function renderStepperCoverageCheck(container) {
         ${resultBox}
       </div>
       <div>
-        <div class="gis-map-placeholder">
-          <div class="gis-map-inner">
-            <div class="gis-grid-lines"></div>
-            <div class="gis-map-marker ${gisStatus === 'Coverage available' ? 'success' : (gisStatus === 'Coverage unavailable' ? 'danger' : '')}"></div>
-            <div style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">${isFibre ? '🔌 FIBRE' : '📡 LTE'}</div>
-            <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">GIS GEOLOCATION ENGINE</div>
+        <div id="gis-interactive-map" style="width: 100%; height: 280px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: #e0ecef; position: relative; overflow: hidden; box-shadow: var(--shadow-sm);">
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 12px; font-family: var(--font-primary);">
+            <span>⏳ Loading interactive GIS map view...</span>
           </div>
         </div>
         <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px;">Coverage zone radius shown for ${serviceLabel}</div>
       </div>
     </div>
   `;
+
+  setTimeout(() => {
+    const mapEl = document.getElementById('gis-interactive-map');
+    if (!mapEl) return;
+    
+    loadLeaflet((err) => {
+      const liveMapEl = document.getElementById('gis-interactive-map');
+      if (!liveMapEl) return;
+      
+      if (err) {
+        renderMockMapFallback(liveMapEl, gisStatus, isFibre);
+        return;
+      }
+      
+      try {
+        let lat = -26.15;
+        let lng = 28.05;
+        if (coverageData.coords) {
+          const parts = coverageData.coords.split(',');
+          if (parts.length === 2) {
+            const pLat = parseFloat(parts[0]);
+            const pLng = parseFloat(parts[1]);
+            if (!isNaN(pLat) && !isNaN(pLng)) {
+              lat = pLat;
+              lng = pLng;
+            }
+          }
+        }
+        
+        liveMapEl.innerHTML = '';
+        const map = L.map(liveMapEl, {
+          zoomControl: true,
+          dragging: true,
+          scrollWheelZoom: false
+        }).setView([lat, lng], 13);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 19,
+          attribution: '© OpenStreetMap'
+        }).addTo(map);
+        
+        const marker = L.marker([lat, lng]).addTo(map);
+        marker.bindPopup(`<b>Service Location</b><br>${addr}`).openPopup();
+        
+        if (gisStatus === 'Coverage available') {
+          L.circle([lat, lng], {
+            color: '#91E200',
+            fillColor: '#91E200',
+            fillOpacity: 0.2,
+            radius: 800
+          }).addTo(map);
+        } else if (gisStatus === 'Coverage unavailable') {
+          L.circle([lat, lng], {
+            color: '#ff4d4f',
+            fillColor: '#ff4d4f',
+            fillOpacity: 0.2,
+            radius: 800
+          }).addTo(map);
+        } else if (gisStatus === 'Coverage inconclusive') {
+          L.circle([lat, lng], {
+            color: '#faad14',
+            fillColor: '#faad14',
+            fillOpacity: 0.2,
+            radius: 800
+          }).addTo(map);
+        }
+      } catch (ex) {
+        console.error("Leaflet initialization failed", ex);
+        renderMockMapFallback(liveMapEl, gisStatus, isFibre);
+      }
+    });
+  }, 50);
 }
 
 export function updateStepperColor(color) {
@@ -1381,142 +1661,208 @@ export function renderStepperContractDetails(container, product) {
 // STEP 10 REVIEW CHECKLIST
 // -----------------------------------------
 export function renderStepperReviewChecklist(container) {
-  const customerValid = !!APP_STATE.selectedCustomer;
-  const interactionValid = true;
-  const productValid = !!APP_STATE.cart.product;
-  
-  let stockValid = true;
-  if (APP_STATE.cart.product && APP_STATE.cart.product.deviceSKU) {
-    stockValid = APP_STATE.cart.stockChecked && APP_STATE.cart.stockStatus === 'In Stock';
-  }
+  const product = APP_STATE.cart.product;
+  if (!product) return;
 
-  let billingValid = false;
+  const customer = APP_STATE.selectedCustomer;
+  if (!customer) return;
+
+  // Gather billing selection info
+  let bankName = "";
+  let accountNo = "";
+  let accountType = "";
+  let debitDay = "";
   if (APP_STATE.cart.billingSelection) {
     const bill = APP_STATE.cart.billingSelection;
-    if (bill.option === 'existing' && bill.selectedId) {
-      billingValid = true;
+    if (bill.option === 'existing') {
+      bankName = "FNB (Existing Profile)";
+      accountNo = "••••5678";
+      accountType = "Savings";
+      debitDay = "1st";
     } else if (bill.option === 'new') {
       const nd = bill.newDebit;
-      if (nd.bankName && nd.branchCode && nd.accountType && nd.accountNumber && nd.debitDay && nd.debiCheckConsent && nd.termsConsent) {
-        billingValid = true;
-      }
+      bankName = nd.bankName || "";
+      accountNo = nd.accountNumber ? ("••••" + nd.accountNumber.slice(-4)) : "";
+      accountType = nd.accountType || "";
+      debitDay = nd.debitDay || "";
     }
   }
 
-  let vettingValid = false;
-  if (APP_STATE.cart.creditVetting && APP_STATE.cart.creditVetting.ran) {
-    const cv = APP_STATE.cart.creditVetting;
-    if (cv.outcome === 'Successful') {
-      vettingValid = true;
-    } else if (cv.outcome === 'Referral' && cv.depositPaid) {
-      vettingValid = true;
-    }
-  }
-
-  const detailsValid = true;
-  const consentValid = APP_STATE.cart.consent;
-
-  let docsValid = false;
-  if (APP_STATE.cart.supportingDocs) {
-    const sd = APP_STATE.cart.supportingDocs;
-    if (sd.option === 'later') {
-      docsValid = true;
-    } else if (sd.option === 'now') {
-      const uploads = sd.uploads;
-      if (uploads.idDoc && uploads.bankStatements && uploads.proofAddress && uploads.companyReg) {
-        docsValid = true;
-      }
-    }
-  }
-
-  const roleValid = APP_STATE.currentUser.role === 'agent' || APP_STATE.currentUser.role === 'manager';
-  const submissionAllowed = customerValid && interactionValid && productValid && stockValid && billingValid && vettingValid && detailsValid && consentValid && docsValid && roleValid;
+  // Gather affordability details
+  const financial = APP_STATE.newCustomerData.financial || {};
+  const gross = financial.grossIncome ? `R${parseFloat(financial.grossIncome).toLocaleString()}` : "R28,500";
+  const net = financial.netIncome ? `R${parseFloat(financial.netIncome).toLocaleString()}` : "R21,200";
+  const expenses = financial.expenses ? `R${parseFloat(financial.expenses).toLocaleString()}` : "R7,800";
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(10, "Final Validation Checklist")}</h3>
-    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Pre-submission review. Ensure all required dependencies are validated.</p>
-    
-    <div style="margin-bottom: 24px;">
-      <div class="checklist-item ${customerValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${customerValid ? 'pass' : 'fail'}">${customerValid ? '✓' : '✗'}</div>
-          <div><strong>Customer Account Identification</strong> - Found from CRM database.</div>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(10, "Order Summary & Sign-off")}</h3>
+    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Please review the summary details below, read the contract terms, and provide a manual signature to authorize your Telkom subscription.</p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
+      <!-- Customer & Product info card -->
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-lg);">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px; letter-spacing: 0.5px;">1. Customer & Product Details</h5>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">CUSTOMER:</span> <strong style="color: var(--text-primary); font-size: 14px;">${customer.name}</strong></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">IDENTIFIER:</span> <span style="font-family: monospace;">${customer.id ? maskID(customer.id) : maskPassport(customer.passport)}</span></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">CONTACT:</span> <span>${customer.mobile} | ${customer.email}</span></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">BILLING ADDR:</span> <span style="font-size: 12px; color: var(--text-secondary);">${customer.address}</span></div>
+          <div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;"><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">ORDERING PRODUCT:</span> <strong style="color: var(--telkom-blue-dark);">${product.name}</strong></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">ALLOCATION:</span> <span style="font-size: 12px; color: var(--text-secondary);">${product.allocation || product.description}</span></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">MONTHLY COST:</span> <strong style="color: var(--telkom-blue); font-size: 15px;">R${product.price} pm</strong> for ${product.term} Months</div>
         </div>
-        <span class="badge ${customerValid ? 'badge-success' : 'badge-danger'}">${customerValid ? 'Pass' : 'Fail'}</span>
       </div>
 
-      <div class="checklist-item ${productValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${productValid ? 'pass' : 'fail'}">${productValid ? '✓' : '✗'}</div>
-          <div><strong>Product Catalogue Allocation</strong> - Valid item selected.</div>
+      <!-- Financial, Vetting & Bank info card -->
+      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-lg);">
+        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 14px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; font-size: 13px; letter-spacing: 0.5px;">2. Payment & Credit Status</h5>
+        <div style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;">
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">BANK NAME:</span> <strong style="color: var(--text-primary);">${bankName || 'Not selected'}</strong></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">ACCOUNT TYPE:</span> <span>${accountType || 'N/A'}</span></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">ACCOUNT NO:</span> <span style="font-family: monospace;">${accountNo || 'N/A'}</span></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">DEBIT DATE:</span> <span>${debitDay || 'N/A'}</span></div>
+          <div style="margin-top: 6px; border-top: 1px dashed var(--border-color); padding-top: 6px;"><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">CREDIT ASSESSMENT:</span> <span class="badge badge-success" style="font-size: 10px;">Vetting Passed (Experian)</span></div>
+          <div><span style="color: var(--text-muted); font-weight: 600; font-size: 11px;">AFFORDABILITY EVAL:</span> <span style="font-size:12px;">Gross: ${gross} | Net: ${net} | Exp: ${expenses}</span></div>
         </div>
-        <span class="badge ${productValid ? 'badge-success' : 'badge-danger'}">${productValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      ${APP_STATE.cart.product && APP_STATE.cart.product.deviceSKU ? `
-      <div class="checklist-item ${stockValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${stockValid ? 'pass' : 'fail'}">${stockValid ? '✓' : '✗'}</div>
-          <div><strong>Device stock availability check</strong> - SKU allocation from Transact.</div>
-        </div>
-        <span class="badge ${stockValid ? 'badge-success' : 'badge-danger'}">${stockValid ? 'Pass' : 'Fail'}</span>
-      </div>
-      ` : ''}
-
-      <div class="checklist-item ${billingValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${billingValid ? 'pass' : 'fail'}">${billingValid ? '✓' : '✗'}</div>
-          <div><strong>Billing Account Selection</strong> - Valid existing profile or new DebiCheck setup.</div>
-        </div>
-        <span class="badge ${billingValid ? 'badge-success' : 'badge-danger'}">${billingValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      <div class="checklist-item ${vettingValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${vettingValid ? 'pass' : 'fail'}">${vettingValid ? '✓' : '✗'}</div>
-          <div><strong>Credit Bureau Risk Vetting Check</strong> - Experian credit check outcome clean.</div>
-        </div>
-        <span class="badge ${vettingValid ? 'badge-success' : 'badge-danger'}">${vettingValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      <div class="checklist-item ${detailsValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${detailsValid ? 'pass' : 'fail'}">${detailsValid ? '✓' : '✗'}</div>
-          <div><strong>Service Details capture</strong> - All mandatory form details filled.</div>
-        </div>
-        <span class="badge ${detailsValid ? 'badge-success' : 'badge-danger'}">${detailsValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      <div class="checklist-item ${consentValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${consentValid ? 'pass' : 'fail'}">${consentValid ? '✓' : '✗'}</div>
-          <div><strong>NCA customer consent</strong> - Legally binding checked options.</div>
-        </div>
-        <span class="badge ${consentValid ? 'badge-success' : 'badge-danger'}">${consentValid ? 'Pass' : 'Fail'}</span>
-      </div>
-
-      <div class="checklist-item ${docsValid ? 'pass' : 'fail'}">
-        <div class="checklist-info">
-          <div class="checklist-status-icon ${docsValid ? 'pass' : 'fail'}">${docsValid ? '✓' : '✗'}</div>
-          <div><strong>Supporting Documents</strong> - Required files uploaded or deferred.</div>
-        </div>
-        <span class="badge ${docsValid ? 'badge-success' : 'badge-danger'}">${docsValid ? 'Pass' : 'Fail'}</span>
       </div>
     </div>
 
-    ${submissionAllowed ? `
-      <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 14px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
-        All checks passed! Ready to submit order and initiate payment.
+    <!-- NCA Contract T&Cs -->
+    <div style="margin-bottom: 24px;">
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 10px; font-size: 13px;">3. Postpaid Agreement Terms & Conditions</h5>
+      <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 14px; border-radius: var(--radius-md); font-size: 12px; color: var(--text-secondary); max-height: 120px; overflow-y: scroll; line-height: 1.5; margin-bottom: 12px; font-family: var(--font-primary);">
+        <p style="margin-bottom: 8px;"><strong>1. Subscription Terms:</strong> The customer agrees to subscribe to the services outlined in this contract for a fixed period of ${product.term} months. Cancellation during the contract term may subject the customer to early termination fees as allowed under the National Credit Act (NCA).</p>
+        <p style="margin-bottom: 8px;"><strong>2. Payment Terms:</strong> Payments are processed monthly via debit order. The customer authorizes Telkom SA SOC Ltd to debit the designated bank account on the chosen debit day. Failed debits may result in service suspension and credit bureau referral.</p>
+        <p style="margin-bottom: 8px;"><strong>3. NCA & Credit Bureau:</strong> Telkom has assessed the customer's financial declarations and credit record. The customer declares that they have fully disclosed all necessary details and can comfortably afford the monthly payments.</p>
+        <p><strong>4. POPIA compliance:</strong> Customer data is processed strictly in accordance with the Protection of Personal Information Act. Signing represents authorization to process files for service provision.</p>
       </div>
-    ` : `
-      <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 14px; border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
-        ERROR: Order checklist contains issues. Correct failed steps in the stepper before submitting.
+      <label class="checkbox-group" style="display: flex; gap: 10px; align-items: flex-start; cursor: pointer; user-select: none;">
+        <input type="checkbox" id="stepper-final-consent-check" ${APP_STATE.cart.consent ? 'checked' : ''} onchange="toggleFinalConsent(this.checked)" style="width: 18px; height: 18px; cursor: pointer; margin-top: 2px;">
+        <span style="font-size: 12px; color: var(--text-primary); line-height: 1.4;">I, <strong>${customer.name}</strong>, declare that I have read, understood, and accept the contract details, terms & conditions, and debit order authorization.</span>
+      </label>
+    </div>
+
+    <!-- Manual Signature Canvas -->
+    <div style="margin-bottom: 20px;">
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 10px; font-size: 13px;">4. Customer Signature Required</h5>
+      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">Please draw your signature in the box below using your mouse or touch screen.</p>
+      
+      <div style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+        <div style="background-color: white; border: 2px dashed var(--border-color); border-radius: var(--radius-md); width: 420px; height: 150px; position: relative;">
+          <canvas id="customer-signature-canvas" width="416" height="146" style="cursor: crosshair; display: block; border-radius: var(--radius-md);"></canvas>
+          <div id="signature-placeholder" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 13px; pointer-events: none;">
+            <em>Sign here</em>
+          </div>
+        </div>
+        <div>
+          <button class="btn btn-outline" onclick="clearSignatureCanvas()" style="height: 38px; border-color: var(--danger); color: var(--danger); font-weight: 600; font-size: 12px;">Clear Signature</button>
+        </div>
       </div>
-    `}
+    </div>
   `;
 
-  document.getElementById('stepper-next-btn').disabled = !submissionAllowed;
+  setTimeout(() => {
+    initSignatureCanvas();
+    validateFinalStepSubmission();
+  }, 100);
 }
+
+export function initSignatureCanvas() {
+  const canvas = document.getElementById('customer-signature-canvas');
+  const placeholder = document.getElementById('signature-placeholder');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#002f6c'; // Telkom blue signature color
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  let drawing = false;
+
+  function getMousePos(canvasDom, touchOrMouseEvent) {
+    const rect = canvasDom.getBoundingClientRect();
+    const clientX = touchOrMouseEvent.touches ? touchOrMouseEvent.touches[0].clientX : touchOrMouseEvent.clientX;
+    const clientY = touchOrMouseEvent.touches ? touchOrMouseEvent.touches[0].clientY : touchOrMouseEvent.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  }
+
+  function startDrawing(e) {
+    e.preventDefault();
+    drawing = true;
+    const pos = getMousePos(canvas, e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    if (placeholder) placeholder.style.display = 'none';
+  }
+
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const pos = getMousePos(canvas, e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    APP_STATE.cart.hasSignature = true;
+    validateFinalStepSubmission();
+  }
+
+  function stopDrawing(e) {
+    if (drawing) {
+      e.preventDefault();
+      drawing = false;
+    }
+  }
+
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseleave', stopDrawing);
+
+  canvas.addEventListener('touchstart', startDrawing, { passive: false });
+  canvas.addEventListener('touchmove', draw, { passive: false });
+  canvas.addEventListener('touchend', stopDrawing, { passive: false });
+  
+  if (APP_STATE.cart.hasSignature) {
+    if (placeholder) placeholder.style.display = 'none';
+    ctx.beginPath();
+    ctx.moveTo(50, 70);
+    ctx.bezierCurveTo(150, 30, 200, 110, 350, 60);
+    ctx.stroke();
+  }
+}
+
+export function toggleFinalConsent(checked) {
+  APP_STATE.cart.consent = checked;
+  validateFinalStepSubmission();
+}
+
+export function clearSignatureCanvas() {
+  const canvas = document.getElementById('customer-signature-canvas');
+  const placeholder = document.getElementById('signature-placeholder');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  if (placeholder) placeholder.style.display = 'flex';
+  APP_STATE.cart.hasSignature = false;
+  validateFinalStepSubmission();
+}
+
+export function validateFinalStepSubmission() {
+  const nextBtn = document.getElementById('stepper-next-btn');
+  if (!nextBtn) return;
+  const isConsent = !!APP_STATE.cart.consent;
+  const isSigned = !!APP_STATE.cart.hasSignature;
+  nextBtn.disabled = !(isConsent && isSigned);
+  nextBtn.style.opacity = (isConsent && isSigned) ? '1' : '0.5';
+  nextBtn.style.cursor = (isConsent && isSigned) ? 'pointer' : 'not-allowed';
+}
+
+window.toggleFinalConsent = toggleFinalConsent;
+window.clearSignatureCanvas = clearSignatureCanvas;
+window.validateFinalStepSubmission = validateFinalStepSubmission;
 
 export function toggleConsent() {
   APP_STATE.cart.consent = document.getElementById('consent-check').checked;
@@ -1600,14 +1946,44 @@ export function selectProductForStepper(prodId) {
 
   const p = findProductById(prodId) || MOCK_DB.products.find(prod => prod.id === prodId);
   if (p) {
+    const isHandset = (p.category || '').toLowerCase().includes('handset');
+    const { term, price } = getProductTermAndPrice(p);
+
+    let selectedColor = APP_STATE.productColors[prodId];
+    if (isHandset && !selectedColor) {
+      let colors = ["Midnight Black", "Space Grey", "Silver"];
+      const deviceName = (p.device || p.name || '').toLowerCase();
+      if (deviceName.includes('samsung') || deviceName.includes('galaxy') || deviceName.includes('s26') || deviceName.includes('s24')) {
+        colors = ["Onyx Black", "Marble Gray", "Cobalt Violet", "Amber Yellow"];
+      } else if (deviceName.includes('apple') || deviceName.includes('iphone')) {
+        colors = ["Natural Titanium", "Blue Titanium", "White Titanium", "Black Titanium"];
+      }
+      selectedColor = colors[0];
+      APP_STATE.productColors[prodId] = selectedColor;
+    }
+
+    let deviceSKU = p.deviceSKU;
+    if (isHandset) {
+      deviceSKU = `SKU-${p.id}-${selectedColor.replace(/\s+/g, '')}-${term}`;
+      if (window.getProductStock) {
+        window.getProductStock(p.id, selectedColor, term);
+      }
+    }
+
     // Reset coverage / stock flags based on product type
     if (requiresCoverageCheck(p)) {
       // LTE / Fibre → requires GIS address check
-      APP_STATE.cart.gisStatus = "Not checked";
-      APP_STATE.cart.gisRef = "";
+      if (APP_STATE.checkedCoverage && APP_STATE.checkedCoverage.status === 'Coverage available') {
+        APP_STATE.cart.tempCoverageAddress = APP_STATE.checkedCoverage.address;
+        APP_STATE.cart.gisStatus = "Coverage available";
+        APP_STATE.cart.gisRef = APP_STATE.checkedCoverage.ref;
+      } else {
+        APP_STATE.cart.gisStatus = "Not checked";
+        APP_STATE.cart.gisRef = "";
+      }
       APP_STATE.cart.stockChecked = true;   // no physical device to allocate
       APP_STATE.cart.stockStatus = "Skip";
-    } else if (p.deviceSKU) {
+    } else if (isHandset || p.deviceSKU) {
       // Physical handset → stock check required
       APP_STATE.cart.gisStatus = "Skip";
       APP_STATE.cart.stockChecked = false;
@@ -1619,13 +1995,12 @@ export function selectProductForStepper(prodId) {
       APP_STATE.cart.stockStatus = "Skip";
     }
 
-    const { term, price } = getProductTermAndPrice(p);
-    const selectedColor = APP_STATE.productColors[prodId] || (p.deviceInfo ? p.deviceInfo.colour : (p.device ? '' : ''));
     APP_STATE.cart.product = {
       ...p,
       price: price,
       term: term,
-      selectedColor: selectedColor
+      selectedColor: selectedColor || '',
+      deviceSKU: deviceSKU
     };
 
     if (!APP_STATE.selectedCustomer) {
@@ -1693,7 +2068,7 @@ export function handleStepperNext() {
     }
   }
 
-  // Validate Step 5: Billing Selection
+  // Validate Step 5: Billing & Credit Vetting
   if (step === 5) {
     saveBillingInputs();
     const bill = APP_STATE.cart.billingSelection;
@@ -1712,10 +2087,8 @@ export function handleStepperNext() {
         return;
       }
     }
-  }
 
-  // Validate Step 6: Credit Vetting
-  if (step === 6) {
+    // Embed Credit Vetting validation inside billing selection step
     const cv = APP_STATE.cart.creditVetting;
     if (!cv || !cv.ran) {
       showToast("Please run Credit Bureau vetting assessment first.", "warning");
@@ -1727,31 +2100,6 @@ export function handleStepperNext() {
     }
     if (cv.outcome === 'Referral' && !cv.depositPaid) {
       showToast("Action Required: Customer must pay deposit to resolve referral block.", "warning");
-      return;
-    }
-  }
-
-  // Validate Step 7: Connection details
-  if (step === 7) {
-    const simType = document.getElementById('mobile-sim-type').value;
-    const numOpt = document.getElementById('mobile-number-opt').value;
-    APP_STATE.cart.contractDetails.simType = simType;
-    APP_STATE.cart.contractDetails.numberOption = numOpt;
-    
-    if (numOpt === 'Port In') {
-      const portNum = document.getElementById('mobile-port-number').value.trim();
-      if (!portNum) {
-        showToast("Port in phone number must be supplied.", "warning");
-        return;
-      }
-      APP_STATE.cart.contractDetails.portInNumber = portNum;
-    }
-  }
-
-  // Validate Step 8: Consent Check
-  if (step === 8) {
-    if (!APP_STATE.cart.consent) {
-      showToast("NCA Credit Check consent checkboxes must be acknowledged.", "warning");
       return;
     }
   }
@@ -1771,6 +2119,14 @@ export function handleStepperNext() {
 
   // Final Step 10: Submission
   if (step === 10) {
+    if (!APP_STATE.cart.consent) {
+      showToast("Please accept the Terms & Conditions to proceed.", "warning");
+      return;
+    }
+    if (!APP_STATE.cart.hasSignature) {
+      showToast("Please sign the contract on the signature pad to submit the order.", "warning");
+      return;
+    }
     submitOrderToOMS();
     return;
   }
@@ -1891,7 +2247,7 @@ export function handlePOSPaymentTrigger() {
       APP_STATE.cart.receiptNo = "REC-" + Math.floor(10000000 + Math.random() * 90000000);
       APP_STATE.cart.paymentStatus = "Successful";
 
-      const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
+      const isSimProduct = isSimOrLteProduct(APP_STATE.cart.product);
       
       const isNewDebit = APP_STATE.cart.billingSelection && APP_STATE.cart.billingSelection.option === 'new';
       const debiCheck = isNewDebit ? {
@@ -1963,7 +2319,7 @@ export function renderConfirmationReceipt() {
   document.getElementById('conf-onceoff').innerText = `R${APP_STATE.cart.product.onceOff}`;
   document.getElementById('conf-total').innerText = `R${APP_STATE.cart.product.price + APP_STATE.cart.product.onceOff}`;
 
-  const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
+  const isSimProduct = isSimOrLteProduct(APP_STATE.cart.product);
   const panel = document.getElementById('confirmation-rica-activation-panel');
   if (isSimProduct && panel) {
     panel.style.display = 'block';
@@ -2309,7 +2665,7 @@ export function submitCustomCancellation() {
   closeModal('cancellation-confirm-modal');
 
   const ordRef = APP_STATE.cart.orderRef || "ORD-" + Math.floor(100000 + Math.random() * 900000);
-  const isSimProduct = !!(APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts'));
+  const isSimProduct = isSimOrLteProduct(APP_STATE.cart.product);
   
   const newCancelledOrder = {
     orderRef: ordRef,
@@ -2448,7 +2804,32 @@ export function cancelToSaveDraft() {
   switchRoute('catalogue');
 }
 
+export function runBillingCreditVettingCheck() {
+  const select = document.getElementById('mock-billing-vetting-outcome');
+  const val = select ? select.value : 'Successful';
+  
+  if (!APP_STATE.cart.creditVetting) {
+    APP_STATE.cart.creditVetting = { outcome: "", ran: false, depositPaid: false };
+  }
+  APP_STATE.cart.creditVetting.outcome = val;
+  APP_STATE.cart.creditVetting.ran = true;
+  APP_STATE.cart.creditVetting.depositPaid = false;
+  
+  showToast(`Credit Bureau check finished: ${val}`, "success");
+  renderStepper();
+}
+
+export function payBillingCreditVettingDeposit() {
+  if (APP_STATE.cart.creditVetting) {
+    APP_STATE.cart.creditVetting.depositPaid = true;
+    showToast("Refundable deposit of R250.00 registered successfully.", "success");
+    renderStepper();
+  }
+}
+
 // Bind to window for global access (from HTML inline onclick attributes)
+window.runBillingCreditVettingCheck = runBillingCreditVettingCheck;
+window.payBillingCreditVettingDeposit = payBillingCreditVettingDeposit;
 window.handleCancelOrder = handleCancelOrder;
 window.submitCustomCancellation = submitCustomCancellation;
 window.cancelToSaveDraft = cancelToSaveDraft;

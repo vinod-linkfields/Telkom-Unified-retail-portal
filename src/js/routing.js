@@ -7,6 +7,7 @@ import { renderStepper, renderPaymentScreen, renderConfirmationReceipt } from '.
 import { renderOrderTracking } from './tracking.js';
 import { switchStockTab } from './stock.js';
 import { renderReports, renderRecordLogs } from './reports.js';
+import { renderCheckCoverageScreen } from './coverage.js';
 
 export function updateSessionBanner() {
   const banner = document.getElementById('session-banner');
@@ -15,18 +16,13 @@ export function updateSessionBanner() {
   const hasCustomer = !!APP_STATE.selectedCustomer;
   const hasProduct = !!APP_STATE.cart.product;
 
-  if (hasCustomer || hasProduct) {
+  if (hasCustomer) {
     banner.style.display = 'flex';
     const nameEl = document.getElementById('session-customer-name');
     const accEl = document.getElementById('session-account-no');
     
-    if (hasCustomer) {
-      if (nameEl) nameEl.innerText = APP_STATE.selectedCustomer.name;
-      if (accEl) accEl.innerText = APP_STATE.selectedCustomer.accountNumber;
-    } else {
-      if (nameEl) nameEl.innerText = "Awaiting Customer Selection";
-      if (accEl) accEl.innerText = "N/A";
-    }
+    if (nameEl) nameEl.innerText = APP_STATE.selectedCustomer.name;
+    if (accEl) accEl.innerText = APP_STATE.selectedCustomer.accountNumber;
     
     const cimStatus = document.getElementById('session-cim-status');
     if (cimStatus) {
@@ -43,9 +39,9 @@ export function updateSessionBanner() {
     if (sessionCancelBtn) {
       if (hasProduct) {
         sessionCancelBtn.style.display = 'inline-block';
-        sessionCancelBtn.disabled = !hasCustomer;
-        sessionCancelBtn.style.opacity = !hasCustomer ? '0.5' : '1';
-        sessionCancelBtn.style.cursor = !hasCustomer ? 'not-allowed' : 'pointer';
+        sessionCancelBtn.disabled = false;
+        sessionCancelBtn.style.opacity = '1';
+        sessionCancelBtn.style.cursor = 'pointer';
       } else {
         sessionCancelBtn.style.display = 'none';
       }
@@ -53,16 +49,16 @@ export function updateSessionBanner() {
 
     const endJourneyBtn = document.getElementById('session-end-journey-btn');
     if (endJourneyBtn) {
-      endJourneyBtn.disabled = !hasCustomer;
-      endJourneyBtn.style.opacity = !hasCustomer ? '0.5' : '1';
-      endJourneyBtn.style.cursor = !hasCustomer ? 'not-allowed' : 'pointer';
+      endJourneyBtn.disabled = false;
+      endJourneyBtn.style.opacity = '1';
+      endJourneyBtn.style.cursor = 'pointer';
     }
 
     const view360Btn = document.getElementById('session-view-360-btn');
     if (view360Btn) {
-      view360Btn.disabled = !hasCustomer;
-      view360Btn.style.opacity = !hasCustomer ? '0.5' : '1';
-      view360Btn.style.cursor = !hasCustomer ? 'not-allowed' : 'pointer';
+      view360Btn.disabled = false;
+      view360Btn.style.opacity = '1';
+      view360Btn.style.cursor = 'pointer';
     }
   } else {
     banner.style.display = 'none';
@@ -83,7 +79,14 @@ export function updateSidebarMenuOptions() {
   if (userFullname) userFullname.innerText = APP_STATE.currentUser.name;
   if (userRolename) userRolename.innerText = role.toUpperCase();
 
-  let html = '';
+  let html = `
+    <div style="padding: 0 12px 20px 12px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px;">
+      <button class="btn btn-primary" onclick="startNewOrderFlow()" style="width: 100%; height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 700; font-family: var(--font-display); background-color: var(--telkom-blue); border-color: var(--telkom-blue); color: white; border-radius: var(--radius-md); box-shadow: 0 4px 10px rgba(0, 153, 255, 0.15); cursor: pointer; transition: all 0.2s ease; font-size: 13px;">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"></path></svg>
+        <span>Start New Order</span>
+      </button>
+    </div>
+  `;
 
   if (role === 'agent') {
     html += `
@@ -93,7 +96,6 @@ export function updateSidebarMenuOptions() {
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="customer-search" onclick="switchRoute('customer-search')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Customer Search</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="catalogue" onclick="switchRoute('catalogue')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg><span>Product Catalogue</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="order-tracking" onclick="switchRoute('order-tracking')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg><span>Order Tracking</span></a></li>
-        <li class="sidebar-menu-item"><a class="sidebar-link" data-route="stock-requests" onclick="switchRoute('stock-requests')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg><span>Stock Requests</span></a></li>
       </ul>
     `;
   } else if (role === 'manager') {
@@ -104,7 +106,6 @@ export function updateSidebarMenuOptions() {
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="customer-search" onclick="switchRoute('customer-search')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Customer Search</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="catalogue" onclick="switchRoute('catalogue')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg><span>Product Catalogue</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="order-tracking" onclick="switchRoute('order-tracking')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg><span>Order Tracking</span></a></li>
-        <li class="sidebar-menu-item"><a class="sidebar-link" data-route="stock-requests" onclick="switchRoute('stock-requests')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg><span>Stock Requests</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="reports" onclick="switchRoute('reports')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span>Reports</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="record-logs" onclick="switchRoute('record-logs')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg><span>Record Logs</span></a></li>
       </ul>
@@ -115,7 +116,6 @@ export function updateSidebarMenuOptions() {
       <ul class="sidebar-menu-list">
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="area-dashboard" onclick="switchRoute('area-dashboard')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span>Area Dashboard</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="order-tracking" onclick="switchRoute('order-tracking')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg><span>Order Tracking</span></a></li>
-        <li class="sidebar-menu-item"><a class="sidebar-link" data-route="stock-requests" onclick="switchRoute('stock-requests')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg><span>Stock Approvals</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="reports" onclick="switchRoute('reports')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span>Reports</span></a></li>
         <li class="sidebar-menu-item"><a class="sidebar-link" data-route="record-logs" onclick="switchRoute('record-logs')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg><span>Record Logs</span></a></li>
       </ul>
@@ -132,9 +132,19 @@ export function updateSidebarMenuOptions() {
     `;
   }
 
+  if (role === 'agent' || role === 'manager' || role === 'admin') {
+    html += `
+      <div class="menu-section-title">Coverage Services</div>
+      <ul class="sidebar-menu-list">
+        <li class="sidebar-menu-item"><a class="sidebar-link" data-route="check-coverage" onclick="switchRoute('check-coverage')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span>Check Coverage</span></a></li>
+      </ul>
+    `;
+  }
+
   html += `
     <div class="menu-section-title">System & Settings</div>
     <ul class="sidebar-menu-list">
+      <li class="sidebar-menu-item"><a class="sidebar-link" data-route="stock-requests" onclick="switchRoute('stock-requests')"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg><span>Stock</span></a></li>
       <li class="sidebar-menu-item"><a class="sidebar-link" data-route="notifications" onclick="switchRoute('notifications')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg><span>Notifications</span></a></li>
       <li class="sidebar-menu-item"><a class="sidebar-link" onclick="handleLogout()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span>Log Out</span></a></li>
     </ul>
@@ -176,6 +186,9 @@ export function renderScreen(route) {
       loadProductsFromJSON().then(() => {
         try { renderCatalogue(); } catch(e) { console.error('renderCatalogue error:', e); }
       });
+      break;
+    case "check-coverage":
+      try { renderCheckCoverageScreen(); } catch(e) { console.error('renderCheckCoverageScreen error:', e); }
       break;
     case "order-stepper":
       try { renderStepper(); } catch(e) { console.error('renderStepper error:', e); }

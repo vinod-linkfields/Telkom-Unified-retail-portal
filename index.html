@@ -790,7 +790,7 @@
               <div class="screen-header-actions">
                 <button class="btn btn-secondary" onclick="openEditCustomerModal()">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                  Edit Contact Details
+                  Edit Customer Profile
                 </button>
                 <button class="btn btn-primary" id="c360-start-order-btn" onclick="switchRoute('catalogue')">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -850,6 +850,14 @@
                   </div>
                 </div>
 
+                <!-- Onboarding Profile Details Panel -->
+                <div class="panel" id="c360-onboarding-panel">
+                  <div class="panel-header"><span class="panel-title">Onboarding Profile Details</span></div>
+                  <div class="panel-body" id="c360-onboarding-content" style="padding: 20px;">
+                    <!-- Populated dynamically in JS -->
+                  </div>
+                </div>
+
                 <!-- Saved Order Drafts panel -->
                 <div class="panel" id="c360-drafts-panel" style="display: none;">
                   <div class="panel-header"><span class="panel-title">Saved Order Drafts</span></div>
@@ -893,6 +901,24 @@
                 </div>
               </div>
 
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VIEW: CHECK COVERAGE (STANDALONE) -->
+        <!-- ========================================== -->
+        <div id="view-check-coverage" class="view-container" style="display: none;">
+          <div class="screen-header">
+            <div>
+              <h2>Check Network Coverage</h2>
+              <p class="screen-title-desc">Verify LTE fixed-wireless or Fibre broadband availability at a specified location before starting the order.</p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-body" id="check-coverage-screen-content">
+              <!-- Content rendered dynamically by coverage.js -->
             </div>
           </div>
         </div>
@@ -969,6 +995,10 @@
                 <label class="filter-option">
                   <input type="checkbox" id="filter-promotions-only" onchange="_currentCatPage=1;renderCatalogue()">
                   <span>Promotions Only</span>
+                </label>
+                <label class="filter-option">
+                  <input type="checkbox" id="filter-bestsellers-only" onchange="_currentCatPage=1;renderCatalogue()">
+                  <span>Best Sellers Only</span>
                 </label>
               </div>
 
