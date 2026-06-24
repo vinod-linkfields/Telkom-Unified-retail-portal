@@ -1,6 +1,6 @@
 import { MOCK_DB, APP_STATE, saveOrders, saveDraftOrders, BANK_OPTIONS } from './state.js';
 import { paginateExistingTable, showToast, pushNotification, maskID, maskPassport, openModal, closeModal } from './utils.js';
-import { switchRoute } from './routing.js';
+import { switchRoute, updateSessionBanner } from './routing.js';
 import { getProductTermAndPrice } from './catalogue.js';
 import { openNewCustomerWizard } from './customer.js';
 import { renderOrderActivationWorkflow } from './tracking.js';
@@ -60,6 +60,7 @@ export function renderStepperHeader() {
 }
 
 export function renderStepper() {
+  updateSessionBanner();
   const stepContainer = document.getElementById('stepper-form-content');
   if (!stepContainer) return;
   stepContainer.innerHTML = '';

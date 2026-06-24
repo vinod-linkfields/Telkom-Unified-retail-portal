@@ -86,9 +86,9 @@
           <span class="session-tag" id="session-cim-status">CIM Session Active</span>
         </div>
         <div class="session-actions">
-          <button class="session-btn" onclick="switchRoute('customer-360')">View 360 Profile</button>
+          <button class="session-btn" id="session-view-360-btn" onclick="switchRoute('customer-360')">View 360 Profile</button>
           <button type="button" class="session-btn danger-btn" id="session-cancel-order-btn" onclick="handleCancelOrder(event)" style="display: none; background-color: var(--danger); margin-right: 8px;">Cancel Order</button>
-          <button class="session-btn danger-btn" onclick="closeCustomerSession()">End Customer Session</button>
+          <button class="session-btn danger-btn" id="session-end-journey-btn" onclick="closeCustomerSession()">End Customer Session</button>
         </div>
       </div>
 

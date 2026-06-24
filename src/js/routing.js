@@ -11,12 +11,22 @@ import { renderReports, renderRecordLogs } from './reports.js';
 export function updateSessionBanner() {
   const banner = document.getElementById('session-banner');
   if (!banner) return;
-  if (APP_STATE.selectedCustomer) {
+
+  const hasCustomer = !!APP_STATE.selectedCustomer;
+  const hasProduct = !!APP_STATE.cart.product;
+
+  if (hasCustomer || hasProduct) {
     banner.style.display = 'flex';
     const nameEl = document.getElementById('session-customer-name');
     const accEl = document.getElementById('session-account-no');
-    if (nameEl) nameEl.innerText = APP_STATE.selectedCustomer.name;
-    if (accEl) accEl.innerText = APP_STATE.selectedCustomer.accountNumber;
+    
+    if (hasCustomer) {
+      if (nameEl) nameEl.innerText = APP_STATE.selectedCustomer.name;
+      if (accEl) accEl.innerText = APP_STATE.selectedCustomer.accountNumber;
+    } else {
+      if (nameEl) nameEl.innerText = "Awaiting Customer Selection";
+      if (accEl) accEl.innerText = "N/A";
+    }
     
     const cimStatus = document.getElementById('session-cim-status');
     if (cimStatus) {
@@ -31,11 +41,28 @@ export function updateSessionBanner() {
 
     const sessionCancelBtn = document.getElementById('session-cancel-order-btn');
     if (sessionCancelBtn) {
-      if (APP_STATE.cart.product) {
+      if (hasProduct) {
         sessionCancelBtn.style.display = 'inline-block';
+        sessionCancelBtn.disabled = !hasCustomer;
+        sessionCancelBtn.style.opacity = !hasCustomer ? '0.5' : '1';
+        sessionCancelBtn.style.cursor = !hasCustomer ? 'not-allowed' : 'pointer';
       } else {
         sessionCancelBtn.style.display = 'none';
       }
+    }
+
+    const endJourneyBtn = document.getElementById('session-end-journey-btn');
+    if (endJourneyBtn) {
+      endJourneyBtn.disabled = !hasCustomer;
+      endJourneyBtn.style.opacity = !hasCustomer ? '0.5' : '1';
+      endJourneyBtn.style.cursor = !hasCustomer ? 'not-allowed' : 'pointer';
+    }
+
+    const view360Btn = document.getElementById('session-view-360-btn');
+    if (view360Btn) {
+      view360Btn.disabled = !hasCustomer;
+      view360Btn.style.opacity = !hasCustomer ? '0.5' : '1';
+      view360Btn.style.cursor = !hasCustomer ? 'not-allowed' : 'pointer';
     }
   } else {
     banner.style.display = 'none';
