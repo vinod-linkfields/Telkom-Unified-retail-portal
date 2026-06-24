@@ -1994,7 +1994,11 @@ export function renderConfirmationRicaActivation() {
   renderOrderActivationWorkflow(order, panel, false);
 }
 
-export function handleCancelOrder() {
+export function handleCancelOrder(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const confirmCancel = confirm("Are you sure you want to cancel this order?");
   if (!confirmCancel) return;
 

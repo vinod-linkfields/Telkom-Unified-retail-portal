@@ -28,6 +28,15 @@ export function updateSessionBanner() {
         cimStatus.className = "session-tag warning";
       }
     }
+
+    const sessionCancelBtn = document.getElementById('session-cancel-order-btn');
+    if (sessionCancelBtn) {
+      if (APP_STATE.activeRoute === 'order-stepper' && APP_STATE.cart.product) {
+        sessionCancelBtn.style.display = 'inline-block';
+      } else {
+        sessionCancelBtn.style.display = 'none';
+      }
+    }
   } else {
     banner.style.display = 'none';
   }

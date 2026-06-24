@@ -87,6 +87,7 @@
         </div>
         <div class="session-actions">
           <button class="session-btn" onclick="switchRoute('customer-360')">View 360 Profile</button>
+          <button type="button" class="session-btn danger-btn" id="session-cancel-order-btn" onclick="handleCancelOrder(event)" style="display: none; background-color: var(--danger); margin-right: 8px;">Cancel Order</button>
           <button class="session-btn danger-btn" onclick="closeCustomerSession()">End Customer Session</button>
         </div>
       </div>
@@ -1032,7 +1033,6 @@
             <div class="panel-footer" style="display: flex; justify-content: flex-end; align-items: center; background-color: var(--bg-light); border-top: 1px solid var(--border-color); padding: 16px 24px;">
             <button class="btn btn-secondary" id="stepper-back-btn" onclick="handleStepperBack()">Back</button>
             <button class="btn btn-outline" id="stepper-draft-btn" onclick="handleSaveDraft()" style="margin: 0 auto 0 16px; border-color: var(--telkom-blue); color: var(--telkom-blue);">Save Draft</button>
-            <button class="btn btn-danger" id="stepper-cancel-btn" onclick="handleCancelOrder()" style="margin-left: 12px; background-color: var(--danger); color: white;">Cancel Order</button>
             <button class="btn btn-primary" id="stepper-next-btn" onclick="handleStepperNext()">Continue</button>
           </div>
           </div>
