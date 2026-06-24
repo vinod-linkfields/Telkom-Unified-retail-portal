@@ -103,13 +103,7 @@ export function renderOrderTracking() {
   }
   const submittedCount = submittedFilteredForCount.length;
 
-  // Pending Count
-  let pendingDrafts = APP_STATE.draftOrders || [];
-  pendingDrafts = applyVisibilityFilters(pendingDrafts, true);
-  if (searchValForCount) {
-    pendingDrafts = pendingDrafts.filter(d => d.draftId.toLowerCase().includes(searchValForCount) || d.customerName.toLowerCase().includes(searchValForCount));
-  }
-
+  // Pending Count (Only submitted pending orders, not drafts)
   let pendingSubmitted = (APP_STATE.ordersList || []).filter(o => {
     if (o.status === 'Cancelled') return false;
     const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
@@ -121,7 +115,15 @@ export function renderOrderTracking() {
   if (searchValForCount) {
     pendingSubmitted = pendingSubmitted.filter(o => o.orderRef.toLowerCase().includes(searchValForCount) || o.customerName.toLowerCase().includes(searchValForCount));
   }
-  const pendingCount = pendingDrafts.length + pendingSubmitted.length;
+  const pendingCount = pendingSubmitted.length;
+
+  // Drafts Count
+  let draftsFilteredForCount = APP_STATE.draftOrders || [];
+  draftsFilteredForCount = applyVisibilityFilters(draftsFilteredForCount, true);
+  if (searchValForCount) {
+    draftsFilteredForCount = draftsFilteredForCount.filter(d => d.draftId.toLowerCase().includes(searchValForCount) || d.customerName.toLowerCase().includes(searchValForCount));
+  }
+  const draftsCount = draftsFilteredForCount.length;
 
   // Cancelled Count
   let cancelledFilteredForCount = (APP_STATE.ordersList || []).filter(o => o.status === 'Cancelled');
@@ -134,6 +136,7 @@ export function renderOrderTracking() {
   // Render dynamic badges on the tab buttons
   const submittedTabBtn = document.getElementById('tracking-tab-btn-submitted');
   const pendingTabBtn = document.getElementById('tracking-tab-btn-pending');
+  const draftsTabBtn = document.getElementById('tracking-tab-btn-drafts');
   const cancelledTabBtn = document.getElementById('tracking-tab-btn-cancelled');
 
   if (submittedTabBtn) {
@@ -141,6 +144,9 @@ export function renderOrderTracking() {
   }
   if (pendingTabBtn) {
     pendingTabBtn.innerHTML = `Pending Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'pending' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'pending' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${pendingCount}</span>`;
+  }
+  if (draftsTabBtn) {
+    draftsTabBtn.innerHTML = `Draft Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'drafts' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'drafts' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${draftsCount}</span>`;
   }
   if (cancelledTabBtn) {
     cancelledTabBtn.innerHTML = `Cancelled Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'cancelled' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'cancelled' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${cancelledCount}</span>`;
@@ -187,10 +193,6 @@ export function renderOrderTracking() {
       emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No tracking orders found.</td></tr>`
     });
   } else if (tab === 'pending') {
-    let draftsFiltered = APP_STATE.draftOrders || [];
-    draftsFiltered = applyOrderFilters(draftsFiltered, true);
-    draftsFiltered = applyVisibilityFilters(draftsFiltered, true);
-
     let submittedPendingFiltered = (APP_STATE.ordersList || []).filter(o => {
       if (o.status === 'Cancelled') return false;
       const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
@@ -201,21 +203,7 @@ export function renderOrderTracking() {
     submittedPendingFiltered = applyOrderFilters(submittedPendingFiltered, false);
     submittedPendingFiltered = applyVisibilityFilters(submittedPendingFiltered, false);
 
-    const draftRows = draftsFiltered.map(d => `
-      <tr style="background-color: rgba(15, 48, 87, 0.02);">
-        <td><span class="badge badge-secondary" style="letter-spacing:0.5px;">DRAFT</span></td>
-        <td>${d.customerName || 'Anonymous Customer'}</td>
-        <td>${d.product ? d.product.name : 'Unknown Product'}</td>
-        <td><code>${d.branch}</code></td>
-        <td>${d.timestamp.replace('T', ' ').substring(0,16)}</td>
-        <td><span class="badge badge-secondary">Awaiting Completion</span></td>
-        <td>
-          <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Resume checkout</button>
-        </td>
-      </tr>
-    `);
-
-    const submittedRows = submittedPendingFiltered.map(o => {
+    const rows = submittedPendingFiltered.map(o => {
       const actionBtnHtml = `<button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')">Resolve blocks</button>`;
       let detailText = "Awaiting Action";
       if (o.ricaStatus === 'Pending') {
@@ -241,8 +229,6 @@ export function renderOrderTracking() {
       `;
     });
 
-    const rows = [...draftRows, ...submittedRows];
-
     container.innerHTML = `
       <table class="custom-table">
         <thead>
@@ -261,7 +247,46 @@ export function renderOrderTracking() {
       </table>
     `;
     renderPaginatedRows(document.getElementById('tracking-pending-table-body'), rows, {
-      emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending orders or drafts.</td></tr>`
+      emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending orders.</td></tr>`
+    });
+  } else if (tab === 'drafts') {
+    let draftsFiltered = APP_STATE.draftOrders || [];
+    draftsFiltered = applyOrderFilters(draftsFiltered, true);
+    draftsFiltered = applyVisibilityFilters(draftsFiltered, true);
+
+    const rows = draftsFiltered.map(d => `
+      <tr style="background-color: rgba(15, 48, 87, 0.02);">
+        <td><strong>${d.draftId}</strong></td>
+        <td>${d.customerName || 'Anonymous Customer'}</td>
+        <td>${d.product ? d.product.name : 'Unknown Product'}</td>
+        <td><code>${d.branch}</code></td>
+        <td>${d.timestamp ? d.timestamp.replace('T', ' ').substring(0,16) : 'N/A'}</td>
+        <td><span class="badge badge-secondary" style="background-color: #e2e8f0; color: #475569;">Draft</span></td>
+        <td>
+          <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Resume checkout</button>
+        </td>
+      </tr>
+    `);
+
+    container.innerHTML = `
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Draft ID</th>
+            <th>Customer</th>
+            <th>Product Name</th>
+            <th>Branch Store</th>
+            <th>Date Saved</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tracking-drafts-table-body">
+        </tbody>
+      </table>
+    `;
+    renderPaginatedRows(document.getElementById('tracking-drafts-table-body'), rows, {
+      emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No draft orders found.</td></tr>`
     });
   } else if (tab === 'cancelled') {
     let filtered = (APP_STATE.ordersList || []).filter(o => o.status === 'Cancelled');
@@ -317,42 +342,25 @@ export function switchTrackingTab(tabName) {
   APP_STATE.activeTrackingTab = tabName;
   const submittedBtn = document.getElementById('tracking-tab-btn-submitted');
   const pendingBtn = document.getElementById('tracking-tab-btn-pending');
+  const draftsBtn = document.getElementById('tracking-tab-btn-drafts');
   const cancelledBtn = document.getElementById('tracking-tab-btn-cancelled');
   
-  if (submittedBtn && pendingBtn) {
-    submittedBtn.classList.remove('active');
-    submittedBtn.style.borderBottom = '3px solid transparent';
-    submittedBtn.style.color = 'var(--text-secondary)';
-    submittedBtn.style.fontWeight = '600';
-
-    pendingBtn.classList.remove('active');
-    pendingBtn.style.borderBottom = '3px solid transparent';
-    pendingBtn.style.color = 'var(--text-secondary)';
-    pendingBtn.style.fontWeight = '600';
-
-    if (cancelledBtn) {
-      cancelledBtn.classList.remove('active');
-      cancelledBtn.style.borderBottom = '3px solid transparent';
-      cancelledBtn.style.color = 'var(--text-secondary)';
-      cancelledBtn.style.fontWeight = '600';
+  const allBtns = [submittedBtn, pendingBtn, draftsBtn, cancelledBtn];
+  allBtns.forEach(btn => {
+    if (btn) {
+      btn.classList.remove('active');
+      btn.style.borderBottom = '3px solid transparent';
+      btn.style.color = 'var(--text-secondary)';
+      btn.style.fontWeight = '600';
     }
+  });
 
-    if (tabName === 'submitted') {
-      submittedBtn.classList.add('active');
-      submittedBtn.style.borderBottom = '3px solid var(--telkom-blue)';
-      submittedBtn.style.color = 'var(--telkom-blue-dark)';
-      submittedBtn.style.fontWeight = '700';
-    } else if (tabName === 'pending') {
-      pendingBtn.classList.add('active');
-      pendingBtn.style.borderBottom = '3px solid var(--telkom-blue)';
-      pendingBtn.style.color = 'var(--telkom-blue-dark)';
-      pendingBtn.style.fontWeight = '700';
-    } else if (tabName === 'cancelled' && cancelledBtn) {
-      cancelledBtn.classList.add('active');
-      cancelledBtn.style.borderBottom = '3px solid var(--telkom-blue)';
-      cancelledBtn.style.color = 'var(--telkom-blue-dark)';
-      cancelledBtn.style.fontWeight = '700';
-    }
+  const activeBtn = document.getElementById(`tracking-tab-btn-${tabName}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.borderBottom = '3px solid var(--telkom-blue)';
+    activeBtn.style.color = 'var(--telkom-blue-dark)';
+    activeBtn.style.fontWeight = '700';
   }
   renderOrderTracking();
 }

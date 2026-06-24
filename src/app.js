@@ -112,6 +112,7 @@ import {
   handleStepperNext,
   handleCancelOrder,
   submitCustomCancellation,
+  cancelToSaveDraft,
   updateCIMState,
   updateCIMNotesCount,
   updateContractDetailsState,
@@ -555,6 +556,7 @@ window.handleStepperBack = handleStepperBack;
 window.handleStepperNext = handleStepperNext;
 window.handleCancelOrder = handleCancelOrder;
 window.submitCustomCancellation = submitCustomCancellation;
+window.cancelToSaveDraft = cancelToSaveDraft;
 window.updateCIMState = updateCIMState;
 window.updateCIMNotesCount = updateCIMNotesCount;
 window.updateContractDetailsState = updateContractDetailsState;

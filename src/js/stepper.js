@@ -2078,9 +2078,87 @@ export function submitCustomCancellation() {
   }
 }
 
+export function cancelToSaveDraft() {
+  closeModal('cancellation-confirm-modal');
+
+  const currentStep = APP_STATE.currentStep;
+
+  // Save current step inputs before building draft object
+  if (currentStep === 4) {
+    const cimTypeEl = document.getElementById('stepper-cim-type');
+    const cimNotesEl = document.getElementById('stepper-cim-notes');
+    if (APP_STATE.activeCIMInteraction) {
+      if (cimTypeEl) APP_STATE.activeCIMInteraction.type = cimTypeEl.value;
+      if (cimNotesEl) APP_STATE.activeCIMInteraction.notes = cimNotesEl.value;
+    }
+  } else if (currentStep === 5) {
+    if (document.getElementById('billing-new-bankname')) {
+      saveBillingInputs();
+    }
+  } else if (currentStep === 7) {
+    if (document.getElementById('mobile-sim-type')) {
+      updateContractDetailsState();
+    }
+  } else if (currentStep === 9) {
+    if (document.querySelector('input[name="docs-opt"]:checked')) {
+      saveDocsOptionInput();
+    }
+  }
+
+  const targetId = APP_STATE.cart.draftId || "DRF-" + Math.floor(100000 + Math.random() * 900000);
+
+  const draftObj = {
+    draftId: targetId,
+    customerName: APP_STATE.selectedCustomer ? APP_STATE.selectedCustomer.name : "",
+    customerAccount: APP_STATE.selectedCustomer ? APP_STATE.selectedCustomer.accountNumber : "",
+    selectedCustomer: APP_STATE.selectedCustomer,
+    activeCIMInteraction: APP_STATE.activeCIMInteraction,
+    product: APP_STATE.cart.product,
+    cart: { ...APP_STATE.cart, draftId: targetId, status: "Draft" },
+    step: currentStep,
+    branch: APP_STATE.currentUser.branch,
+    agentId: APP_STATE.currentUser.id,
+    timestamp: new Date().toISOString(),
+    status: "Draft"
+  };
+
+  const existsIdx = APP_STATE.draftOrders.findIndex(d => d.draftId === targetId);
+  if (existsIdx > -1) {
+    APP_STATE.draftOrders[existsIdx] = draftObj;
+  } else {
+    APP_STATE.draftOrders.unshift(draftObj);
+  }
+
+  saveDraftOrders();
+  showToast(`Checkout draft saved successfully! ID: ${targetId}`, "success");
+
+  APP_STATE.selectedCustomer = null;
+  APP_STATE.activeCIMInteraction = null;
+  APP_STATE.cart = {
+    product: null,
+    contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+    consent: false,
+    gisRef: "",
+    gisStatus: "Not checked",
+    stockChecked: false,
+    stockStatus: "",
+    ricaStatus: "",
+    simActivationNumber: "",
+    paymentStatus: "Pending",
+    posTxnRef: "",
+    receiptNo: "",
+    orderRef: "",
+    draftId: ""
+  };
+  APP_STATE.currentStep = 1;
+
+  switchRoute('catalogue');
+}
+
 // Bind to window for global access (from HTML inline onclick attributes)
 window.handleCancelOrder = handleCancelOrder;
 window.submitCustomCancellation = submitCustomCancellation;
+window.cancelToSaveDraft = cancelToSaveDraft;
 window.getActiveStepsForProduct = getActiveStepsForProduct;
 window.getStepperStepTitle = getStepperStepTitle;
 window.renderStepperHeader = renderStepperHeader;
