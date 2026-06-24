@@ -5,6 +5,27 @@ import { getProductTermAndPrice, findProductById } from './catalogue.js';
 import { openNewCustomerWizard } from './customer.js';
 import { renderOrderActivationWorkflow } from './tracking.js';
 
+// ─── Product type helpers ────────────────────────────────────────────────────
+/**
+ * Returns true when a product requires a GIS coverage address check.
+ * Applies to LTE fixed-wireless and Fibre products.
+ */
+export function requiresCoverageCheck(product) {
+  if (!product) return false;
+  const pkg  = (product.package  || '').toLowerCase();
+  const name = (product.name     || '').toLowerCase();
+  const cat  = (product.category || '').toLowerCase();
+  return (
+    pkg.includes('lte') ||
+    pkg.includes('mbps') ||
+    name.includes('fibre') ||
+    name.includes('fiber') ||
+    pkg.includes('fibre') ||
+    pkg.includes('fiber') ||
+    cat === 'fibre'
+  );
+}
+
 export function getActiveStepsForProduct(product) {
   const steps = [
     { id: 1, label: "Check Avail" },
@@ -19,10 +40,15 @@ export function getActiveStepsForProduct(product) {
   ];
   
   if (product) {
-    const needsStock = !!product.deviceSKU;
-    if (!needsStock) {
+    const needsStock  = !!product.deviceSKU;
+    const needsCoverage = requiresCoverageCheck(product);
+
+    if (!needsStock && !needsCoverage) {
+      // Pure SIM / voice / mobile-handset contracts — skip step 1 entirely
       return steps.filter(s => s.id !== 1);
     }
+    // Handset with device → stock check (step 1 stays)
+    // LTE/Fibre → coverage check (step 1 stays)
   }
   return steps;
 }
@@ -105,8 +131,10 @@ export function renderStepper() {
   }
 
   switch (APP_STATE.currentStep) {
-    case 1: // Stock Check (Handset)
-      if (product.deviceSKU) {
+    case 1: // Step 1 — Stock Check (Handset) OR Coverage Check (LTE/Fibre)
+      if (requiresCoverageCheck(product)) {
+        renderStepperCoverageCheck(stepContainer);
+      } else if (product.deviceSKU) {
         renderStepperStockCheck(stepContainer);
       } else {
         stepContainer.innerHTML = `
@@ -1058,9 +1086,24 @@ export function simulateDocUpload(docType, fileName) {
 // STEP 1 GEOGRAPHIC COVERAGE CHECK
 // -----------------------------------------
 export function renderStepperCoverageCheck(container) {
+  const product = APP_STATE.cart.product;
+  // Determine product type label
+  const pkg = (product ? product.package || '' : '').toLowerCase();
+  const isLTE = pkg.includes('lte') || pkg.includes('mbps');
+  const isFibre = pkg.includes('fibre') || pkg.includes('fiber') ||
+                  (product && (product.name || '').toLowerCase().includes('fibre'));
+  const serviceLabel = isFibre ? 'Fibre Broadband' : 'LTE Fixed-Wireless';
+  const checkLabel   = isFibre ? 'Fibre Coverage Checker' : 'LTE Network Coverage Checker';
+  const blockMsg     = isFibre
+    ? 'COVERAGE DECLINED: Address does not have Telkom Fibre services. Fixed-line ordering is blocked.'
+    : 'COVERAGE DECLINED: Address is outside the LTE fixed-wireless coverage zone. Ordering is blocked.';
+  const approvedMsg  = isFibre
+    ? `COVERAGE APPROVED: Telkom Fibre is available at this address.`
+    : `COVERAGE APPROVED: LTE Fixed-Wireless signal is available at this address.`;
+
   if (!APP_STATE.systemHealth.gis) {
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "GIS Fixed-Line Coverage Checker")}</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, `GIS ${checkLabel}`)}</h3>
       <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 16px; border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
         GIS API Offline: Connection to Telkom Coverage Checker timed out.
       </div>
@@ -1070,67 +1113,101 @@ export function renderStepperCoverageCheck(container) {
   }
 
   const isCustSelected = !!APP_STATE.selectedCustomer;
-  const addr = isCustSelected ? APP_STATE.selectedCustomer.address : (APP_STATE.cart.tempCoverageAddress || "");
-  const coverageData = MOCK_DB.gis[addr] || { ref: "GIS-AUTO-" + Math.floor(1000 + Math.random() * 9000), coords: "-26.15, 28.05" };
-  
+  const addr = isCustSelected
+    ? APP_STATE.selectedCustomer.address
+    : (APP_STATE.cart.tempCoverageAddress || '');
+  const coverageData = MOCK_DB.gis[addr] || { ref: 'GIS-AUTO-' + Math.floor(1000 + Math.random() * 9000), coords: '-26.15, 28.05' };
+
+  const gisStatus = APP_STATE.cart.gisStatus;
+
+  // ── Status result banner ──────────────────────────────────────────────────
   let resultBox = '';
-  if (APP_STATE.cart.gisStatus === 'Coverage available') {
+  if (gisStatus === 'Coverage available') {
     resultBox = `
-      <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 14px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600; margin-top: 16px;">
-        COVERAGE APPROVED: Exlight Broadband is available. Ref: <strong>${coverageData.ref}</strong> (${coverageData.coords})
+      <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 14px; border-radius: var(--radius-md); margin-top: 16px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--success); margin-bottom: 4px;">✅ ${approvedMsg}</div>
+        <div style="font-size: 12px; color: var(--text-secondary);">GIS Ref: <strong>${APP_STATE.cart.gisRef || coverageData.ref}</strong> &nbsp;·&nbsp; Coords: ${coverageData.coords || 'N/A'}</div>
       </div>
     `;
-  } else if (APP_STATE.cart.gisStatus === 'Coverage unavailable') {
+  } else if (gisStatus === 'Coverage unavailable') {
     resultBox = `
-      <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 14px; border-radius: var(--radius-md); color: var(--danger); font-size: 13px; font-weight: 600; margin-top: 16px;">
-        COVERAGE DECLINED: Address does not have Exlight fiber services. Fixed line ordering is blocked.
+      <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 14px; border-radius: var(--radius-md); margin-top: 16px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--danger); margin-bottom: 4px;">❌ ${blockMsg}</div>
+        <div style="font-size: 12px; color: var(--text-secondary);">Please advise the customer to check alternative service options.</div>
       </div>
     `;
-  } else if (APP_STATE.cart.gisStatus === 'Coverage inconclusive') {
+  } else if (gisStatus === 'Coverage inconclusive') {
     resultBox = `
-      <div style="background-color: var(--warning-light); border-left: 4px solid var(--warning); padding: 14px; border-radius: var(--radius-md); color: var(--warning); font-size: 13px; margin-top: 16px;">
-        <p style="font-weight: 700; color: var(--warning); margin-bottom: 8px;">GIS RESULT INCONCLUSIVE</p>
-        <p style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">The address coordinates require manual confirmation or site validation.</p>
-        <button class="btn btn-sm btn-outline" onclick="forceCoverageAcceptance()">Manual Override & Accept</button>
+      <div style="background-color: var(--warning-light); border-left: 4px solid var(--warning); padding: 14px; border-radius: var(--radius-md); margin-top: 16px;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--warning); margin-bottom: 6px;">⚠️ GIS RESULT INCONCLUSIVE</div>
+        <p style="font-size: 12px; margin-bottom: 12px; color: var(--text-secondary);">Address coordinates require manual site validation or field confirmation.</p>
+        <button class="btn btn-sm btn-outline" onclick="forceCoverageAcceptance()">Manual Override &amp; Accept</button>
+      </div>
+    `;
+  } else {
+    // Not yet checked
+    resultBox = `
+      <div style="background-color: var(--bg-light); border-left: 4px solid var(--border-color); padding: 14px; border-radius: var(--radius-md); margin-top: 16px;">
+        <div style="font-size: 13px; color: var(--text-muted);">⏳ Coverage check not yet performed. Click <strong>Execute Coverage Check</strong> to verify the service address.</div>
       </div>
     `;
   }
 
+  // ── Address input ─────────────────────────────────────────────────────────
   let addressInputHtml = '';
   if (isCustSelected) {
     addressInputHtml = `
       <div class="form-group">
-        <label class="form-label">Service Address</label>
+        <label class="form-label">Service / Installation Address</label>
         <input type="text" class="form-control" value="${addr}" disabled>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Address sourced from customer CRM profile.</div>
       </div>
     `;
   } else {
     addressInputHtml = `
       <div class="form-group">
-        <label class="form-label">Service Address <span class="required">*</span></label>
-        <input type="text" id="stepper-temp-address" class="form-control" value="${addr}" placeholder="Enter street address, suburb, city..." oninput="updateTempAddress(this.value)">
+        <label class="form-label">Service / Installation Address <span class="required">*</span></label>
+        <input type="text" id="stepper-temp-address" class="form-control" value="${addr}"
+          placeholder="e.g. 12 Main Rd, Rosebank, Johannesburg, 2196"
+          oninput="updateTempAddress(this.value)">
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Enter the full installation address for coverage verification.</div>
       </div>
     `;
   }
 
+  // ── Info banner for product type ──────────────────────────────────────────
+  const infoBanner = `
+    <div style="background: linear-gradient(135deg, #e8f4fd, #d1ecf1); border: 1px solid #bee5eb; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+      <div style="font-size: 24px;">${isFibre ? '🔌' : '📡'}</div>
+      <div>
+        <div style="font-size: 12px; font-weight: 700; color: var(--telkom-blue-dark); margin-bottom: 2px;">${serviceLabel.toUpperCase()} PRODUCT SELECTED</div>
+        <div style="font-size: 12px; color: var(--text-secondary);">A GIS coverage check is required before this order can proceed. Coverage must be confirmed as <strong>'Available'</strong> at the service address.</div>
+      </div>
+    </div>
+  `;
+
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "GIS Fixed-Line Coverage Checker")}</h3>
-    <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Address check must return 'Coverage available' for Exlight products.</p>
-    
+    <h3 style="margin-bottom: 8px;">${getStepperStepTitle(1, `GIS ${checkLabel}`)}</h3>
+    ${infoBanner}
+
     <div class="gis-container">
       <div>
         ${addressInputHtml}
-        <button class="btn btn-primary" onclick="simulateGisAddressCheck()">Execute Coverage Check</button>
+        <button class="btn btn-primary" onclick="simulateGisAddressCheck()" style="margin-bottom: 8px;">
+          🔍 Execute Coverage Check
+        </button>
         ${resultBox}
       </div>
       <div>
         <div class="gis-map-placeholder">
           <div class="gis-map-inner">
             <div class="gis-grid-lines"></div>
-            <div class="gis-map-marker ${APP_STATE.cart.gisStatus === 'Coverage available' ? 'success' : (APP_STATE.cart.gisStatus === 'Coverage unavailable' ? 'danger' : '')}"></div>
+            <div class="gis-map-marker ${gisStatus === 'Coverage available' ? 'success' : (gisStatus === 'Coverage unavailable' ? 'danger' : '')}"></div>
+            <div style="position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.65); color: white; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">${isFibre ? '🔌 FIBRE' : '📡 LTE'}</div>
             <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;">GIS GEOLOCATION ENGINE</div>
           </div>
         </div>
+        <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px;">Coverage zone radius shown for ${serviceLabel}</div>
       </div>
     </div>
   `;
@@ -1523,12 +1600,21 @@ export function selectProductForStepper(prodId) {
 
   const p = findProductById(prodId) || MOCK_DB.products.find(prod => prod.id === prodId);
   if (p) {
-    APP_STATE.cart.gisStatus = "Skip";
-
-    if (p.deviceSKU) {
+    // Reset coverage / stock flags based on product type
+    if (requiresCoverageCheck(p)) {
+      // LTE / Fibre → requires GIS address check
+      APP_STATE.cart.gisStatus = "Not checked";
+      APP_STATE.cart.gisRef = "";
+      APP_STATE.cart.stockChecked = true;   // no physical device to allocate
+      APP_STATE.cart.stockStatus = "Skip";
+    } else if (p.deviceSKU) {
+      // Physical handset → stock check required
+      APP_STATE.cart.gisStatus = "Skip";
       APP_STATE.cart.stockChecked = false;
       APP_STATE.cart.stockStatus = "";
     } else {
+      // Pure SIM / mobile plan → no stock, no GIS
+      APP_STATE.cart.gisStatus = "Skip";
       APP_STATE.cart.stockChecked = true;
       APP_STATE.cart.stockStatus = "Skip";
     }
@@ -1575,7 +1661,15 @@ export function handleStepperNext() {
   const step = APP_STATE.currentStep;
 
   if (step === 1) {
-    if (APP_STATE.cart.product.deviceSKU) {
+    const prod1 = APP_STATE.cart.product;
+    if (requiresCoverageCheck(prod1)) {
+      // LTE / Fibre — must pass GIS coverage check
+      if (APP_STATE.cart.gisStatus !== 'Coverage available') {
+        showToast("Coverage check required: Please run and pass the GIS coverage check before proceeding.", "warning");
+        return;
+      }
+    } else if (prod1.deviceSKU) {
+      // Handset — must pass stock check
       if (!APP_STATE.cart.stockChecked || APP_STATE.cart.stockStatus !== 'In Stock') {
         showToast("Device stock must be locked and verified available to proceed.", "warning");
         return;
@@ -2358,6 +2452,7 @@ export function cancelToSaveDraft() {
 window.handleCancelOrder = handleCancelOrder;
 window.submitCustomCancellation = submitCustomCancellation;
 window.cancelToSaveDraft = cancelToSaveDraft;
+window.requiresCoverageCheck = requiresCoverageCheck;
 window.getActiveStepsForProduct = getActiveStepsForProduct;
 window.getStepperStepTitle = getStepperStepTitle;
 window.renderStepperHeader = renderStepperHeader;
