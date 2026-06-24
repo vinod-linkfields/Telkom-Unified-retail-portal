@@ -4,78 +4,152 @@ import { switchRoute } from './routing.js';
 import { renderStepper } from './stepper.js';
 
 // Render Order Tracking View
+function applyOrderFilters(list, isDraft = false) {
+  let result = [...list];
+
+  // 1. Search filter (Ref or Customer Name)
+  const searchVal = document.getElementById('tracking-search-ref') ? document.getElementById('tracking-search-ref').value.trim().toLowerCase() : '';
+  if (searchVal) {
+    result = result.filter(o => {
+      const ref = isDraft ? (o.draftId || '') : (o.orderRef || '');
+      const cust = o.customerName || '';
+      return ref.toLowerCase().includes(searchVal) || cust.toLowerCase().includes(searchVal);
+    });
+  }
+
+  // 2. Start Date filter
+  const startDateVal = document.getElementById('tracking-filter-start-date') ? document.getElementById('tracking-filter-start-date').value : '';
+  if (startDateVal) {
+    result = result.filter(o => {
+      const dateStr = isDraft ? (o.timestamp || '') : (o.date || '');
+      const ymd = dateStr.slice(0, 10);
+      return ymd >= startDateVal;
+    });
+  }
+
+  // 3. End Date filter
+  let endDateVal = document.getElementById('tracking-filter-end-date') ? document.getElementById('tracking-filter-end-date').value : '';
+  const startDateValChecked = document.getElementById('tracking-filter-start-date') ? document.getElementById('tracking-filter-start-date').value : '';
+  if (startDateValChecked && endDateVal && endDateVal < startDateValChecked) {
+    showToast("End date cannot be before start date.", "warning");
+    document.getElementById('tracking-filter-end-date').value = '';
+    endDateVal = '';
+  }
+  if (endDateVal) {
+    result = result.filter(o => {
+      const dateStr = isDraft ? (o.timestamp || '') : (o.date || '');
+      const ymd = dateStr.slice(0, 10);
+      return ymd <= endDateVal;
+    });
+  }
+
+  // 4. Product filter
+  const productVal = document.getElementById('tracking-filter-product') ? document.getElementById('tracking-filter-product').value : '';
+  if (productVal) {
+    result = result.filter(o => {
+      const prodName = isDraft ? (o.product ? o.product.name : '') : (o.product || '');
+      return prodName === productVal;
+    });
+  }
+
+  return result;
+}
+
+function applyVisibilityFilters(list, isDraft = false) {
+  const viewAllNetwork = document.getElementById('tracking-view-all') && document.getElementById('tracking-view-all').checked;
+  if (viewAllNetwork) {
+    return list;
+  }
+  
+  if (APP_STATE.currentUser.role === 'agent') {
+    return list.filter(o => {
+      const agentId = isDraft ? (o.agentId || '') : (o.agent || '');
+      return agentId === APP_STATE.currentUser.id;
+    });
+  } else if (APP_STATE.currentUser.role === 'manager') {
+    return list.filter(o => {
+      const storeVal = isDraft ? (o.branch || '') : (o.store || '');
+      return storeVal === APP_STATE.currentUser.branch;
+    });
+  }
+  return list;
+}
+
 export function renderOrderTracking() {
   const container = document.getElementById('tracking-table-container');
   if (!container) return;
 
   const tab = APP_STATE.activeTrackingTab || 'submitted';
 
-  // Calculate Submitted count (using current search filter & permissions)
-  let submittedFilteredForCount = APP_STATE.ordersList || [];
-  const searchValForCount = document.getElementById('tracking-search-ref') ? document.getElementById('tracking-search-ref').value.trim() : '';
-  if (searchValForCount) {
-    submittedFilteredForCount = submittedFilteredForCount.filter(o => o.orderRef.toLowerCase().includes(searchValForCount.toLowerCase()) || o.customerName.toLowerCase().includes(searchValForCount.toLowerCase()));
+  // Populate dynamic product dropdown
+  const productSelect = document.getElementById('tracking-filter-product');
+  if (productSelect && productSelect.options.length <= 1) {
+    APP_STATE.products.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.name;
+      productSelect.appendChild(opt);
+    });
   }
-  const viewAllNetworkForCount = document.getElementById('tracking-view-all') && document.getElementById('tracking-view-all').checked;
-  if (!viewAllNetworkForCount) {
-    if (APP_STATE.currentUser.role === 'agent') {
-      submittedFilteredForCount = submittedFilteredForCount.filter(o => o.agent === APP_STATE.currentUser.id);
-    } else if (APP_STATE.currentUser.role === 'manager') {
-      submittedFilteredForCount = submittedFilteredForCount.filter(o => o.store === APP_STATE.currentUser.branch);
-    }
+
+  // Calculate counts using search filter & permissions
+  const searchValForCount = document.getElementById('tracking-search-ref') ? document.getElementById('tracking-search-ref').value.trim().toLowerCase() : '';
+
+  // Submitted Count
+  let submittedFilteredForCount = (APP_STATE.ordersList || []).filter(o => o.status !== 'Cancelled');
+  submittedFilteredForCount = applyVisibilityFilters(submittedFilteredForCount, false);
+  if (searchValForCount) {
+    submittedFilteredForCount = submittedFilteredForCount.filter(o => o.orderRef.toLowerCase().includes(searchValForCount) || o.customerName.toLowerCase().includes(searchValForCount));
   }
   const submittedCount = submittedFilteredForCount.length;
 
-  // Calculate Pending count: drafts + submitted orders awaiting RICA/SIM/Payment
+  // Pending Count
   let pendingDrafts = APP_STATE.draftOrders || [];
-  if (APP_STATE.currentUser.role === 'agent') {
-    pendingDrafts = pendingDrafts.filter(d => d.agentId === APP_STATE.currentUser.id);
-  } else if (APP_STATE.currentUser.role === 'manager') {
-    pendingDrafts = pendingDrafts.filter(d => d.branch === APP_STATE.currentUser.branch);
+  pendingDrafts = applyVisibilityFilters(pendingDrafts, true);
+  if (searchValForCount) {
+    pendingDrafts = pendingDrafts.filter(d => d.draftId.toLowerCase().includes(searchValForCount) || d.customerName.toLowerCase().includes(searchValForCount));
   }
 
   let pendingSubmitted = (APP_STATE.ordersList || []).filter(o => {
+    if (o.status === 'Cancelled') return false;
     const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
     const isActivationPending = o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber;
     const isPaymentPending = !o.payment.includes('Complete');
     return isRicaPending || isActivationPending || isPaymentPending;
   });
-  if (APP_STATE.currentUser.role === 'agent') {
-    pendingSubmitted = pendingSubmitted.filter(o => o.agent === APP_STATE.currentUser.id);
-  } else if (APP_STATE.currentUser.role === 'manager') {
-    pendingSubmitted = pendingSubmitted.filter(o => o.store === APP_STATE.currentUser.branch);
+  pendingSubmitted = applyVisibilityFilters(pendingSubmitted, false);
+  if (searchValForCount) {
+    pendingSubmitted = pendingSubmitted.filter(o => o.orderRef.toLowerCase().includes(searchValForCount) || o.customerName.toLowerCase().includes(searchValForCount));
   }
-
   const pendingCount = pendingDrafts.length + pendingSubmitted.length;
+
+  // Cancelled Count
+  let cancelledFilteredForCount = (APP_STATE.ordersList || []).filter(o => o.status === 'Cancelled');
+  cancelledFilteredForCount = applyVisibilityFilters(cancelledFilteredForCount, false);
+  if (searchValForCount) {
+    cancelledFilteredForCount = cancelledFilteredForCount.filter(o => o.orderRef.toLowerCase().includes(searchValForCount) || o.customerName.toLowerCase().includes(searchValForCount));
+  }
+  const cancelledCount = cancelledFilteredForCount.length;
 
   // Render dynamic badges on the tab buttons
   const submittedTabBtn = document.getElementById('tracking-tab-btn-submitted');
   const pendingTabBtn = document.getElementById('tracking-tab-btn-pending');
+  const cancelledTabBtn = document.getElementById('tracking-tab-btn-cancelled');
+
   if (submittedTabBtn) {
     submittedTabBtn.innerHTML = `Submitted Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'submitted' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'submitted' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${submittedCount}</span>`;
   }
   if (pendingTabBtn) {
     pendingTabBtn.innerHTML = `Pending Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'pending' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'pending' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${pendingCount}</span>`;
   }
+  if (cancelledTabBtn) {
+    cancelledTabBtn.innerHTML = `Cancelled Orders <span style="margin-left: 6px; display: inline-block; padding: 2px 6px; font-size: 11px; border-radius: 10px; background-color: ${tab === 'cancelled' ? 'var(--telkom-blue-dark)' : 'var(--border-color)'}; color: ${tab === 'cancelled' ? 'var(--text-white)' : 'var(--text-secondary)'}; font-weight: 600;">${cancelledCount}</span>`;
+  }
 
   if (tab === 'submitted') {
-    let filtered = APP_STATE.ordersList || [];
-
-    // Search input filters
-    const searchVal = document.getElementById('tracking-search-ref') ? document.getElementById('tracking-search-ref').value.trim() : '';
-    if (searchVal) {
-      filtered = filtered.filter(o => o.orderRef.toLowerCase().includes(searchVal.toLowerCase()) || o.customerName.toLowerCase().includes(searchVal.toLowerCase()));
-    }
-
-    // Role visibility restriction / Checkbox override
-    const viewAllNetwork = document.getElementById('tracking-view-all') && document.getElementById('tracking-view-all').checked;
-    if (!viewAllNetwork) {
-      if (APP_STATE.currentUser.role === 'agent') {
-        filtered = filtered.filter(o => o.agent === APP_STATE.currentUser.id);
-      } else if (APP_STATE.currentUser.role === 'manager') {
-        filtered = filtered.filter(o => o.store === APP_STATE.currentUser.branch);
-      }
-    }
+    let filtered = (APP_STATE.ordersList || []).filter(o => o.status !== 'Cancelled');
+    filtered = applyOrderFilters(filtered, false);
+    filtered = applyVisibilityFilters(filtered, false);
 
     const rows = filtered.map(o => `
       <tr>
@@ -84,7 +158,7 @@ export function renderOrderTracking() {
         <td>${o.product}</td>
         <td><code>${o.store}</code></td>
         <td>${o.date}</td>
-        <td><span class="badge ${o.status === 'Fulfilled' || o.status === 'Active' ? 'badge-success' : (o.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}">${o.status}</span></td>
+        <td><span class="badge ${o.status === 'Fulfilled' || o.status === 'Active' ? 'badge-success' : 'badge-warning'}">${o.status}</span></td>
         <td>
           <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')" style="margin-right: 5px;">Details</button>
           <button class="btn btn-sm btn-success" onclick="downloadOrderReceipt('${o.orderRef}')">Receipt</button>
@@ -114,23 +188,18 @@ export function renderOrderTracking() {
     });
   } else if (tab === 'pending') {
     let draftsFiltered = APP_STATE.draftOrders || [];
-    if (APP_STATE.currentUser.role === 'agent') {
-      draftsFiltered = draftsFiltered.filter(d => d.agentId === APP_STATE.currentUser.id);
-    } else if (APP_STATE.currentUser.role === 'manager') {
-      draftsFiltered = draftsFiltered.filter(d => d.branch === APP_STATE.currentUser.branch);
-    }
+    draftsFiltered = applyOrderFilters(draftsFiltered, true);
+    draftsFiltered = applyVisibilityFilters(draftsFiltered, true);
 
     let submittedPendingFiltered = (APP_STATE.ordersList || []).filter(o => {
+      if (o.status === 'Cancelled') return false;
       const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
       const isActivationPending = o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber;
       const isPaymentPending = !o.payment.includes('Complete');
       return isRicaPending || isActivationPending || isPaymentPending;
     });
-    if (APP_STATE.currentUser.role === 'agent') {
-      submittedPendingFiltered = submittedPendingFiltered.filter(o => o.agent === APP_STATE.currentUser.id);
-    } else if (APP_STATE.currentUser.role === 'manager') {
-      submittedPendingFiltered = submittedPendingFiltered.filter(o => o.store === APP_STATE.currentUser.branch);
-    }
+    submittedPendingFiltered = applyOrderFilters(submittedPendingFiltered, false);
+    submittedPendingFiltered = applyVisibilityFilters(submittedPendingFiltered, false);
 
     const draftRows = draftsFiltered.map(d => `
       <tr style="background-color: rgba(15, 48, 87, 0.02);">
@@ -194,6 +263,53 @@ export function renderOrderTracking() {
     renderPaginatedRows(document.getElementById('tracking-pending-table-body'), rows, {
       emptyRow: `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No pending orders or drafts.</td></tr>`
     });
+  } else if (tab === 'cancelled') {
+    let filtered = (APP_STATE.ordersList || []).filter(o => o.status === 'Cancelled');
+    filtered = applyOrderFilters(filtered, false);
+    filtered = applyVisibilityFilters(filtered, false);
+
+    const rows = filtered.map(o => {
+      const audit = o.cancelledAudit || {};
+      const dateCancelled = audit.cancellationDate || o.date || 'N/A';
+      const cancelledBy = audit.cancelledBy || o.agent || 'AGT-101';
+
+      return `
+        <tr>
+          <td><strong>${o.orderRef}</strong></td>
+          <td>${o.customerName}</td>
+          <td>${o.product}</td>
+          <td>${o.date}</td>
+          <td>${dateCancelled}</td>
+          <td><code>${cancelledBy}</code></td>
+          <td><span class="badge badge-danger">Cancelled</span></td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${o.orderRef}')">Details</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    container.innerHTML = `
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Order Ref</th>
+            <th>Customer</th>
+            <th>Product Name</th>
+            <th>Date Created</th>
+            <th>Date Cancelled</th>
+            <th>Cancelled By</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tracking-cancelled-table-body">
+        </tbody>
+      </table>
+    `;
+    renderPaginatedRows(document.getElementById('tracking-cancelled-table-body'), rows, {
+      emptyRow: `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">No cancelled orders found.</td></tr>`
+    });
   }
 }
 
@@ -201,14 +317,41 @@ export function switchTrackingTab(tabName) {
   APP_STATE.activeTrackingTab = tabName;
   const submittedBtn = document.getElementById('tracking-tab-btn-submitted');
   const pendingBtn = document.getElementById('tracking-tab-btn-pending');
+  const cancelledBtn = document.getElementById('tracking-tab-btn-cancelled');
   
   if (submittedBtn && pendingBtn) {
+    submittedBtn.classList.remove('active');
+    submittedBtn.style.borderBottom = '3px solid transparent';
+    submittedBtn.style.color = 'var(--text-secondary)';
+    submittedBtn.style.fontWeight = '600';
+
+    pendingBtn.classList.remove('active');
+    pendingBtn.style.borderBottom = '3px solid transparent';
+    pendingBtn.style.color = 'var(--text-secondary)';
+    pendingBtn.style.fontWeight = '600';
+
+    if (cancelledBtn) {
+      cancelledBtn.classList.remove('active');
+      cancelledBtn.style.borderBottom = '3px solid transparent';
+      cancelledBtn.style.color = 'var(--text-secondary)';
+      cancelledBtn.style.fontWeight = '600';
+    }
+
     if (tabName === 'submitted') {
       submittedBtn.classList.add('active');
-      pendingBtn.classList.remove('active');
-    } else {
-      submittedBtn.classList.remove('active');
+      submittedBtn.style.borderBottom = '3px solid var(--telkom-blue)';
+      submittedBtn.style.color = 'var(--telkom-blue-dark)';
+      submittedBtn.style.fontWeight = '700';
+    } else if (tabName === 'pending') {
       pendingBtn.classList.add('active');
+      pendingBtn.style.borderBottom = '3px solid var(--telkom-blue)';
+      pendingBtn.style.color = 'var(--telkom-blue-dark)';
+      pendingBtn.style.fontWeight = '700';
+    } else if (tabName === 'cancelled' && cancelledBtn) {
+      cancelledBtn.classList.add('active');
+      cancelledBtn.style.borderBottom = '3px solid var(--telkom-blue)';
+      cancelledBtn.style.color = 'var(--telkom-blue-dark)';
+      cancelledBtn.style.fontWeight = '700';
     }
   }
   renderOrderTracking();
@@ -217,40 +360,57 @@ export function switchTrackingTab(tabName) {
 export function switchModalTab(tabName) {
   const omsPanel = document.getElementById('modal-panel-oms');
   const debicheckPanel = document.getElementById('modal-panel-debicheck');
+  const cancellationPanel = document.getElementById('modal-panel-cancellation');
   const omsBtn = document.getElementById('modal-tab-btn-oms');
   const debicheckBtn = document.getElementById('modal-tab-btn-debicheck');
+  const cancellationBtn = document.getElementById('modal-tab-btn-cancellation');
   
+  if (omsPanel) omsPanel.style.display = 'none';
+  if (debicheckPanel) debicheckPanel.style.display = 'none';
+  if (cancellationPanel) cancellationPanel.style.display = 'none';
+
+  if (omsBtn) {
+    omsBtn.classList.remove('active');
+    omsBtn.style.borderBottom = '3px solid transparent';
+    omsBtn.style.color = 'var(--text-secondary)';
+    omsBtn.style.fontWeight = '600';
+  }
+  if (debicheckBtn) {
+    debicheckBtn.classList.remove('active');
+    debicheckBtn.style.borderBottom = '3px solid transparent';
+    debicheckBtn.style.color = 'var(--text-secondary)';
+    debicheckBtn.style.fontWeight = '600';
+  }
+  if (cancellationBtn) {
+    cancellationBtn.classList.remove('active');
+    cancellationBtn.style.borderBottom = '3px solid transparent';
+    cancellationBtn.style.color = 'var(--text-secondary)';
+    cancellationBtn.style.fontWeight = '600';
+  }
+
   if (tabName === 'oms') {
     if (omsPanel) omsPanel.style.display = 'grid';
-    if (debicheckPanel) debicheckPanel.style.display = 'none';
-    
     if (omsBtn) {
       omsBtn.classList.add('active');
       omsBtn.style.borderBottom = '3px solid var(--telkom-blue)';
       omsBtn.style.color = 'var(--telkom-blue-dark)';
       omsBtn.style.fontWeight = '700';
     }
-    if (debicheckBtn) {
-      debicheckBtn.classList.remove('active');
-      debicheckBtn.style.borderBottom = '3px solid transparent';
-      debicheckBtn.style.color = 'var(--text-secondary)';
-      debicheckBtn.style.fontWeight = '600';
-    }
   } else if (tabName === 'debicheck') {
-    if (omsPanel) omsPanel.style.display = 'none';
     if (debicheckPanel) debicheckPanel.style.display = 'block';
-    
-    if (omsBtn) {
-      omsBtn.classList.remove('active');
-      omsBtn.style.borderBottom = '3px solid transparent';
-      omsBtn.style.color = 'var(--text-secondary)';
-      omsBtn.style.fontWeight = '600';
-    }
     if (debicheckBtn) {
       debicheckBtn.classList.add('active');
       debicheckBtn.style.borderBottom = '3px solid var(--telkom-blue)';
       debicheckBtn.style.color = 'var(--telkom-blue-dark)';
       debicheckBtn.style.fontWeight = '700';
+    }
+  } else if (tabName === 'cancellation') {
+    if (cancellationPanel) cancellationPanel.style.display = 'block';
+    if (cancellationBtn) {
+      cancellationBtn.classList.add('active');
+      cancellationBtn.style.borderBottom = '3px solid var(--telkom-blue)';
+      cancellationBtn.style.color = 'var(--telkom-blue-dark)';
+      cancellationBtn.style.fontWeight = '700';
     }
   }
 }
@@ -262,9 +422,18 @@ export function viewOrderDetails(orderRef) {
   // Reset modal tab to 'oms'
   switchModalTab('oms');
 
+  const cancellationTabBtn = document.getElementById('modal-tab-btn-cancellation');
+  if (cancellationTabBtn) {
+    if (order.status === 'Cancelled') {
+      cancellationTabBtn.style.display = 'inline-block';
+    } else {
+      cancellationTabBtn.style.display = 'none';
+    }
+  }
+
   document.getElementById('view-order-ref').innerText = order.orderRef;
   document.getElementById('view-order-status').innerText = order.status;
-  document.getElementById('view-order-status').className = `badge ${order.status === 'Fulfilled' || order.status === 'Active' ? 'badge-success' : 'badge-warning'}`;
+  document.getElementById('view-order-status').className = `badge ${order.status === 'Fulfilled' || order.status === 'Active' ? 'badge-success' : (order.status === 'Cancelled' ? 'badge-danger' : 'badge-warning')}`;
   document.getElementById('view-order-cust').innerText = order.customerName;
   document.getElementById('view-order-acct').innerText = order.accountNo;
   
@@ -388,11 +557,55 @@ export function viewOrderDetails(orderRef) {
 
   const ricaPanel = document.getElementById('order-details-rica-panel');
   const isSim = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
-  if (isSim && ricaPanel) {
+  if (isSim && order.status !== 'Cancelled' && ricaPanel) {
     ricaPanel.style.display = 'block';
     renderOrderActivationWorkflow(order, ricaPanel, true);
   } else if (ricaPanel) {
     ricaPanel.style.display = 'none';
+  }
+
+  const cancellationPanel = document.getElementById('modal-panel-cancellation');
+  if (cancellationPanel) {
+    if (order.status === 'Cancelled') {
+      const audit = order.cancelledAudit || {};
+      const cancelledBy = audit.cancelledBy || order.agent || 'AGT-101';
+      const cancellationDate = audit.cancellationDate || order.date || 'N/A';
+      const lastCompletedStep = audit.lastCompletedStep || 'Step 1: Check Avail';
+      const reason = audit.reason || 'No reason provided';
+
+      cancellationPanel.innerHTML = `
+        <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; font-size: 13px; color: var(--text-secondary);">
+          <h5 style="color: var(--telkom-blue-dark); font-size: 15px; font-weight: 700; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Order Cancellation Audit Information</h5>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Order Reference Number</span>
+              <strong style="color: var(--text-primary); font-size: 14px;">${order.orderRef}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Cancelled By User (Agent ID)</span>
+              <strong style="color: var(--text-primary); font-size: 14px;">${cancelledBy}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Cancellation Date & Time</span>
+              <strong style="color: var(--text-primary); font-size: 14px;">${cancellationDate}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Last Completed Stepper Step</span>
+              <strong style="color: var(--text-primary); font-size: 14px;">${lastCompletedStep}</strong>
+            </div>
+            <div style="grid-column: 1 / -1; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px;">
+              <span style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Reason for Cancellation</span>
+              <div style="background-color: var(--bg-light); border: 1px dashed var(--border-color); padding: 12px; border-radius: var(--radius-md); font-weight: 500; color: var(--text-primary); min-height: 48px;">
+                ${reason}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      cancellationPanel.innerHTML = '';
+    }
   }
 
   // Populate DebiCheck Mandate details tab
@@ -406,7 +619,7 @@ export function viewOrderDetails(orderRef) {
   const idNum = (customer && customer.id) || (customer && customer.passport) || "930412" + String((refNum * 997) % 900000).padStart(6, '0') + "087";
   
   const banks = ["ABSA", "Standard Bank", "Nedbank", "FNB", "Capitec Bank Limited"];
-  const bankName = banks[refNum % banks.length];
+  const bankNameVal = banks[refNum % banks.length];
   
   const branchCodes = {
     "ABSA": "632005",
@@ -415,300 +628,140 @@ export function viewOrderDetails(orderRef) {
     "Standard Bank": "051001",
     "Nedbank": "198765"
   };
-  const branchCode = branchCodes[bankName] || "632005";
-  const accountType = ["Cheque / Current", "Savings", "Transmission"][refNum % 3];
-  const accountNumber = "62" + String((refNum * 997) % 100000000).padStart(8, '0');
-  const debitDay = ["1st", "15th", "25th"][refNum % 3];
+  
+  const isNewDebit = order.debiCheck;
+  const bankName = isNewDebit ? order.debiCheck.bankName : bankNameVal;
+  const branchCode = isNewDebit ? order.debiCheck.branchCode : (branchCodes[bankName] || "632005");
+  const accountType = isNewDebit ? order.debiCheck.accountType : ["Cheque/Current", "Savings", "Transmission"][refNum % 3];
+  const accountNumber = isNewDebit ? order.debiCheck.accountNumber : "62" + String((refNum * 997) % 100000000).padStart(8, '0');
+  const debitDay = isNewDebit ? order.debiCheck.debitDay : ["1st", "15th", "25th"][refNum % 3];
+  const monthlyAmount = isNewDebit ? order.debiCheck.monthlyAmount : (product ? product.price : 199);
+  const onceOffAmount = isNewDebit ? order.debiCheck.onceOffAmount : (product ? product.onceOff : 99);
+  const debiCheckRef = isNewDebit ? order.debiCheck.debiCheckRef : "DBC-" + String((refNum * 321) % 100000000).padStart(8, '0');
 
-  const monthlyAmount = product ? product.price : 199;
-  const onceOffAmount = product ? product.onceOff : 99;
-  const duration = product ? product.term : 24;
+  // Verification statuses (AVS, credit, authn)
+  const avsStatus = `<span class="badge badge-success">Verified</span>`;
+  
+  const vettingStatus = (order.status === 'Fulfilled' || order.status === 'In Progress' || order.status === 'Active') ? 
+    `<span class="badge badge-success">Approved</span>` : 
+    (order.status === 'Failed' ? `<span class="badge badge-danger">Declined</span>` : `<span class="badge badge-warning">Pending</span>`);
 
-  let authStatus = "Pending";
-  let authBadgeClass = "badge-warning";
-  let authTime = "Awaiting Action";
+  let authStatusHtml = `<span class="badge badge-warning">Pending</span>`;
   if (order.status === 'Fulfilled' || order.status === 'Active') {
-    authStatus = "Approved";
-    authBadgeClass = "badge-success";
-    authTime = order.date;
+    authStatusHtml = `<span class="badge badge-success">Approved</span>`;
   } else if (order.status === 'Failed') {
-    authStatus = "Declined";
-    authBadgeClass = "badge-danger";
-    authTime = order.date;
+    authStatusHtml = `<span class="badge badge-danger">Declined</span>`;
   } else if (order.status === 'Cancelled') {
-    authStatus = "Expired";
-    authBadgeClass = "badge-danger";
-    authTime = order.date;
-  }
-
-  const debiCheckRef = "DBC-" + String((refNum * 321) % 100000000).padStart(8, '0');
-  const vettingRef = "CRV-" + String((refNum * 123) % 100000000).padStart(8, '0');
-
-  function adjustTime(dateStr, minsOffset) {
-    try {
-      const standardized = dateStr.includes(' ') ? dateStr.replace(' ', 'T') : dateStr;
-      const d = new Date(standardized);
-      if (isNaN(d.getTime())) return dateStr;
-      d.setMinutes(d.getMinutes() + minsOffset);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      const hh = String(d.getHours()).padStart(2, '0');
-      const min = String(d.getMinutes()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
-    } catch (e) {
-      return dateStr;
-    }
-  }
-
-  let debiTimelineHtml = `
-    <div style="margin-bottom: 12px; position:relative; padding-left: 12px;">
-      <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-      <strong>Mandate Created (Status: PENDING)</strong>
-      <div style="font-size:10px; color:var(--text-muted)">Created by Agent [${order.agent}] at ${adjustTime(order.date, -10)}</div>
-    </div>
-    <div style="margin-bottom: 12px; position:relative; padding-left: 12px;">
-      <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-      <strong>AVS Verification Completed</strong>
-      <div style="font-size:10px; color:var(--text-muted)">Match confirmed by banking gateway at ${adjustTime(order.date, -8)}</div>
-    </div>
-    <div style="margin-bottom: 12px; position:relative; padding-left: 12px;">
-      <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-      <strong>Credit Bureau check completed</strong>
-      <div style="font-size:10px; color:var(--text-muted)">Outcome: Approved. Ref: ${vettingRef} at ${adjustTime(order.date, -7)}</div>
-    </div>
-    <div style="margin-bottom: 12px; position:relative; padding-left: 12px;">
-      <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-      <strong>DebiCheck Auth Request Sent</strong>
-      <div style="font-size:10px; color:var(--text-muted)">Dispatched via TT1 (Real-Time SMS/USSD) at ${adjustTime(order.date, -5)}</div>
-    </div>
-  `;
-
-  if (authStatus === 'Approved') {
-    debiTimelineHtml += `
-      <div style="position:relative; padding-left: 12px;">
-        <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--success); border: 2px solid white;"></div>
-        <strong>DebiCheck Auth APPROVED</strong>
-        <div style="font-size:10px; color:var(--text-muted)">Customer authorized via mobile banking app at ${order.date}</div>
-      </div>
-    `;
-  } else if (authStatus === 'Declined') {
-    debiTimelineHtml += `
-      <div style="position:relative; padding-left: 12px;">
-        <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--danger); border: 2px solid white;"></div>
-        <strong>DebiCheck Auth DECLINED</strong>
-        <div style="font-size:10px; color:var(--text-muted)">Rejected by customer at ${order.date}</div>
-      </div>
-    `;
-  } else if (authStatus === 'Expired') {
-    debiTimelineHtml += `
-      <div style="position:relative; padding-left: 12px;">
-        <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--danger); border: 2px solid white;"></div>
-        <strong>DebiCheck Auth EXPIRED</strong>
-        <div style="font-size:10px; color:var(--text-muted)">Authorization timed out (No customer response) at ${order.date}</div>
-      </div>
-    `;
-  } else {
-    debiTimelineHtml += `
-      <div style="position:relative; padding-left: 12px;">
-        <div style="position:absolute; left:-21px; top:3px; width:8px; height:8px; border-radius:50%; background-color: var(--warning); border: 2px solid white;"></div>
-        <strong>Awaiting Customer Auth</strong>
-        <div style="font-size:10px; color:var(--text-muted)">Pending subscriber mobile authentication (USSD push pending)</div>
-      </div>
-    `;
+    authStatusHtml = `<span class="badge badge-danger">Expired</span>`;
   }
 
   const debicheckPanel = document.getElementById('modal-panel-debicheck');
   if (debicheckPanel) {
     debicheckPanel.innerHTML = `
-      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px;">
-        <!-- LEFT COLUMN: Mandate Details -->
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-          <!-- Card 1: Account Holder Info -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">Account Holder Information <span style="font-size: 11px; color: var(--text-muted); font-weight: 400; margin-left: 4px;">(Optional Fields)</span></h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Holder Name</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${customerName}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">ID / Passport Number</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${idNum}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Mobile Number (Auth)</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${mobile}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Email Address</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px; word-break: break-all;">${email}</strong>
-              </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Card 1: Account Holder Information (View Only) -->
+        <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">1. Account Holder Info</h5>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Holder Name</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${customerName}</strong>
             </div>
-          </div>
-
-          <!-- Card 2: Settlement Banking details -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">Settlement Banking Details</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Bank Name</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${bankName}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Number</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${accountNumber}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Type</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${accountType}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Branch Code</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${branchCode}</strong>
-              </div>
-              <div style="grid-column: 1 / -1;">
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Debit Order Day</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${debitDay} of the month</strong>
-              </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">ID / Passport Number</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${idNum}</strong>
             </div>
-          </div>
-
-          <!-- Card 3: Mandate Specs -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">Contract & Mandate Specifications</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Monthly Contract Amount</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">R${monthlyAmount.toLocaleString()} /mo</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Once-Off Amount Due Today</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">R${onceOffAmount.toLocaleString()}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Contract Duration</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${duration} Months</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Service/Product Description</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${order.product}</strong>
-              </div>
-              <div style="grid-column: 1 / -1;">
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Mandate Reference Number (System Generated)</span>
-                <code style="color: var(--telkom-blue-dark); font-weight: bold; font-size: 11.5px;">MND-DC-${orderRef}</code>
-              </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Mobile Number (View Only – used for DebiCheck authorization)</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${mobile}</strong>
             </div>
-          </div>
-          
-          <!-- Card 4: Consent check indicators -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">Billing Preferences & Consent</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Billing Email Address</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px; word-break: break-all;">${email}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Statement Delivery Method</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">Email</strong>
-              </div>
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="color: var(--success); font-size: 16px; font-weight: bold;">☑</span>
-                <span style="font-size: 12px; color: var(--text-primary);">Customer authorizes monthly debit order collection.</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="color: var(--success); font-size: 16px; font-weight: bold;">☑</span>
-                <span style="font-size: 12px; color: var(--text-primary);">Customer accepts contract terms and conditions.</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="color: var(--success); font-size: 16px; font-weight: bold;">☑</span>
-                <span style="font-size: 12px; color: var(--text-primary);">Customer accepts the once-off activation/setup fee.</span>
-              </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Email Address</span>
+              <strong style="color: var(--text-primary); font-size: 13px; word-break: break-all;">${email}</strong>
             </div>
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Verifications & Logs -->
-        <div style="display: flex; flex-direction: column; gap: 16px;">
-          <!-- Card 5: Bank & Credit Verification Status -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">AVS & Credit Vetting Status</h5>
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <div style="background-color: var(--bg-light); padding: 10px; border-radius: var(--radius-md); border-left: 3px solid var(--telkom-blue);">
-                <strong style="display: block; font-size: 12px; color: var(--telkom-blue-dark);">Account Verification Service (AVS)</strong>
-                <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px;">
-                  <span>AVS Status: <strong style="color: var(--success-dark);">Verified</strong></span>
-                  <span>Result: <strong>Match</strong></span>
-                </div>
-                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Checked: ${adjustTime(order.date, -8)}</div>
+        <!-- Card 2: Settlement Banking Details -->
+        <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">2. Settlement Banking Details</h5>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Bank Name</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${bankName}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Number</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${accountNumber}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Type</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${accountType}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Branch Code</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${branchCode}</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Debit Order Day</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${debitDay}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Mandate Specs & Verification Status -->
+        <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">3. Specs & Verification Status</h5>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Monthly Debit Amount</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">R${monthlyAmount.toLocaleString()} (Auto-populated)</strong>
+            </div>
+            <div>
+              <span style="font-size: 11px; color: var(--text-muted); display: block;">Once-Off Amount</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">R${onceOffAmount.toLocaleString()} (Auto-populated)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px; margin-top: 4px;">
+              <span style="font-size: 11.5px; color: var(--text-secondary);">Bank Account Verification Status (AVS):</span>
+              <strong>${avsStatus}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px;">
+              <span style="font-size: 11.5px; color: var(--text-secondary);">Credit Vetting Status:</span>
+              <strong>${vettingStatus}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px;">
+              <span style="font-size: 11.5px; color: var(--text-secondary);">DebiCheck Authentication Status:</span>
+              <strong>${authStatusHtml}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 8px;">
+              <span style="font-size: 11.5px; color: var(--text-secondary);">DebiCheck Reference Number:</span>
+              <code style="font-weight: bold; color: var(--telkom-blue-dark);">${debiCheckRef}</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Consent & Terms -->
+        <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">4. Authorizations & Consents</h5>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <input type="checkbox" checked disabled style="margin-top: 3px; cursor: not-allowed;">
+                <span style="font-size: 12px; line-height: 1.3; color: var(--text-primary);">
+                  <strong>Customer Authorization Consent Checkbox:</strong> Customer authorizes monthly debit collections.
+                </span>
               </div>
-              
-              <div style="background-color: var(--bg-light); padding: 10px; border-radius: var(--radius-md); border-left: 3px solid var(--telkom-blue);">
-                <strong style="display: block; font-size: 12px; color: var(--telkom-blue-dark);">Bureau Credit Vetting</strong>
-                <div style="display: flex; justify-content: space-between; margin-top: 4px; font-size: 12px;">
-                  <span>Status: <strong style="color: var(--success-dark);">Completed</strong></span>
-                  <span>Result: <strong>Approved</strong></span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-top: 2px; font-size: 12px;">
-                  <span>Risk Rating: <strong style="color: var(--success-dark);">${refNum % 4 === 0 ? 'Medium Risk' : 'Low Risk'}</strong></span>
-                  <span>Vetting Ref: <code>${vettingRef}</code></span>
-                </div>
-                <div style="font-size: 10px; color: var(--text-muted); margin-top: 2px;">Checked: ${adjustTime(order.date, -7)}</div>
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <input type="checkbox" checked disabled style="margin-top: 3px; cursor: not-allowed;">
+                <span style="font-size: 12px; line-height: 1.3; color: var(--text-primary);">
+                  <strong>Terms & Conditions Acceptance Checkbox:</strong> Customer accepts contract terms and conditions.
+                </span>
               </div>
             </div>
           </div>
-
-          <!-- Card 6: DebiCheck Authentication Status -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">DebiCheck Gateway Handshake</h5>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Authentication Type</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">TT1 (Real-Time)</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Customer Auth Mobile</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${mobile}</strong>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Authentication Result</span>
-                <span class="badge ${authBadgeClass}" style="font-size: 11px;">${authStatus}</span>
-              </div>
-              <div>
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">Auth Date & Time</span>
-                <strong style="color: var(--text-primary); font-size: 12.5px;">${authTime}</strong>
-              </div>
-              <div style="grid-column: 1 / -1;">
-                <span style="font-size: 11px; color: var(--text-muted); display: block;">DebiCheck Reference Number</span>
-                <code style="color: var(--telkom-blue-dark); font-weight: bold; font-size: 11.5px;">${debiCheckRef}</code>
-              </div>
-            </div>
-          </div>
-
-          <!-- Card 7: Audit Info & History Logs -->
-          <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">Audit History & Verification Logs</h5>
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; font-size: 11px; color: var(--text-secondary);">
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px;">
-                <span>Created By:</span>
-                <strong>Agent [${order.agent}]</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-color); padding-bottom: 4px;">
-                <span>Created Date:</span>
-                <strong>${adjustTime(order.date, -10)}</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
-                <span>Last Updated Date:</span>
-                <strong>${order.date}</strong>
-              </div>
-            </div>
-            
-            <div class="debicheck-timeline" style="border-left: 2px solid var(--telkom-blue); padding-left: 16px; position: relative; margin-left: 8px; display: flex; flex-direction: column; gap: 12px; font-size: 11px;">
-              ${debiTimelineHtml}
-            </div>
+          
+          <div style="font-size: 10px; color: var(--text-muted); border-top: 1px dashed var(--border-color); padding-top: 8px; margin-top: 10px;">
+            All authorizations were verified digitally by the customer during order checkout.
           </div>
         </div>
       </div>

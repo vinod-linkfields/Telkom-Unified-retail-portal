@@ -1029,11 +1029,12 @@
               <!-- Form steps injected dynamically -->
             </div>
             
-            <div class="panel-header" style="border-top:1px solid var(--border-color); border-bottom:none; display:flex; justify-content:space-between; align-items:center;">
-              <button class="btn btn-secondary" id="stepper-back-btn" onclick="handleStepperBack()">Back</button>
-              <button class="btn btn-outline" id="stepper-draft-btn" onclick="handleSaveDraft()" style="margin: 0 auto 0 16px; border-color: var(--telkom-blue); color: var(--telkom-blue);">Save Draft</button>
-              <button class="btn btn-primary" id="stepper-next-btn" onclick="handleStepperNext()">Continue</button>
-            </div>
+            <div class="panel-footer" style="display: flex; justify-content: flex-end; align-items: center; background-color: var(--bg-light); border-top: 1px solid var(--border-color); padding: 16px 24px;">
+            <button class="btn btn-secondary" id="stepper-back-btn" onclick="handleStepperBack()">Back</button>
+            <button class="btn btn-outline" id="stepper-draft-btn" onclick="handleSaveDraft()" style="margin: 0 auto 0 16px; border-color: var(--telkom-blue); color: var(--telkom-blue);">Save Draft</button>
+            <button class="btn btn-danger" id="stepper-cancel-btn" onclick="handleCancelOrder()" style="margin-left: 12px; background-color: var(--danger); color: white;">Cancel Order</button>
+            <button class="btn btn-primary" id="stepper-next-btn" onclick="handleStepperNext()">Continue</button>
+          </div>
           </div>
         </div>
 
@@ -1198,15 +1199,32 @@
           <div class="tab-navigation" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; padding-bottom: 0;">
             <button class="tab-btn active" id="tracking-tab-btn-submitted" onclick="switchTrackingTab('submitted')" style="padding: 10px 16px; border: none; background: none; font-weight: 700; cursor: pointer; border-bottom: 3px solid var(--telkom-blue); color: var(--telkom-blue-dark);">Submitted Orders</button>
             <button class="tab-btn" id="tracking-tab-btn-pending" onclick="switchTrackingTab('pending')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary);">Pending Orders</button>
+            <button class="tab-btn" id="tracking-tab-btn-cancelled" onclick="switchTrackingTab('cancelled')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary);">Cancelled Orders</button>
           </div>
 
           <div class="panel" id="tracking-filter-panel">
             <div class="panel-body">
               <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
                 <input type="text" id="tracking-search-ref" class="form-control" placeholder="Search orders by reference ID or customer name..." oninput="renderOrderTracking()" style="flex: 1; min-width: 250px;">
+                
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Start:</span>
+                  <input type="date" id="tracking-filter-start-date" class="form-control" onchange="renderOrderTracking()" style="width: 135px; padding: 6px 10px; height: 44px;">
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">End:</span>
+                  <input type="date" id="tracking-filter-end-date" class="form-control" onchange="renderOrderTracking()" style="width: 135px; padding: 6px 10px; height: 44px;">
+                </div>
+                
+                <select id="tracking-filter-product" class="form-control" onchange="renderOrderTracking()" style="width: 200px; height: 44px; display: inline-block;">
+                  <option value="">All Products</option>
+                  <!-- Populated dynamically -->
+                </select>
+
                 <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-dark); cursor: pointer; margin-bottom: 0; white-space: nowrap;">
                   <input type="checkbox" id="tracking-view-all" onchange="renderOrderTracking()" style="width: 16px; height: 16px;">
-                  <span>View All Network Orders (All Branches)</span>
+                  <span>View All Network Orders</span>
                 </label>
                 <button class="btn btn-secondary" onclick="renderOrderTracking()">Refresh List</button>
               </div>
@@ -1900,6 +1918,7 @@
         <div class="tab-navigation" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; padding-bottom: 0;">
           <button class="tab-btn active" id="modal-tab-btn-oms" onclick="switchModalTab('oms')" style="padding: 10px 16px; border: none; background: none; font-weight: 700; cursor: pointer; border-bottom: 3px solid var(--telkom-blue); color: var(--telkom-blue-dark); font-size: 14px;">OMS Lifecycle Tracker</button>
           <button class="tab-btn" id="modal-tab-btn-debicheck" onclick="switchModalTab('debicheck')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-size: 14px;">DebiCheck Mandate Details</button>
+          <button class="tab-btn" id="modal-tab-btn-cancellation" onclick="switchModalTab('cancellation')" style="display: none; padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-size: 14px;">Cancellation Audit</button>
         </div>
 
         <!-- OMS PANEL -->
@@ -1977,6 +1996,11 @@
 
         <!-- DEBICHECK PANEL -->
         <div id="modal-panel-debicheck" style="display: none;">
+          <!-- Content populated dynamically by viewOrderDetails in js/tracking.js -->
+        </div>
+
+        <!-- CANCELLATION PANEL -->
+        <div id="modal-panel-cancellation" style="display: none;">
           <!-- Content populated dynamically by viewOrderDetails in js/tracking.js -->
         </div>
       </div>

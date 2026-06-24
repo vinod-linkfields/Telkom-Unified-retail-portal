@@ -66,6 +66,10 @@ export function renderStepper() {
   
   const product = APP_STATE.cart.product;
   if (!product) {
+    const cancelBtn = document.getElementById('stepper-cancel-btn');
+    if (cancelBtn) {
+      cancelBtn.style.display = 'none';
+    }
     stepContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 15px;">No product selected. Please select a product from the catalogue first.</div>`;
     return;
   }
@@ -92,6 +96,11 @@ export function renderStepper() {
   const backBtn = document.getElementById('stepper-back-btn');
   if (backBtn) {
     backBtn.disabled = false;
+  }
+
+  const cancelBtn = document.getElementById('stepper-cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.style.display = 'inline-block';
   }
 
   switch (APP_STATE.currentStep) {
@@ -420,7 +429,7 @@ export function renderStepperBillingSelection(container) {
     APP_STATE.cart.billingSelection = {
       option: "existing",
       selectedId: accounts[0].id,
-      newDebit: { bankName: "", branchCode: "", accountType: "", accountNumber: "", debiCheckConsent: false }
+      newDebit: { bankName: "", branchCode: "", accountType: "", accountNumber: "", debitDay: "1st", debiCheckConsent: false, termsConsent: false }
     };
   }
 
@@ -439,6 +448,24 @@ export function renderStepperBillingSelection(container) {
       </label>
     `;
   });
+
+  const customer = APP_STATE.selectedCustomer || { name: "N/A", id: "", passport: "", mobile: "N/A", email: "N/A" };
+  const customerId = customer.id || customer.passport || "N/A";
+  const product = APP_STATE.cart.product;
+  const monthlyAmount = product ? `R${product.price} / month` : "R0.00";
+  const onceOffAmount = product ? `R${product.onceOff}` : "R0.00";
+
+  // Simulated status indicators
+  const avsStatus = bill.newDebit.bankName && bill.newDebit.accountNumber ? 
+    `<span class="badge badge-success">Verified</span>` : 
+    `<span class="badge badge-neutral">Awaiting Details</span>`;
+
+  const vettingStatus = APP_STATE.cart.creditVetting && APP_STATE.cart.creditVetting.ran ? 
+    `<span class="badge badge-success">${APP_STATE.cart.creditVetting.outcome}</span>` : 
+    `<span class="badge badge-warning">Pending Credit Assessment (Step 6)</span>`;
+
+  const authStatus = `<span class="badge badge-warning">Pending Customer Auth</span>`;
+  const dbcRef = APP_STATE.cart.draftId ? `DBC-DFT-${APP_STATE.cart.draftId}` : "DBC-PENDING";
 
   container.innerHTML = `
     <h3 style="margin-bottom: 16px;">${getStepperStepTitle(5, "Billing Account Selection")}</h3>
@@ -461,47 +488,146 @@ export function renderStepperBillingSelection(container) {
     </div>
 
     <div id="billing-new-panel" style="display: ${isNew ? 'block' : 'none'};">
-      <h5 style="margin-bottom: 16px; color: var(--telkom-blue-dark);">Register New DebiCheck Account</h5>
+      <h5 style="margin-bottom: 20px; color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 2px solid var(--telkom-blue); padding-bottom: 8px;">Register New DebiCheck Account</h5>
       
-      <div class="form-row">
-        <div class="form-group searchable-dropdown-container">
-          <label class="form-label">Bank Name <span class="required">*</span></label>
-          <input type="text" id="billing-new-bankname" class="form-control searchable-dropdown-input" placeholder="Select bank name..." value="${bill.newDebit.bankName || ''}" onclick="toggleBillingBankMenu(event)" readonly>
-          <div id="billing-bank-dropdown-menu" class="searchable-dropdown-menu">
-            <div class="searchable-dropdown-search-box">
-              <input type="text" class="form-control" placeholder="Filter banks..." oninput="filterBillingBankOptions(this)" onclick="event.stopPropagation()">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <!-- Card 1: Account Holder Info (View Only) -->
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">1. Account Holder Info (View Only)</h6>
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px;">Account Holder Name</label>
+            <input type="text" class="form-control" value="${customer.name}" disabled style="background-color: var(--bg-card); font-weight: 600; height: 36px; padding: 6px 12px; font-size: 13px;">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px;">ID Number / Passport Number</label>
+            <input type="text" class="form-control" value="${customerId}" disabled style="background-color: var(--bg-card); font-weight: 600; height: 36px; padding: 6px 12px; font-size: 13px;">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px;">Mobile Number (View Only – used for DebiCheck authorization)</label>
+            <input type="text" class="form-control" value="${customer.mobile}" disabled style="background-color: var(--bg-card); font-weight: 600; height: 36px; padding: 6px 12px; font-size: 13px;">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px;">Email Address</label>
+            <input type="text" class="form-control" value="${customer.email}" disabled style="background-color: var(--bg-card); font-weight: 600; height: 36px; padding: 6px 12px; font-size: 13px;">
+          </div>
+        </div>
+
+        <!-- Card 2: Settlement Banking Details -->
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">2. Settlement Banking Details</h6>
+          
+          <div class="form-group searchable-dropdown-container" style="margin-bottom: 10px;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 3px;">Bank Name <span class="required">*</span></label>
+            <input type="text" id="billing-new-bankname" class="form-control searchable-dropdown-input" placeholder="Select bank name..." value="${bill.newDebit.bankName || ''}" onclick="toggleBillingBankMenu(event)" readonly style="height: 36px; padding: 6px 12px; font-size: 13px;">
+            <div id="billing-bank-dropdown-menu" class="searchable-dropdown-menu">
+              <div class="searchable-dropdown-search-box">
+                <input type="text" class="form-control" placeholder="Filter banks..." oninput="filterBillingBankOptions(this)" onclick="event.stopPropagation()">
+              </div>
+              <div id="billing-bank-dropdown-options-list">
+                <!-- Banks loaded dynamically -->
+              </div>
             </div>
-            <div id="billing-bank-dropdown-options-list">
-              <!-- Banks loaded dynamically -->
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 3px;">Account Number <span class="required">*</span></label>
+            <input type="text" id="billing-new-accnum" class="form-control" placeholder="Enter account number..." value="${bill.newDebit.accountNumber || ''}" oninput="handleBillingNewInput('accountNumber', this.value.replace(/[^0-9]/g, ''))" style="height: 36px; padding: 6px 12px; font-size: 13px;">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 10px;">
+            <label class="form-label" style="font-size: 11px; margin-bottom: 3px;">Account Type <span class="required">*</span></label>
+            <select id="billing-new-acctype" class="form-control" onchange="handleBillingNewInput('accountType', this.value)" style="height: 36px; padding: 6px 12px; font-size: 13px;">
+              <option value="">-- Select Type --</option>
+              <option value="Cheque/Current" ${bill.newDebit.accountType === 'Cheque/Current' || bill.newDebit.accountType === 'Cheque' ? 'selected' : ''}>Cheque/Current</option>
+              <option value="Savings" ${bill.newDebit.accountType === 'Savings' ? 'selected' : ''}>Savings</option>
+              <option value="Transmission" ${bill.newDebit.accountType === 'Transmission' ? 'selected' : ''}>Transmission</option>
+            </select>
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 11px; margin-bottom: 3px;">Branch Code <span class="required">*</span></label>
+              <input type="text" id="billing-new-branchcode" class="form-control" placeholder="e.g. 632005" value="${bill.newDebit.branchCode || ''}" oninput="handleBillingNewInput('branchCode', this.value.replace(/[^0-9]/g, ''))" style="height: 36px; padding: 6px 12px; font-size: 13px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 11px; margin-bottom: 3px;">Debit Order Day <span class="required">*</span></label>
+              <select id="billing-new-debitday" class="form-control" onchange="handleBillingNewInput('debitDay', this.value)" style="height: 36px; padding: 6px 12px; font-size: 13px;">
+                <option value="">-- Select Day --</option>
+                <option value="1st" ${bill.newDebit.debitDay === '1st' ? 'selected' : ''}>1st of the month</option>
+                <option value="15th" ${bill.newDebit.debitDay === '15th' ? 'selected' : ''}>15th of the month</option>
+                <option value="25th" ${bill.newDebit.debitDay === '25th' ? 'selected' : ''}>25th of the month</option>
+                <option value="Last Day" ${bill.newDebit.debitDay === 'Last Day' ? 'selected' : ''}>Last Day of the month</option>
+              </select>
             </div>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Branch Code <span class="required">*</span></label>
-          <input type="text" id="billing-new-branchcode" class="form-control" placeholder="e.g. 632005" value="${bill.newDebit.branchCode || ''}" oninput="handleBillingNewInput('branchCode', this.value.replace(/[^0-9]/g, ''))">
-        </div>
       </div>
 
-      <div class="form-row" style="margin-top:16px;">
-        <div class="form-group">
-          <label class="form-label">Account Type <span class="required">*</span></label>
-          <select id="billing-new-acctype" class="form-control" onchange="handleBillingNewInput('accountType', this.value)">
-            <option value="">-- Select Type --</option>
-            <option value="Cheque" ${bill.newDebit.accountType === 'Cheque' ? 'selected' : ''}>Cheque</option>
-            <option value="Savings" ${bill.newDebit.accountType === 'Savings' ? 'selected' : ''}>Savings</option>
-            <option value="Transmission" ${bill.newDebit.accountType === 'Transmission' ? 'selected' : ''}>Transmission</option>
-          </select>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <!-- Card 3: Mandate Specs & Verification Status -->
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
+          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">3. Specs & Verification Status</h6>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <span style="font-size: 10px; color: var(--text-muted); display: block;">Monthly Debit Amount</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${monthlyAmount} (Auto-populated)</strong>
+            </div>
+            <div>
+              <span style="font-size: 10px; color: var(--text-muted); display: block;">Once-Off Amount</span>
+              <strong style="color: var(--text-primary); font-size: 13px;">${onceOffAmount} (Auto-populated)</strong>
+            </div>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary);">AVS Status:</span>
+              <strong>${avsStatus}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary);">Credit Vetting:</span>
+              <strong>${vettingStatus}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary);">DebiCheck Status:</span>
+              <strong>${authStatus}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary);">DebiCheck Ref:</span>
+              <code style="font-weight: bold; color: var(--telkom-blue-dark);">${dbcRef}</code>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Account Number <span class="required">*</span></label>
-          <input type="text" id="billing-new-accnum" class="form-control" placeholder="Enter account number..." value="${bill.newDebit.accountNumber || ''}" oninput="handleBillingNewInput('accountNumber', this.value.replace(/[^0-9]/g, ''))">
+
+        <!-- Card 4: Consent & Terms -->
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">4. Consents & Agreements</h6>
+            
+            <label class="checkbox-group" style="align-items: flex-start; margin-bottom: 12px; cursor: pointer;">
+              <input type="checkbox" id="billing-new-consent" ${bill.newDebit.debiCheckConsent ? 'checked' : ''} onchange="handleBillingNewInput('debiCheckConsent', this.checked)" style="margin-top: 3px;">
+              <span class="checkbox-label" style="font-size: 12px; line-height: 1.3;">
+                <strong>Customer Authorization Consent:</strong> Authorize monthly debit collections. <span class="required">*</span>
+              </span>
+            </label>
+            
+            <label class="checkbox-group" style="align-items: flex-start; margin-bottom: 0; cursor: pointer;">
+              <input type="checkbox" id="billing-new-terms" ${bill.newDebit.termsConsent ? 'checked' : ''} onchange="handleBillingNewInput('termsConsent', this.checked)" style="margin-top: 3px;">
+              <span class="checkbox-label" style="font-size: 12px; line-height: 1.3;">
+                <strong>Terms & Conditions Acceptance:</strong> Accept terms of postpaid contract. <span class="required">*</span>
+              </span>
+            </label>
+          </div>
+          
+          <div style="font-size: 10px; color: var(--text-muted); border-top: 1px dashed var(--border-color); padding-top: 8px; margin-top: 10px;">
+            Fields marked with (*) are required to proceed.
+          </div>
         </div>
       </div>
-
-      <label class="checkbox-group" style="margin-top:20px; align-items:flex-start;">
-        <input type="checkbox" id="billing-new-consent" ${bill.newDebit.debiCheckConsent ? 'checked' : ''} onchange="handleBillingNewInput('debiCheckConsent', this.checked)" style="margin-top: 3px;">
-        <span class="checkbox-label"><strong>Debit Collection Authorization (Required):</strong> I authorize Telkom and/or its approved debt collection partners to use DEBICHECK for collection of monthly fees.</span>
-      </label>
     </div>
   `;
 }
@@ -525,13 +651,17 @@ export function saveBillingInputs() {
   const branch = document.getElementById('billing-new-branchcode');
   const type = document.getElementById('billing-new-acctype');
   const accNum = document.getElementById('billing-new-accnum');
+  const debitDay = document.getElementById('billing-new-debitday');
   const consent = document.getElementById('billing-new-consent');
+  const terms = document.getElementById('billing-new-terms');
 
   if (bank) bill.newDebit.bankName = bank.value;
   if (branch) bill.newDebit.branchCode = branch.value.trim();
   if (type) bill.newDebit.accountType = type.value;
   if (accNum) bill.newDebit.accountNumber = accNum.value.trim();
+  if (debitDay) bill.newDebit.debitDay = debitDay.value;
   if (consent) bill.newDebit.debiCheckConsent = consent.checked;
+  if (terms) bill.newDebit.termsConsent = terms.checked;
 }
 
 export function toggleBillingBankMenu(e) {
@@ -1189,7 +1319,7 @@ export function renderStepperReviewChecklist(container) {
       billingValid = true;
     } else if (bill.option === 'new') {
       const nd = bill.newDebit;
-      if (nd.bankName && nd.branchCode && nd.accountType && nd.accountNumber && nd.debiCheckConsent) {
+      if (nd.bankName && nd.branchCode && nd.accountType && nd.accountNumber && nd.debitDay && nd.debiCheckConsent && nd.termsConsent) {
         billingValid = true;
       }
     }
@@ -1474,12 +1604,16 @@ export function handleStepperNext() {
     const bill = APP_STATE.cart.billingSelection;
     if (bill && bill.option === 'new') {
       const nd = bill.newDebit;
-      if (!nd.bankName || !nd.branchCode || !nd.accountType || !nd.accountNumber) {
+      if (!nd.bankName || !nd.branchCode || !nd.accountType || !nd.accountNumber || !nd.debitDay) {
         showToast("Please fill in all mandatory debit details (*)", "warning");
         return;
       }
       if (!nd.debiCheckConsent) {
         showToast("DebiCheck collection authorization checkbox is required.", "warning");
+        return;
+      }
+      if (!nd.termsConsent) {
+        showToast("Terms & Conditions acceptance checkbox is required.", "warning");
         return;
       }
     }
@@ -1663,6 +1797,21 @@ export function handlePOSPaymentTrigger() {
       APP_STATE.cart.paymentStatus = "Successful";
 
       const isSimProduct = APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts');
+      
+      const isNewDebit = APP_STATE.cart.billingSelection && APP_STATE.cart.billingSelection.option === 'new';
+      const debiCheck = isNewDebit ? {
+        bankName: APP_STATE.cart.billingSelection.newDebit.bankName,
+        accountNumber: APP_STATE.cart.billingSelection.newDebit.accountNumber,
+        accountType: APP_STATE.cart.billingSelection.newDebit.accountType,
+        branchCode: APP_STATE.cart.billingSelection.newDebit.branchCode,
+        debitDay: APP_STATE.cart.billingSelection.newDebit.debitDay,
+        debiCheckConsent: APP_STATE.cart.billingSelection.newDebit.debiCheckConsent,
+        termsConsent: APP_STATE.cart.billingSelection.newDebit.termsConsent,
+        monthlyAmount: APP_STATE.cart.product.price,
+        onceOffAmount: APP_STATE.cart.product.onceOff,
+        debiCheckRef: "DBC-" + Math.floor(10000000 + Math.random() * 90000000)
+      } : null;
+
       const newOrder = {
         orderRef: APP_STATE.cart.orderRef,
         customerName: APP_STATE.selectedCustomer.name,
@@ -1677,7 +1826,8 @@ export function handlePOSPaymentTrigger() {
         date: new Date().toISOString().replace('T', ' ').slice(0, 19),
         ricaStatus: isSimProduct ? "Pending" : "N/A",
         simActivationNumber: "",
-        isSimProduct: isSimProduct
+        isSimProduct: isSimProduct,
+        debiCheck: debiCheck
       };
 
       if (APP_STATE.cart.draftId) {
@@ -1844,7 +1994,81 @@ export function renderConfirmationRicaActivation() {
   renderOrderActivationWorkflow(order, panel, false);
 }
 
+export function handleCancelOrder() {
+  const confirmCancel = confirm("Are you sure you want to cancel this order?");
+  if (!confirmCancel) return;
+
+  let reason = prompt("Please enter a reason for cancellation (optional):");
+  if (reason === null) {
+    return;
+  }
+  reason = reason.trim() || "No reason provided";
+
+  const ordRef = APP_STATE.cart.orderRef || "ORD-" + Math.floor(100000 + Math.random() * 900000);
+  const isSimProduct = !!(APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts'));
+  
+  const newCancelledOrder = {
+    orderRef: ordRef,
+    customerName: APP_STATE.selectedCustomer ? APP_STATE.selectedCustomer.name : "Anonymous Customer",
+    accountNo: APP_STATE.selectedCustomer ? APP_STATE.selectedCustomer.accountNumber : "N/A",
+    product: APP_STATE.cart.product ? APP_STATE.cart.product.name : "Unknown Product",
+    selectedColor: APP_STATE.cart.product ? (APP_STATE.cart.product.selectedColor || "") : "",
+    type: APP_STATE.cart.product ? APP_STATE.cart.product.type : "",
+    store: APP_STATE.currentUser.branch,
+    agent: APP_STATE.currentUser.id,
+    status: "Cancelled",
+    payment: "Cancelled",
+    date: new Date().toISOString().replace('T', ' ').slice(0, 19),
+    ricaStatus: "N/A",
+    simActivationNumber: "",
+    isSimProduct: isSimProduct,
+    debiCheck: null,
+    cancelledAudit: {
+      cancelledBy: APP_STATE.currentUser.id,
+      cancellationDate: new Date().toISOString().replace('T', ' ').slice(0, 19),
+      lastCompletedStep: getStepperStepTitle(APP_STATE.currentStep, "Step " + APP_STATE.currentStep),
+      reason: reason
+    }
+  };
+
+  if (APP_STATE.cart.draftId) {
+    APP_STATE.draftOrders = APP_STATE.draftOrders.filter(d => d.draftId !== APP_STATE.cart.draftId);
+    saveDraftOrders();
+  }
+
+  APP_STATE.ordersList.unshift(newCancelledOrder);
+  saveOrders();
+
+  APP_STATE.selectedCustomer = null;
+  APP_STATE.activeCIMInteraction = null;
+  APP_STATE.cart = {
+    product: null,
+    contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+    consent: false,
+    gisRef: "",
+    gisStatus: "Not checked",
+    stockChecked: false,
+    stockStatus: "",
+    ricaStatus: "",
+    simActivationNumber: "",
+    paymentStatus: "Pending",
+    posTxnRef: "",
+    receiptNo: "",
+    orderRef: "",
+    draftId: ""
+  };
+  APP_STATE.currentStep = 1;
+
+  showToast(`Order ${ordRef} has been cancelled.`, "info");
+
+  switchRoute('order-tracking');
+  if (window.switchTrackingTab) {
+    window.switchTrackingTab('cancelled');
+  }
+}
+
 // Bind to window for global access (from HTML inline onclick attributes)
+window.handleCancelOrder = handleCancelOrder;
 window.getActiveStepsForProduct = getActiveStepsForProduct;
 window.getStepperStepTitle = getStepperStepTitle;
 window.renderStepperHeader = renderStepperHeader;

@@ -272,6 +272,7 @@ export function renderCustomer360() {
   if (pendingOrdersPanel && pendingOrdersContent) {
     const customerPendingOrders = (APP_STATE.ordersList || []).filter(o => {
       if (o.accountNo !== cust.accountNumber) return false;
+      if (o.status === 'Cancelled') return false;
       const isRicaPending = o.isSimProduct && o.ricaStatus === 'Pending';
       const isActivationPending = o.isSimProduct && o.ricaStatus === 'Verified' && !o.simActivationNumber;
       const isPaymentPending = !o.payment.includes('Complete');
