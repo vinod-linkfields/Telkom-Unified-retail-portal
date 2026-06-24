@@ -286,6 +286,35 @@ export function generateMockData() {
     const ricaStatus = isSimProduct ? (status === 'Fulfilled' ? 'Verified' : 'Pending') : 'N/A';
     const simActivationNumber = isSimProduct && status === 'Fulfilled' ? '892700000000' + (1000000 + i) : '';
 
+    let cancelledAudit = null;
+    if (status === "Cancelled") {
+      const cancelHour = hour + 1;
+      const cancelMinute = (minute + 15) % 60;
+      const cancelDateStr = `2026-06-${day < 10 ? '0' + day : day} ${cancelHour < 10 ? '0' + cancelHour : cancelHour}:${cancelMinute < 10 ? '0' + cancelMinute : cancelMinute}`;
+      
+      const reasons = [
+        "Customer changed their mind regarding contract term",
+        "Vetting check block requiring higher deposit than customer approved",
+        "Stock not available in local store node and request denied",
+        "Customer could not provide required POPIA/NCA bank statements",
+        "DebiCheck mandate authentication failed at banking gateway"
+      ];
+      const steps = [
+        "Step 3: Confirm Details",
+        "Step 5: Billing Selection",
+        "Step 6: Credit Vetting",
+        "Step 8: Capture Customer Consent",
+        "Step 9: Supporting Documents"
+      ];
+
+      cancelledAudit = {
+        cancelledBy: agent.id,
+        cancellationDate: cancelDateStr,
+        lastCompletedStep: steps[i % steps.length],
+        reason: reasons[i % reasons.length]
+      };
+    }
+
     orders.push({
       orderRef: `ORD-90${280 + i}`,
       customerName: cust.name,
@@ -304,7 +333,8 @@ export function generateMockData() {
       date: dateStr,
       ricaStatus: ricaStatus,
       simActivationNumber: simActivationNumber,
-      isSimProduct: isSimProduct
+      isSimProduct: isSimProduct,
+      cancelledAudit: cancelledAudit
     });
   }
 
@@ -409,9 +439,15 @@ export function restoreAuthSession() {
 export function loadStateFromStorage() {
   const savedOrders = localStorage.getItem("telkom_orders");
   const savedRequests = localStorage.getItem("telkom_stock_requests");
-  
+
   if (savedOrders && JSON.parse(savedOrders).length > 10) {
     APP_STATE.ordersList = JSON.parse(savedOrders);
+    const needsAuditRegen = APP_STATE.ordersList.some(o => o.status === 'Cancelled' && !o.cancelledAudit);
+    if (needsAuditRegen) {
+      const mock = generateMockData();
+      APP_STATE.ordersList = mock.orders;
+      saveOrders();
+    }
   } else {
     const mock = generateMockData();
     APP_STATE.ordersList = mock.orders;

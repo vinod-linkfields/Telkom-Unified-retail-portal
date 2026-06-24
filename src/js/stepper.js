@@ -1,5 +1,5 @@
 import { MOCK_DB, APP_STATE, saveOrders, saveDraftOrders, BANK_OPTIONS } from './state.js';
-import { paginateExistingTable, showToast, pushNotification, maskID, maskPassport } from './utils.js';
+import { paginateExistingTable, showToast, pushNotification, maskID, maskPassport, openModal, closeModal } from './utils.js';
 import { switchRoute } from './routing.js';
 import { getProductTermAndPrice } from './catalogue.js';
 import { openNewCustomerWizard } from './customer.js';
@@ -1999,14 +1999,20 @@ export function handleCancelOrder(event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  const confirmCancel = confirm("Are you sure you want to cancel this order?");
-  if (!confirmCancel) return;
-
-  let reason = prompt("Please enter a reason for cancellation (optional):");
-  if (reason === null) {
-    return;
+  
+  const reasonEl = document.getElementById('custom-cancellation-reason');
+  if (reasonEl) {
+    reasonEl.value = '';
   }
-  reason = reason.trim() || "No reason provided";
+
+  openModal('cancellation-confirm-modal');
+}
+
+export function submitCustomCancellation() {
+  const reasonEl = document.getElementById('custom-cancellation-reason');
+  const reason = reasonEl ? (reasonEl.value.trim() || "No reason provided") : "No reason provided";
+
+  closeModal('cancellation-confirm-modal');
 
   const ordRef = APP_STATE.cart.orderRef || "ORD-" + Math.floor(100000 + Math.random() * 900000);
   const isSimProduct = !!(APP_STATE.cart.product && (APP_STATE.cart.product.category === 'SIM-only' || APP_STATE.cart.product.category === 'Handset contracts'));
@@ -2073,6 +2079,7 @@ export function handleCancelOrder(event) {
 
 // Bind to window for global access (from HTML inline onclick attributes)
 window.handleCancelOrder = handleCancelOrder;
+window.submitCustomCancellation = submitCustomCancellation;
 window.getActiveStepsForProduct = getActiveStepsForProduct;
 window.getStepperStepTitle = getStepperStepTitle;
 window.renderStepperHeader = renderStepperHeader;

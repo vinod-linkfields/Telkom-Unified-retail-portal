@@ -2007,6 +2007,33 @@
     </div>
   </div>
 
+  <!-- MODAL: Custom Order Cancellation -->
+  <div class="modal-overlay" id="cancellation-confirm-modal" style="display: none; z-index: 2000;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h4 class="modal-title" style="color: var(--danger); display: flex; align-items: center; gap: 8px; margin: 0;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color: var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Confirm Order Cancellation
+        </h4>
+        <button class="modal-close" onclick="closeModal('cancellation-confirm-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding-top: 16px;">
+        <p style="font-size: 14px; color: var(--text-primary); margin-bottom: 12px; font-weight: 500;">
+          Are you sure you want to cancel this order? This will discard your current configuration.
+        </p>
+        
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" style="font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Reason for Cancellation (Optional)</label>
+          <textarea id="custom-cancellation-reason" class="form-control" rows="3" placeholder="Please enter a reason for cancellation..." style="width: 100%; border-radius: var(--radius-md); padding: 8px 12px; border: 1px solid var(--border-color); font-size: 13px;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 16px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('cancellation-confirm-modal')">Discard & Keep Order</button>
+        <button type="button" class="btn btn-danger" onclick="submitCustomCancellation()" style="background-color: var(--danger); color: white;">Yes, Cancel Order</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: Stock Request Details -->
   <div class="modal-overlay" id="stock-request-details-modal" style="display: none;">
     <div class="modal-content">

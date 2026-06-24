@@ -31,7 +31,7 @@ export function updateSessionBanner() {
 
     const sessionCancelBtn = document.getElementById('session-cancel-order-btn');
     if (sessionCancelBtn) {
-      if (APP_STATE.activeRoute === 'order-stepper' && APP_STATE.cart.product) {
+      if (APP_STATE.cart.product) {
         sessionCancelBtn.style.display = 'inline-block';
       } else {
         sessionCancelBtn.style.display = 'none';
