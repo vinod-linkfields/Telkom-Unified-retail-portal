@@ -121,7 +121,8 @@ import {
   handlePOSPaymentTrigger,
   renderConfirmationReceipt,
   renderConfirmationContract,
-  renderConfirmationRicaActivation
+  renderConfirmationRicaActivation,
+  downloadContractOnly
 } from './js/stepper.js';
 
 import {
@@ -566,6 +567,7 @@ window.handlePOSPaymentTrigger = handlePOSPaymentTrigger;
 window.renderConfirmationReceipt = renderConfirmationReceipt;
 window.renderConfirmationContract = renderConfirmationContract;
 window.renderConfirmationRicaActivation = renderConfirmationRicaActivation;
+window.downloadContractOnly = downloadContractOnly;
 
 // Tracking
 window.renderOrderTracking = renderOrderTracking;

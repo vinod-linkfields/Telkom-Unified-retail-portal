@@ -1947,9 +1947,16 @@
                 <span>Product</span>
                 <span id="view-order-prod">SIM Plan</span>
               </div>
-              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color)">
                 <span>Contract Plan</span>
-                <span id="view-order-contract-plan">-</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="view-order-contract-plan">-</span>
+                  <button id="modal-download-contract-btn" class="btn btn-sm btn-outline" style="padding: 2px 6px; display: none; align-items: center; justify-content: center; height: 24px; width: 24px; border-radius: var(--radius-sm); border-color: var(--telkom-blue); color: var(--telkom-blue); cursor: pointer;" title="Download Contract Only">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
               <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
                 <span>Once-off Charge</span>

@@ -1881,6 +1881,197 @@ export function renderConfirmationReceipt() {
   renderConfirmationContract(APP_STATE.cart.orderRef);
 }
 
+export function downloadContractOnly(orderRef) {
+  let customer = null;
+  let product = null;
+  let bankName = "N/A";
+  let accountNo = "N/A";
+  let term = 24;
+  let price = 0;
+  let onceOff = 0;
+  let allocation = "";
+  let selectedColor = "";
+
+  if (APP_STATE.cart && APP_STATE.cart.orderRef === orderRef) {
+    customer = APP_STATE.selectedCustomer;
+    const pObj = APP_STATE.cart.product;
+    if (pObj) {
+      product = pObj;
+      price = pObj.price;
+      term = pObj.term || 24;
+      allocation = pObj.allocation || "";
+      onceOff = pObj.onceOff || 0;
+      selectedColor = pObj.selectedColor || "";
+    }
+    if (APP_STATE.cart.billingSelection) {
+      const bs = APP_STATE.cart.billingSelection;
+      if (bs.option === 'existing') {
+        bankName = "Existing Account (ABSA)";
+        accountNo = "••••1234";
+      } else if (bs.option === 'new') {
+        bankName = bs.newDebit.bankName || "N/A";
+        const fullAcc = bs.newDebit.accountNumber || "";
+        accountNo = fullAcc.length > 4 ? "••••" + fullAcc.slice(-4) : fullAcc;
+      }
+    }
+  } else {
+    const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+    if (!order) {
+      showToast("Order details not found.", "danger");
+      return;
+    }
+    customer = MOCK_DB.crm.find(c => c.accountNumber === order.accountNo || c.name === order.customerName);
+    const pObj = MOCK_DB.products.find(p => p.name === order.product);
+    if (pObj) {
+      product = pObj;
+      price = pObj.price;
+      term = pObj.term || 24;
+      allocation = pObj.allocation || "";
+      onceOff = pObj.onceOff || 0;
+      selectedColor = order.selectedColor || "";
+    }
+    if (order.debiCheck) {
+      bankName = order.debiCheck.bankName || "N/A";
+      const fullAcc = order.debiCheck.accountNumber || "";
+      accountNo = fullAcc.length > 4 ? "••••" + fullAcc.slice(-4) : fullAcc;
+    } else {
+      const refNum = parseInt(order.orderRef.replace(/\D/g, '')) || 0;
+      const banks = ["ABSA", "Standard Bank", "Nedbank", "FNB", "Capitec Bank Limited"];
+      bankName = banks[refNum % banks.length];
+      accountNo = "••••" + String((refNum * 997) % 10000).padStart(4, '0');
+    }
+  }
+
+  if (!customer || !product) {
+    showToast("Unable to generate contract document: missing customer or product information.", "danger");
+    return;
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Telkom Customer Contract - ${orderRef}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { text-align: center; border-bottom: 3px solid #0099ff; padding-bottom: 10px; margin-bottom: 30px; }
+          h2 { color: #0f3057; text-transform: uppercase; margin: 0; }
+          .section-title { color: #0f3057; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
+          td { padding: 8px 0; border-bottom: 1px solid #eee; }
+          td.label { font-weight: bold; width: 30%; color: #666; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 40px; }
+          .sig-box { width: 45%; border: 1px dashed #ccc; padding: 15px; text-align: center; background-color: #f9f9f9; }
+          .sig-font { font-family: 'Georgia', serif; font-style: italic; font-size: 18px; color: #0f3057; margin: 8px 0; }
+          .footer { text-align: center; font-size: 11px; color: #999; margin-top: 50px; border-top: 1px solid #eee; padding-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h2>Telkom SA SOC Ltd</h2>
+          <div style="font-size: 12px; font-weight: bold; color: #0099ff; letter-spacing: 1px; margin-top: 5px;">CUSTOMER CONTRACT AGREEMENT</div>
+        </div>
+
+        <table>
+          <tr>
+            <td class="label">Agreement Reference</td>
+            <td><strong>${orderRef}</strong></td>
+            <td class="label">Date of Agreement</td>
+            <td><strong>${new Date().toLocaleDateString()}</strong></td>
+          </tr>
+        </table>
+
+        <div class="section-title">1. Subscriber Personal Details</div>
+        <table>
+          <tr>
+            <td class="label">Full Name</td>
+            <td>${customer.name}</td>
+            <td class="label">Identity Number</td>
+            <td>${customer.id ? maskID(customer.id) : maskPassport(customer.passport)}</td>
+          </tr>
+          <tr>
+            <td class="label">Mobile Number</td>
+            <td>${customer.mobile || 'N/A'}</td>
+            <td class="label">Email Address</td>
+            <td>${customer.email || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td class="label">Billing Address</td>
+            <td colspan="3">${customer.address || 'N/A'}</td>
+          </tr>
+        </table>
+
+        <div class="section-title">2. Contract Plan Specifications</div>
+        <table>
+          <tr>
+            <td class="label">Allocated Product</td>
+            <td>${product.name}</td>
+            <td class="label">Contract Duration</td>
+            <td>${product.term || term} Months</td>
+          </tr>
+          <tr>
+            <td class="label">Monthly Charge</td>
+            <td>R${price} /mo</td>
+            <td class="label">Once-off Connection Fee</td>
+            <td>R${onceOff}</td>
+          </tr>
+          <tr>
+            <td class="label">Plan Details</td>
+            <td colspan="3">${allocation}</td>
+          </tr>
+        </table>
+
+        <div class="section-title">3. Debit Order Billing Information</div>
+        <table>
+          <tr>
+            <td class="label">Authorized Bank</td>
+            <td>${bankName}</td>
+            <td class="label">Account Number</td>
+            <td>${accountNo}</td>
+          </tr>
+          <tr>
+            <td class="label">Collection Date</td>
+            <td>1st of every month</td>
+            <td class="label">DebiCheck Status</td>
+            <td>Verified and Authorized</td>
+          </tr>
+        </table>
+
+        <div class="section-title">4. Compliance & Signatures</div>
+        <p style="font-size: 11px; color: #555; margin-bottom: 20px;">The Subscriber agrees to all terms and conditions of Telkom SA. Credit check, NCA requirements and POPI act consent checked digitally.</p>
+        
+        <div class="signatures">
+          <div class="sig-box">
+            <div style="font-size: 10px; color: #666; font-weight: bold;">AUTHORIZED AGENT SIGNATURE</div>
+            <div class="sig-font">Piet van Zyl</div>
+            <div style="font-size: 10px; color: #999;">Branch PTA-01 (Pretoria Main)</div>
+          </div>
+          <div class="sig-box">
+            <div style="font-size: 10px; color: #666; font-weight: bold;">SUBSCRIBER SIGNATURE</div>
+            <div class="sig-font">${customer.name}</div>
+            <div style="font-size: 10px; color: #999;">IP: 192.168.10.150 (POPIA Compliant)</div>
+          </div>
+        </div>
+
+        <div class="footer">
+          Telkom SA SOC Ltd is an authorized financial services provider. Reg no: 1991/005476/30.
+        </div>
+      </body>
+    </html>
+  `;
+
+  const blob = new Blob([htmlContent], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `Telkom_Contract_${orderRef}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast("Contract document downloaded successfully.", "success");
+}
+
 export function renderConfirmationContract(orderRef) {
   const panel = document.getElementById('confirmation-contract-panel');
   if (!panel) return;
@@ -1908,9 +2099,17 @@ export function renderConfirmationContract(orderRef) {
 
   panel.style.display = 'block';
   panel.innerHTML = `
-    <div class="contract-header" style="text-align: center; border-bottom: 2px solid var(--telkom-blue); padding-bottom: 16px; margin-bottom: 20px;">
-      <h3 style="color: var(--telkom-blue-dark); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Customer Contract Agreement</h3>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 700;">TELKOM SA SOC LTD - MOBILE & BROADBAND SERVICES</div>
+    <div class="contract-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--telkom-blue); padding-bottom: 16px; margin-bottom: 20px;">
+      <div style="text-align: left;">
+        <h3 style="color: var(--telkom-blue-dark); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Customer Contract Agreement</h3>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 700;">TELKOM SA SOC LTD - MOBILE & BROADBAND SERVICES</div>
+      </div>
+      <button onclick="downloadContractOnly('${orderRef}')" class="btn btn-sm btn-outline" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-color: var(--telkom-blue); color: var(--telkom-blue-dark); font-weight: 600; cursor: pointer; border-radius: var(--radius-md); transition: all 0.2s;" title="Download Contract Only">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Download Contract</span>
+      </button>
     </div>
 
     <div style="font-size: 13px; color: var(--text-primary); line-height: 1.6;">

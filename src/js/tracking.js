@@ -1,7 +1,7 @@
 import { MOCK_DB, APP_STATE, saveOrders, saveDraftOrders } from './state.js';
 import { renderPaginatedRows, showToast, pushNotification, maskID, maskPassport, openModal, closeModal } from './utils.js';
 import { switchRoute } from './routing.js';
-import { renderStepper } from './stepper.js';
+import { renderStepper, downloadContractOnly } from './stepper.js';
 
 // Render Order Tracking View
 function applyOrderFilters(list, isDraft = false) {
@@ -458,11 +458,24 @@ export function viewOrderDetails(orderRef) {
   const product = MOCK_DB.products.find(p => p.name === order.product);
   const contractPlanEl = document.getElementById('view-order-contract-plan');
   const onceOffEl = document.getElementById('view-order-once-off');
+  const downloadBtn = document.getElementById('modal-download-contract-btn');
+  const isSimProduct = order.isSimProduct || (order.type === 'Mobile' || order.product.includes('SIM') || order.product.includes('Contract'));
+
   if (contractPlanEl) {
     contractPlanEl.innerText = product ? `R${product.price} /mo (${product.term} Months)` : 'N/A';
   }
   if (onceOffEl) {
     onceOffEl.innerText = product ? `R${product.onceOff}` : 'N/A';
+  }
+  if (downloadBtn) {
+    if (isSimProduct && order.status !== 'Cancelled') {
+      downloadBtn.style.display = 'inline-flex';
+      downloadBtn.onclick = function() {
+        downloadContractOnly(order.orderRef);
+      };
+    } else {
+      downloadBtn.style.display = 'none';
+    }
   }
 
   // Populate RICA & SIM badges
