@@ -682,7 +682,7 @@ export function viewOrderDetails(orderRef) {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <!-- Card 1: Account Holder Information (View Only) -->
         <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">1. Account Holder Info</h5>
+          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">1. Account Holder Info</h5>
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <div>
               <span style="font-size: 11px; color: var(--text-muted); display: block;">Account Holder Name</span>
@@ -705,7 +705,7 @@ export function viewOrderDetails(orderRef) {
 
         <!-- Card 2: Settlement Banking Details -->
         <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">2. Settlement Banking Details</h5>
+          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">2. Settlement Banking Details</h5>
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <div>
               <span style="font-size: 11px; color: var(--text-muted); display: block;">Bank Name</span>
@@ -732,7 +732,7 @@ export function viewOrderDetails(orderRef) {
 
         <!-- Card 3: Mandate Specs & Verification Status -->
         <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">3. Specs & Verification Status</h5>
+          <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">3. Specs & Verification Status</h5>
           <div style="display: flex; flex-direction: column; gap: 10px;">
             <div>
               <span style="font-size: 11px; color: var(--text-muted); display: block;">Monthly Debit Amount</span>
@@ -764,7 +764,7 @@ export function viewOrderDetails(orderRef) {
         <!-- Card 4: Consent & Terms -->
         <div class="debicheck-card" style="background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px; text-transform: uppercase;">4. Authorizations & Consents</h5>
+            <h5 style="color: var(--telkom-blue-dark); font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 12px;">4. Authorizations & Consents</h5>
             <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 8px;">
               <div style="display: flex; align-items: flex-start; gap: 10px;">
                 <input type="checkbox" checked disabled style="margin-top: 3px; cursor: not-allowed;">
@@ -953,8 +953,8 @@ export function printContractDocument(orderRef) {
           body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
           .logo { text-align: center; margin-bottom: 30px; }
           .header { text-align: center; border-bottom: 3px solid #0099ff; padding-bottom: 10px; margin-bottom: 30px; }
-          h2 { color: #0f3057; text-transform: uppercase; margin: 0; }
-          .section-title { color: #0f3057; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+          h2 { color: #0f3057; margin: 0; }
+          .section-title { color: #0f3057; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; font-size: 12px; letter-spacing: 1px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
           td { padding: 8px 0; }
           td.label { font-weight: bold; width: 30%; color: #666; }

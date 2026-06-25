@@ -2,6 +2,59 @@ import { APP_STATE, MOCK_DB } from './state.js';
 import { switchRoute } from './routing.js';
 import { renderPaginatedRows, showToast, maskID, maskPassport, openModal, closeModal } from './utils.js';
 
+export function parseAddressString(addressStr) {
+  const result = {
+    line1: "",
+    street: "",
+    suburb: "",
+    city: "",
+    postalCode: "",
+    country: "South Africa"
+  };
+  if (!addressStr) return result;
+
+  const parts = addressStr.split(',').map(p => p.trim());
+  
+  if (parts.length === 6) {
+    result.line1 = parts[0];
+    result.street = parts[1];
+    result.suburb = parts[2];
+    result.city = parts[3];
+    result.postalCode = parts[4];
+    result.country = parts[5];
+  } else if (parts.length === 5) {
+    if (parts[4].toLowerCase() === 'south africa') {
+      result.line1 = parts[0];
+      result.street = parts[0].replace(/^\d+\s+/, '');
+      result.suburb = parts[1];
+      result.city = parts[2];
+      result.postalCode = parts[3];
+      result.country = parts[4];
+    } else {
+      result.line1 = parts[0];
+      result.street = parts[1];
+      result.suburb = parts[2];
+      result.city = parts[3];
+      result.postalCode = parts[4];
+    }
+  } else if (parts.length === 4) {
+    result.line1 = parts[0];
+    result.street = parts[0].replace(/^\d+\s+/, '');
+    result.suburb = parts[1];
+    result.city = parts[2];
+    result.postalCode = parts[3];
+  } else {
+    result.line1 = parts[0] || "";
+    result.street = parts[1] || parts[0] || "";
+    result.suburb = parts[2] || "";
+    result.city = parts[3] || "";
+    result.postalCode = parts[4] || "";
+    if (parts[5]) result.country = parts[5];
+  }
+  return result;
+}
+window.parseAddressString = parseAddressString;
+
 const BANK_OPTIONS = [
   "ABSA",
   "African Bank",
@@ -206,13 +259,7 @@ export function renderCustomer360() {
     startDate: '2020-03-01'
   };
 
-  const address = cust.addressDetails || {
-    line1: cust.address ? cust.address.split(',')[0] : '12 Main Rd',
-    street: cust.address ? cust.address.split(',')[0] : 'Main Rd',
-    suburb: cust.address && cust.address.split(',')[1] ? cust.address.split(',')[1].trim() : 'Rosebank',
-    city: cust.address && cust.address.split(',')[2] ? cust.address.split(',')[2].trim() : 'Johannesburg',
-    postalCode: cust.address && cust.address.split(',')[3] ? cust.address.split(',')[3].trim() : '2196'
-  };
+  const address = parseAddressString(cust.address);
 
   const financial = cust.financialDetails || {
     grossIncome: '45000',
@@ -472,7 +519,22 @@ export function openNewCustomerWizard() {
   APP_STATE.newCustomerData = {
     personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
     employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
-    address: { line1: "", employerAddr: "" },
+    address: {
+      personalAddressLine: "",
+      personalStreet: "",
+      personalSuburb: "",
+      personalCity: "",
+      personalPostalCode: "",
+      personalCountry: "South Africa",
+      employerAddressLine: "",
+      employerStreet: "",
+      employerSuburb: "",
+      employerCity: "",
+      employerPostalCode: "",
+      employerCountry: "South Africa",
+      line1: "",
+      employerAddr: ""
+    },
     financial: { grossIncome: "", netIncome: "", expenses: "" },
     banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: true, creditConsent: false }
   };
@@ -615,9 +677,42 @@ export function renderCustomerCreateStep(step) {
             <label class="form-label">Alternative Contact Number (Optional)</label>
             <input type="text" id="new-cust-altcontact" class="form-control" placeholder="e.g. 0111234567" value="${personal.altContact || ''}" oninput="saveCustomerCreateInputs()">
           </div>
-          <div class="form-group">
-            <label class="form-label">Physical Address <span class="required">*</span></label>
-            <input type="text" id="new-cust-addr-personal" class="form-control" placeholder="Enter complete physical address..." value="${address.line1 || ''}" oninput="saveCustomerCreateInputs()">
+        </div>
+
+        <div style="margin-top: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px 20px; background-color: var(--bg-light);">
+          <h4 style="margin-bottom: 16px; color: var(--telkom-blue-dark); font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">Physical Address Details</h4>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Address Line <span class="required">*</span></label>
+              <input type="text" id="new-cust-personal-line" class="form-control" placeholder="Unit/Flat/Building name..." value="${address.personalAddressLine || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Street Address <span class="required">*</span></label>
+              <input type="text" id="new-cust-personal-street" class="form-control" placeholder="Street number & name..." value="${address.personalStreet || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Suburb <span class="required">*</span></label>
+              <input type="text" id="new-cust-personal-suburb" class="form-control" placeholder="e.g. Rosebank..." value="${address.personalSuburb || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">City <span class="required">*</span></label>
+              <input type="text" id="new-cust-personal-city" class="form-control" placeholder="e.g. Johannesburg..." value="${address.personalCity || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Postal Code <span class="required">*</span></label>
+              <input type="text" id="new-cust-personal-postal" class="form-control" placeholder="e.g. 2196..." value="${address.personalPostalCode || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input type="text" id="new-cust-personal-country" class="form-control" value="South Africa" disabled style="background-color: var(--bg-card); cursor: not-allowed;">
+            </div>
           </div>
         </div>
 
@@ -634,7 +729,7 @@ export function renderCustomerCreateStep(step) {
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Provide employment details, employer address, and monthly financial streams.</p>
         
         <div style="margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px 20px; background-color: var(--bg-light);">
-          <h4 style="margin-bottom: 16px; color: var(--telkom-blue-dark); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Employment Details</h4>
+          <h4 style="margin-bottom: 16px; color: var(--telkom-blue-dark); font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">Employment Details</h4>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Employment Status</label>
@@ -681,10 +776,42 @@ export function renderCustomerCreateStep(step) {
           </div>
         </div>
 
-        <div class="form-group" style="position: relative; margin-top: 16px;">
-          <label class="form-label">Employer Address <span class="required">*</span></label>
-          <input type="text" id="new-cust-addr-employer" class="form-control" placeholder="Type or enter complete employer address..." value="${address.employerAddr || ''}" oninput="handleEmployerAddressInput(this)">
-          <div id="addr-autocomplete-menu" class="searchable-dropdown-menu" style="width: 100%;"></div>
+        <div style="margin-top: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px 20px; background-color: var(--bg-light); position: relative;">
+          <h4 style="margin-bottom: 16px; color: var(--telkom-blue-dark); font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">Employer Address Details</h4>
+          
+          <div class="form-row">
+            <div class="form-group" style="position: relative;">
+              <label class="form-label">Address Line <span class="required">*</span></label>
+              <input type="text" id="new-cust-employer-line" class="form-control" placeholder="Unit/Flat/Building name..." value="${address.employerAddressLine || ''}" oninput="handleEmployerAddressInput(this)">
+              <div id="addr-autocomplete-menu" class="searchable-dropdown-menu" style="width: 100%;"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Street Address <span class="required">*</span></label>
+              <input type="text" id="new-cust-employer-street" class="form-control" placeholder="Street number & name..." value="${address.employerStreet || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Suburb <span class="required">*</span></label>
+              <input type="text" id="new-cust-employer-suburb" class="form-control" placeholder="e.g. Sandton..." value="${address.employerSuburb || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">City <span class="required">*</span></label>
+              <input type="text" id="new-cust-employer-city" class="form-control" placeholder="e.g. Johannesburg..." value="${address.employerCity || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+          </div>
+
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Postal Code <span class="required">*</span></label>
+              <input type="text" id="new-cust-employer-postal" class="form-control" placeholder="e.g. 2196..." value="${address.employerPostalCode || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Country</label>
+              <input type="text" id="new-cust-employer-country" class="form-control" value="South Africa" disabled style="background-color: var(--bg-card); cursor: not-allowed;">
+            </div>
+          </div>
         </div>
 
         <div style="margin-top: 24px;">
@@ -784,7 +911,7 @@ export function renderCustomerCreateStep(step) {
         </div>
 
         <div style="margin-top: 20px; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-light);">
-          <div style="font-weight: 700; font-size: 12px; color: var(--telkom-blue-dark); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Banking Validations</div>
+          <div style="font-weight: 700; font-size: 12px; color: var(--telkom-blue-dark); margin-bottom: 10px; letter-spacing: 0.5px;">Banking Validations</div>
           <div style="display: flex; gap: 24px; margin-bottom: 14px; font-size: 13px;">
             <div>
               <span style="color: var(--text-secondary); font-weight: 600; margin-right: 6px;">Account Verification (AHV):</span>
@@ -875,8 +1002,27 @@ export function saveCustomerCreateInputs() {
     personal.altContact = document.getElementById('new-cust-altcontact').value.trim();
     personal.marketingConsent = document.getElementById('new-cust-marketing').checked;
     
-    const personalAddrEl = document.getElementById('new-cust-addr-personal');
-    if (personalAddrEl) address.line1 = personalAddrEl.value.trim();
+    const personalLineEl = document.getElementById('new-cust-personal-line');
+    const personalStreetEl = document.getElementById('new-cust-personal-street');
+    const personalSuburbEl = document.getElementById('new-cust-personal-suburb');
+    const personalCityEl = document.getElementById('new-cust-personal-city');
+    const personalPostalEl = document.getElementById('new-cust-personal-postal');
+    
+    if (personalLineEl) address.personalAddressLine = personalLineEl.value.trim();
+    if (personalStreetEl) address.personalStreet = personalStreetEl.value.trim();
+    if (personalSuburbEl) address.personalSuburb = personalSuburbEl.value.trim();
+    if (personalCityEl) address.personalCity = personalCityEl.value.trim();
+    if (personalPostalEl) address.personalPostalCode = personalPostalEl.value.trim();
+    address.personalCountry = "South Africa";
+    
+    address.line1 = [
+      address.personalAddressLine,
+      address.personalStreet,
+      address.personalSuburb,
+      address.personalCity,
+      address.personalPostalCode,
+      address.personalCountry
+    ].filter(Boolean).join(', ');
   } else if (step === 2) {
     const statusSel = document.getElementById('new-cust-empstatus');
     const typeSel = document.getElementById('new-cust-emptype');
@@ -893,8 +1039,27 @@ export function saveCustomerCreateInputs() {
     if (contactInput) employment.employerContact = contactInput.value.trim();
     if (startInput) employment.startDate = startInput.value;
 
-    const empAddrEl = document.getElementById('new-cust-addr-employer');
-    if (empAddrEl) address.employerAddr = empAddrEl.value.trim();
+    const empLineEl = document.getElementById('new-cust-employer-line');
+    const empStreetEl = document.getElementById('new-cust-employer-street');
+    const empSuburbEl = document.getElementById('new-cust-employer-suburb');
+    const empCityEl = document.getElementById('new-cust-employer-city');
+    const empPostalEl = document.getElementById('new-cust-employer-postal');
+    
+    if (empLineEl) address.employerAddressLine = empLineEl.value.trim();
+    if (empStreetEl) address.employerStreet = empStreetEl.value.trim();
+    if (empSuburbEl) address.employerSuburb = empSuburbEl.value.trim();
+    if (empCityEl) address.employerCity = empCityEl.value.trim();
+    if (empPostalEl) address.employerPostalCode = empPostalEl.value.trim();
+    address.employerCountry = "South Africa";
+    
+    address.employerAddr = [
+      address.employerAddressLine,
+      address.employerStreet,
+      address.employerSuburb,
+      address.employerCity,
+      address.employerPostalCode,
+      address.employerCountry
+    ].filter(Boolean).join(', ');
 
     const grossEl = document.getElementById('new-cust-gross');
     const netEl = document.getElementById('new-cust-net');
@@ -950,9 +1115,10 @@ export function handleEmployerAddressInput(el) {
   }
 
   menu.innerHTML = '';
-  matches.forEach((addr, index) => {
+  matches.forEach((addr) => {
+    const origIndex = MOCK_EMPLOYER_ADDRESSES.indexOf(addr);
     menu.innerHTML += `
-      <div class="searchable-dropdown-option" onclick="selectEmployerAddressSuggestion(${index})">
+      <div class="searchable-dropdown-option" onclick="selectEmployerAddressSuggestion(${origIndex})">
         <strong>${addr.line1}</strong> — ${addr.suburb}, ${addr.city}, ${addr.postalCode}
       </div>
     `;
@@ -963,8 +1129,22 @@ export function handleEmployerAddressInput(el) {
 export function selectEmployerAddressSuggestion(index) {
   const addr = MOCK_EMPLOYER_ADDRESSES[index];
   if (addr) {
-    const formatted = `${addr.line1}, ${addr.suburb}, ${addr.city}, ${addr.postalCode}`;
-    APP_STATE.newCustomerData.address.employerAddr = formatted;
+    const address = APP_STATE.newCustomerData.address;
+    address.employerAddressLine = addr.line1;
+    address.employerStreet = addr.street || addr.line1;
+    address.employerSuburb = addr.suburb;
+    address.employerCity = addr.city;
+    address.employerPostalCode = addr.postalCode;
+    address.employerCountry = "South Africa";
+    
+    address.employerAddr = [
+      address.employerAddressLine,
+      address.employerStreet,
+      address.employerSuburb,
+      address.employerCity,
+      address.employerPostalCode,
+      address.employerCountry
+    ].filter(Boolean).join(', ');
     
     renderCustomerCreateStep(2);
     showToast("Employer address auto-completed.", "success");
@@ -1108,7 +1288,8 @@ export function handleCustomerCreateNext() {
   const banking = APP_STATE.newCustomerData.banking;
 
   if (step === 1) {
-    if (!personal.idNum || !personal.firstName || !personal.lastName || !personal.email || !personal.mobile || !address.line1) {
+    if (!personal.idNum || !personal.firstName || !personal.lastName || !personal.email || !personal.mobile ||
+        !address.personalAddressLine || !address.personalStreet || !address.personalSuburb || !address.personalCity || !address.personalPostalCode) {
       showToast("Please fill in all mandatory customer details (*)", "warning");
       return;
     }
@@ -1146,8 +1327,8 @@ export function handleCustomerCreateNext() {
   }
 
   if (step === 2) {
-    if (!address.employerAddr) {
-      showToast("Please enter the complete Employer Address (*)", "warning");
+    if (!address.employerAddressLine || !address.employerStreet || !address.employerSuburb || !address.employerCity || !address.employerPostalCode) {
+      showToast("Please fill in all mandatory Employer Address fields (*)", "warning");
       return;
     }
     if (!financial.grossIncome || !financial.netIncome || !financial.expenses) {
@@ -1200,7 +1381,14 @@ export function submitNewCustomerProfile() {
   const address = APP_STATE.newCustomerData.address;
   const financial = APP_STATE.newCustomerData.financial;
   const banking = APP_STATE.newCustomerData.banking;
-  const formattedAddress = address.line1 || "12 Main Rd, Rosebank, Johannesburg, 2196";
+  const formattedAddress = address.line1 || [
+    address.personalAddressLine,
+    address.personalStreet,
+    address.personalSuburb,
+    address.personalCity,
+    address.personalPostalCode,
+    address.personalCountry
+  ].filter(Boolean).join(', ');
 
   let targetCust;
 
@@ -1570,7 +1758,24 @@ export function openEditCustomerModal() {
     startDate: '2020-03-01'
   };
 
+  const personalAddrParsed = parseAddressString(cust.address || (cust.addressDetails ? cust.addressDetails.line1 : '') || '12 Main Rd, Rosebank, Johannesburg, 2196');
+  const employerAddrParsed = parseAddressString((cust.addressDetails && cust.addressDetails.employerAddr) || '15 Alice Lane, Sandton, Johannesburg, 2196');
+
   const address = {
+    personalAddressLine: personalAddrParsed.line1,
+    personalStreet: personalAddrParsed.street,
+    personalSuburb: personalAddrParsed.suburb,
+    personalCity: personalAddrParsed.city,
+    personalPostalCode: personalAddrParsed.postalCode,
+    personalCountry: personalAddrParsed.country,
+
+    employerAddressLine: employerAddrParsed.line1,
+    employerStreet: employerAddrParsed.street,
+    employerSuburb: employerAddrParsed.suburb,
+    employerCity: employerAddrParsed.city,
+    employerPostalCode: employerAddrParsed.postalCode,
+    employerCountry: employerAddrParsed.country,
+
     line1: cust.address || (cust.addressDetails ? cust.addressDetails.line1 : '') || '12 Main Rd, Rosebank, Johannesburg, 2196',
     employerAddr: (cust.addressDetails && cust.addressDetails.employerAddr) || '15 Alice Lane, Sandton, Johannesburg, 2196'
   };

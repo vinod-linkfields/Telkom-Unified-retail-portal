@@ -417,7 +417,7 @@ export function showProductDetails(productId) {
       </div>
     </div>
     
-    <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 12px;">Key Specifications</h4>
+    <h4 style="font-size: 14px; font-weight: 700; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 12px;">Key Specifications</h4>
     <div class="spec-cards-grid">
       <div class="spec-card">
         <span class="spec-card-label">Device</span>

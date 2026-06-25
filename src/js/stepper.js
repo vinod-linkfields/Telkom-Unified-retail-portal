@@ -216,7 +216,7 @@ export function renderStepper() {
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
           <div style="background-color: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-            <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">CUSTOMER PROFILE</h5>
+            <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">Customer Profile</h5>
             <div style="margin-bottom: 10px;">
               <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">FULL NAME</div>
               <div style="font-weight: 700; color: var(--text-primary); font-size: 14px;">${APP_STATE.selectedCustomer.name}</div>
@@ -232,7 +232,7 @@ export function renderStepper() {
           </div>
           
           <div style="background-color: var(--bg-light); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
-            <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">PRODUCT DETAILS</h5>
+            <h5 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700;">Product Details</h5>
             ${imageHtml}
             <div style="margin-bottom: 10px;">
               <div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">NAME</div>
@@ -297,7 +297,7 @@ export function renderStepper() {
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Legally required declarations for SA NCA compliance.</p>
         
         <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius-lg); font-size: 13px; color: var(--text-secondary); max-height: 250px; overflow-y: scroll; margin-bottom: 24px;">
-          <h5 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">NCA CREDIT & DATA PROTECTION POLICY</h5>
+          <h5 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">NCA Credit & Data Protection Policy</h5>
           <p style="margin-bottom: 12px;">The customer agrees that Telkom SA SOC Ltd may check credit histories with authorized credit agencies for the purpose of contract evaluation. The customer certifies that all details provided are true and complete.</p>
           <p style="margin-bottom: 12px;">Telkom SA complies with the Protection of Personal Information Act (POPIA) 4 of 2013. The customer's information is secure and will only be utilized for managing this digital journey.</p>
           <p>By checking the boxes below, the customer gives explicit sign-off to activate this service.</p>
@@ -537,7 +537,7 @@ export function renderStepperBillingSelection(container) {
     APP_STATE.cart.billingSelection = {
       option: "existing",
       selectedId: accounts[0].id,
-      newDebit: { bankName: "", branchCode: "", accountType: "", accountNumber: "", debitDay: "1st", debiCheckConsent: false, termsConsent: false }
+      newDebit: { bankName: "", branchCode: "", accountType: "", accountNumber: "", debitDay: "1st", debiCheckConsent: false, termsConsent: false, accountVerificationStatus: "Awaiting Details" }
     };
   }
 
@@ -572,9 +572,15 @@ export function renderStepperBillingSelection(container) {
   const onceOffAmount = product ? `R${product.onceOff}` : "R0.00";
 
   // Simulated status indicators
-  const avsStatus = bill.newDebit.bankName && bill.newDebit.accountNumber ? 
-    `<span class="badge badge-success">Verified</span>` : 
-    `<span class="badge badge-neutral">Awaiting Details</span>`;
+  const verificationStatus = bill.newDebit.accountVerificationStatus || "Awaiting Details";
+  let avsStatus = '';
+  if (verificationStatus === 'Verified') {
+    avsStatus = `<span class="badge badge-success">Verified</span>`;
+  } else if (verificationStatus === 'Awaiting Details') {
+    avsStatus = `<span class="badge badge-neutral">Awaiting Details</span>`;
+  } else {
+    avsStatus = `<span class="badge badge-warning">${verificationStatus}</span>`;
+  }
 
   const vettingStatus = APP_STATE.cart.creditVetting && APP_STATE.cart.creditVetting.ran ? 
     `<span class="badge badge-success">${APP_STATE.cart.creditVetting.outcome}</span>` : 
@@ -685,7 +691,7 @@ export function renderStepperBillingSelection(container) {
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
         <!-- Card 1: Account Holder Info (View Only) -->
         <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">1. Account Holder Info (View Only)</h6>
+          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">1. Account Holder Info (View Only)</h6>
           
           <div class="form-group" style="margin-bottom: 10px;">
             <label class="form-label" style="font-size: 11px; color: var(--text-muted); margin-bottom: 3px;">Account Holder Name</label>
@@ -710,7 +716,7 @@ export function renderStepperBillingSelection(container) {
 
         <!-- Card 2: Settlement Banking Details -->
         <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">2. Settlement Banking Details</h6>
+          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">2. Settlement Banking Details</h6>
           
           <div class="form-group searchable-dropdown-container" style="margin-bottom: 10px;">
             <label class="form-label" style="font-size: 11px; margin-bottom: 3px;">Bank Name <span class="required">*</span></label>
@@ -756,13 +762,19 @@ export function renderStepperBillingSelection(container) {
               </select>
             </div>
           </div>
+
+          <div style="margin-top: 14px;">
+            <button type="button" class="btn btn-sm btn-outline" style="width: 100%; height: 36px; font-weight: 600;" onclick="runBillingAccountVerification()">
+              Account Holder Verification
+            </button>
+          </div>
         </div>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
         <!-- Card 3: Mandate Specs & Verification Status -->
         <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px;">
-          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">3. Specs & Verification Status</h6>
+          <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">3. Specs & Verification Status</h6>
           
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
             <div>
@@ -798,7 +810,7 @@ export function renderStepperBillingSelection(container) {
         <!-- Card 4: Consent & Terms -->
         <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">4. Consents & Agreements</h6>
+            <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">4. Consents & Agreements</h6>
             
             <label class="checkbox-group" style="align-items: flex-start; margin-bottom: 12px; cursor: pointer;">
               <input type="checkbox" id="billing-new-consent" ${bill.newDebit.debiCheckConsent ? 'checked' : ''} onchange="handleBillingNewInput('debiCheckConsent', this.checked)" style="margin-top: 3px;">
@@ -824,7 +836,7 @@ export function renderStepperBillingSelection(container) {
 
     <!-- 5. Credit Bureau Vetting Assessment -->
     <div style="margin-top: 24px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; border-left: 5px solid var(--telkom-blue);">
-      <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">5. Credit Bureau Vetting Assessment</h6>
+      <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">5. Credit Bureau Vetting Assessment</h6>
       <div id="billing-credit-vetting-container">
         ${creditVettingHtml}
       </div>
@@ -863,6 +875,31 @@ export function saveBillingInputs() {
   if (consent) bill.newDebit.debiCheckConsent = consent.checked;
   if (terms) bill.newDebit.termsConsent = terms.checked;
 }
+
+export function runBillingAccountVerification() {
+  saveBillingInputs();
+  const bill = APP_STATE.cart.billingSelection;
+  if (!bill || bill.option === 'existing') return;
+  const nd = bill.newDebit;
+  
+  if (!nd.bankName || !nd.branchCode || !nd.accountNumber || !nd.accountType) {
+    showToast("Please capture Bank Name, Branch Code, Account Number, and Account Type before running verification.", "warning");
+    return;
+  }
+
+  if (!/^\d{7,16}$/.test(nd.accountNumber)) {
+    showToast("Account number must be numeric and between 7 and 16 digits.", "danger");
+    return;
+  }
+
+  showToast("Initiating Account Holder Verification (AHV) with settlement bank...", "info");
+  setTimeout(() => {
+    nd.accountVerificationStatus = "Verified";
+    showToast("Account Holder Verification successful: Verified & Matched", "success");
+    renderStepper();
+  }, 500);
+}
+window.runBillingAccountVerification = runBillingAccountVerification;
 
 export function toggleBillingBankMenu(e) {
   e.stopPropagation();
@@ -2079,6 +2116,10 @@ export function handleStepperNext() {
         showToast("Please fill in all mandatory debit details (*)", "warning");
         return;
       }
+      if (nd.accountVerificationStatus !== "Verified") {
+        showToast("Account Holder Verification is required before proceeding.", "warning");
+        return;
+      }
       if (!nd.debiCheckConsent) {
         showToast("DebiCheck collection authorization checkbox is required.", "warning");
         return;
@@ -2504,8 +2545,8 @@ export function downloadContractOnly(orderRef) {
         <style>
           body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
           .header { text-align: center; border-bottom: 3px solid #0099ff; padding-bottom: 10px; margin-bottom: 30px; }
-          h2 { color: #0f3057; text-transform: uppercase; margin: 0; }
-          .section-title { color: #0f3057; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; font-size: 12px; letter-spacing: 1px; }
+          h2 { color: #0f3057; margin: 0; }
+          .section-title { color: #0f3057; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; font-size: 12px; letter-spacing: 1px; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
           td { padding: 8px 0; border-bottom: 1px solid #eee; }
           td.label { font-weight: bold; width: 30%; color: #666; }
@@ -2650,7 +2691,7 @@ export function renderConfirmationContract(orderRef) {
   panel.innerHTML = `
     <div class="contract-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--telkom-blue); padding-bottom: 16px; margin-bottom: 20px;">
       <div style="text-align: left;">
-        <h3 style="color: var(--telkom-blue-dark); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Customer Contract Agreement</h3>
+        <h3 style="color: var(--telkom-blue-dark); font-weight: 800; margin: 0; letter-spacing: 0.5px;">Customer Contract Agreement</h3>
         <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; font-weight: 700;">TELKOM SA SOC LTD - MOBILE & BROADBAND SERVICES</div>
       </div>
       <button onclick="downloadContractOnly('${orderRef}')" class="btn btn-sm btn-outline" style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-color: var(--telkom-blue); color: var(--telkom-blue-dark); font-weight: 600; cursor: pointer; border-radius: var(--radius-md); transition: all 0.2s;" title="Download Contract Only">
@@ -2673,7 +2714,7 @@ export function renderConfirmationContract(orderRef) {
         </div>
       </div>
 
-      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">1. Contracting Parties</h5>
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; font-size: 12px; letter-spacing: 0.5px;">1. Contracting Parties</h5>
       <div style="margin-bottom: 20px;">
         <div style="display: grid; grid-template-columns: 100px 1fr; gap: 4px 12px;">
           <span style="color: var(--text-secondary);">Provider:</span>
@@ -2687,7 +2728,7 @@ export function renderConfirmationContract(orderRef) {
         </div>
       </div>
 
-      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">2. Contracted Service & Pricing</h5>
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; font-size: 12px; letter-spacing: 0.5px;">2. Contracted Service & Pricing</h5>
       <div style="margin-bottom: 20px;">
         <div style="display: grid; grid-template-columns: 100px 1fr; gap: 4px 12px;">
           <span style="color: var(--text-secondary);">Plan Name:</span>
@@ -2703,7 +2744,7 @@ export function renderConfirmationContract(orderRef) {
         </div>
       </div>
 
-      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">3. Debit Order Billing Instructions</h5>
+      <h5 style="color: var(--telkom-blue-dark); font-weight: 700; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; margin-bottom: 10px; font-size: 12px; letter-spacing: 0.5px;">3. Debit Order Billing Instructions</h5>
       <div style="margin-bottom: 20px;">
         <div style="display: grid; grid-template-columns: 100px 1fr; gap: 4px 12px;">
           <span style="color: var(--text-secondary);">Bank Name:</span>
