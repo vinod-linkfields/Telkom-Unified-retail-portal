@@ -130,7 +130,8 @@ import {
   renderConfirmationReceipt,
   renderConfirmationContract,
   renderConfirmationRicaActivation,
-  downloadContractOnly
+  downloadContractOnly,
+  handlePaymentMethodChange
 } from './js/stepper.js';
 
 import {
@@ -610,6 +611,7 @@ window.renderConfirmationReceipt = renderConfirmationReceipt;
 window.renderConfirmationContract = renderConfirmationContract;
 window.renderConfirmationRicaActivation = renderConfirmationRicaActivation;
 window.downloadContractOnly = downloadContractOnly;
+window.handlePaymentMethodChange = handlePaymentMethodChange;
 
 // Tracking
 window.renderOrderTracking = renderOrderTracking;

@@ -2198,10 +2198,43 @@ export function renderPaymentScreen() {
   document.getElementById('pay-order-ref').innerText = APP_STATE.cart.orderRef;
   document.getElementById('pay-amount').innerText = `R${APP_STATE.cart.product.price + APP_STATE.cart.product.onceOff}`;
   
+  const payMethodSelect = document.getElementById('pay-method');
+  if (payMethodSelect) {
+    payMethodSelect.innerHTML = `
+      <option value="card">Standard POS Credit / Debit Card swipe</option>
+      <option value="cash">Branch Cash Payment Register</option>
+    `;
+    
+    const product = APP_STATE.cart.product;
+    const isHandsetContract = product && (product.category === 'Handset contracts' || (product.category || '').toLowerCase().includes('handset'));
+    if (isHandsetContract) {
+      const dbkOption = document.createElement('option');
+      dbkOption.value = 'debicheck';
+      dbkOption.textContent = 'DebiCheck Payment Authorization';
+      payMethodSelect.appendChild(dbkOption);
+    }
+    
+    payMethodSelect.value = 'card';
+  }
+
+  handlePaymentMethodChange();
+  
   const payBtn = document.getElementById('pay-init-btn');
   if (payBtn) {
     payBtn.disabled = false;
     payBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Verify transaction`;
+  }
+}
+
+export function handlePaymentMethodChange() {
+  const methodSelect = document.getElementById('pay-method');
+  const container = document.getElementById('debit-date-selection-container');
+  if (methodSelect && container) {
+    if (methodSelect.value === 'debicheck') {
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+    }
   }
 }
 
@@ -2211,6 +2244,15 @@ export function handlePOSPaymentTrigger() {
 
   const outcomeSelect = document.getElementById('mock-payment-outcome');
   const outcome = outcomeSelect ? outcomeSelect.value : 'Successful';
+
+  const payMethodSelect = document.getElementById('pay-method');
+  const paymentMethod = payMethodSelect ? payMethodSelect.value : 'card';
+  
+  let debitDate = "";
+  if (paymentMethod === 'debicheck') {
+    const debitDateSelect = document.getElementById('pay-debit-date');
+    debitDate = debitDateSelect ? debitDateSelect.value : '1st';
+  }
 
   if (!APP_STATE.systemHealth.pos || outcome === 'Timeout') {
     payBtn.disabled = true;
@@ -2244,25 +2286,52 @@ export function handlePOSPaymentTrigger() {
     payBtn.innerText = "Verifying transaction...";
     
     setTimeout(() => {
-      APP_STATE.cart.posTxnRef = "POS-" + Math.floor(10000000 + Math.random() * 90000000);
-      APP_STATE.cart.receiptNo = "REC-" + Math.floor(10000000 + Math.random() * 90000000);
-      APP_STATE.cart.paymentStatus = "Successful";
+      if (paymentMethod === 'debicheck') {
+        APP_STATE.cart.posTxnRef = "DBK-" + Math.floor(10000000 + Math.random() * 90000000);
+        APP_STATE.cart.receiptNo = "REC-" + Math.floor(10000000 + Math.random() * 90000000);
+        APP_STATE.cart.paymentStatus = "Scheduled";
+        APP_STATE.cart.paymentMethod = "debicheck";
+        APP_STATE.cart.debitDate = debitDate;
+      } else {
+        APP_STATE.cart.posTxnRef = "POS-" + Math.floor(10000000 + Math.random() * 90000000);
+        APP_STATE.cart.receiptNo = "REC-" + Math.floor(10000000 + Math.random() * 90000000);
+        APP_STATE.cart.paymentStatus = "Successful";
+        APP_STATE.cart.paymentMethod = paymentMethod;
+        APP_STATE.cart.debitDate = "";
+      }
 
       const isSimProduct = isSimOrLteProduct(APP_STATE.cart.product);
       
       const isNewDebit = APP_STATE.cart.billingSelection && APP_STATE.cart.billingSelection.option === 'new';
-      const debiCheck = isNewDebit ? {
-        bankName: APP_STATE.cart.billingSelection.newDebit.bankName,
-        accountNumber: APP_STATE.cart.billingSelection.newDebit.accountNumber,
-        accountType: APP_STATE.cart.billingSelection.newDebit.accountType,
-        branchCode: APP_STATE.cart.billingSelection.newDebit.branchCode,
-        debitDay: APP_STATE.cart.billingSelection.newDebit.debitDay,
-        debiCheckConsent: APP_STATE.cart.billingSelection.newDebit.debiCheckConsent,
-        termsConsent: APP_STATE.cart.billingSelection.newDebit.termsConsent,
-        monthlyAmount: APP_STATE.cart.product.price,
-        onceOffAmount: APP_STATE.cart.product.onceOff,
-        debiCheckRef: "DBC-" + Math.floor(10000000 + Math.random() * 90000000)
-      } : null;
+      let debiCheck = null;
+      if (isNewDebit) {
+        debiCheck = {
+          bankName: APP_STATE.cart.billingSelection.newDebit.bankName,
+          accountNumber: APP_STATE.cart.billingSelection.newDebit.accountNumber,
+          accountType: APP_STATE.cart.billingSelection.newDebit.accountType,
+          branchCode: APP_STATE.cart.billingSelection.newDebit.branchCode,
+          debitDay: APP_STATE.cart.billingSelection.newDebit.debitDay,
+          debiCheckConsent: APP_STATE.cart.billingSelection.newDebit.debiCheckConsent,
+          termsConsent: APP_STATE.cart.billingSelection.newDebit.termsConsent,
+          monthlyAmount: APP_STATE.cart.product.price,
+          onceOffAmount: APP_STATE.cart.product.onceOff,
+          debiCheckRef: "DBC-" + Math.floor(10000000 + Math.random() * 90000000)
+        };
+      } else if (paymentMethod === 'debicheck') {
+        const bd = APP_STATE.selectedCustomer && APP_STATE.selectedCustomer.bankDetails;
+        debiCheck = {
+          bankName: bd ? bd.bankName : "Standard Bank",
+          accountNumber: bd ? bd.accountNumber : "••••1234",
+          accountType: "Savings",
+          branchCode: "250655",
+          debitDay: debitDate,
+          debiCheckConsent: true,
+          termsConsent: true,
+          monthlyAmount: APP_STATE.cart.product.price,
+          onceOffAmount: APP_STATE.cart.product.onceOff,
+          debiCheckRef: APP_STATE.cart.posTxnRef
+        };
+      }
 
       const newOrder = {
         orderRef: APP_STATE.cart.orderRef,
@@ -2274,7 +2343,9 @@ export function handlePOSPaymentTrigger() {
         store: APP_STATE.currentUser.branch,
         agent: APP_STATE.currentUser.id,
         status: "Submitted",
-        payment: "Payment Complete",
+        payment: paymentMethod === 'debicheck' ? `Payment Complete (Scheduled DebiCheck: ${debitDate})` : "Payment Complete",
+        paymentMethod: paymentMethod,
+        debitDate: debitDate,
         date: new Date().toISOString().replace('T', ' ').slice(0, 19),
         ricaStatus: isSimProduct ? "Pending" : "N/A",
         simActivationNumber: "",
@@ -2319,7 +2390,33 @@ export function renderConfirmationReceipt() {
   document.getElementById('conf-term').innerText = `${APP_STATE.cart.product.term} Months`;
   document.getElementById('conf-price').innerText = `R${APP_STATE.cart.product.price} /mo`;
   document.getElementById('conf-onceoff').innerText = `R${APP_STATE.cart.product.onceOff}`;
-  document.getElementById('conf-total').innerText = `R${APP_STATE.cart.product.price + APP_STATE.cart.product.onceOff}`;
+  const totalAmount = `R${APP_STATE.cart.product.price + APP_STATE.cart.product.onceOff}`;
+  document.getElementById('conf-total').innerText = totalAmount;
+
+  const debiNoticeEl = document.getElementById('conf-debicheck-notice');
+  const totalLabelEl = document.getElementById('conf-total-label');
+  if (APP_STATE.cart.paymentMethod === 'debicheck') {
+    if (debiNoticeEl) {
+      debiNoticeEl.style.display = 'block';
+      const amtEl = document.getElementById('conf-debicheck-amount');
+      if (amtEl) amtEl.innerText = totalAmount;
+      const dateEl = document.getElementById('conf-debicheck-date');
+      if (dateEl) {
+        const suffix = APP_STATE.cart.debitDate.includes('month') ? '' : ' of the month';
+        dateEl.innerText = APP_STATE.cart.debitDate + suffix;
+      }
+    }
+    if (totalLabelEl) {
+      totalLabelEl.innerText = 'DEBICHECK SCHEDULED DEBIT';
+    }
+  } else {
+    if (debiNoticeEl) {
+      debiNoticeEl.style.display = 'none';
+    }
+    if (totalLabelEl) {
+      totalLabelEl.innerText = 'TOTAL TRANSFERRED POS';
+    }
+  }
 
   const isSimProduct = isSimOrLteProduct(APP_STATE.cart.product);
   const panel = document.getElementById('confirmation-rica-activation-panel');
@@ -2715,6 +2812,8 @@ export function submitCustomCancellation() {
     ricaStatus: "",
     simActivationNumber: "",
     paymentStatus: "Pending",
+    paymentMethod: "",
+    debitDate: "",
     posTxnRef: "",
     receiptNo: "",
     orderRef: "",
@@ -2798,6 +2897,8 @@ export function cancelToSaveDraft() {
     ricaStatus: "",
     simActivationNumber: "",
     paymentStatus: "Pending",
+    paymentMethod: "",
+    debitDate: "",
     posTxnRef: "",
     receiptNo: "",
     orderRef: "",

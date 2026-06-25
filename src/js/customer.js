@@ -148,6 +148,8 @@ export function closeCustomerSession() {
     ricaStatus: "",
     simActivationNumber: "",
     paymentStatus: "Pending",
+    paymentMethod: "",
+    debitDate: "",
     posTxnRef: "",
     receiptNo: "",
     orderRef: "",
@@ -302,8 +304,8 @@ export function renderCustomer360() {
         <div>
           <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBICHECK</div>
           <div style="margin-top: 2px;">
-            <span class="badge ${banking.debiCheckConsent ? 'badge-success' : 'badge-danger'}" style="font-size: 10px; padding: 2px 6px;">
-              ${banking.debiCheckConsent ? 'Authorized' : 'Refused'}
+            <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">
+              Authorized
             </span>
           </div>
         </div>
@@ -472,7 +474,7 @@ export function openNewCustomerWizard() {
     employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
     address: { line1: "", employerAddr: "" },
     financial: { grossIncome: "", netIncome: "", expenses: "" },
-    banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: false, creditConsent: false }
+    banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: true, creditConsent: false }
   };
 
   const searchInputVal = document.getElementById('search-input') ? document.getElementById('search-input').value.trim() : '';

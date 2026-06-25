@@ -203,6 +203,8 @@ export const APP_STATE = {
     ricaStatus: "",
     simActivationNumber: "",
     paymentStatus: "Pending",
+    paymentMethod: "",
+    debitDate: "",
     posTxnRef: "",
     receiptNo: "",
     orderRef: "",
@@ -224,7 +226,7 @@ export const APP_STATE = {
     employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
     address: { line1: "", street: "", suburb: "", city: "", postalCode: "" },
     financial: { grossIncome: "", netIncome: "", expenses: "" },
-    banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: false, creditConsent: false }
+    banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: true, creditConsent: false }
   },
   systemHealth: {
     crm: true,
