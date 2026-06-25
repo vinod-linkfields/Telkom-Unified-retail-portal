@@ -495,6 +495,7 @@ export function openNewCustomerWizard() {
 
 export function handleCustStepperClick(stepNum) {
   if (APP_STATE.isEditingCustomer) {
+    if (stepNum > 2) return;
     saveCustomerCreateInputs();
     renderCustomerCreateStep(stepNum);
   }
@@ -519,12 +520,24 @@ export function renderCustomerCreateStep(step) {
   }
   
   document.querySelectorAll('#cust-create-stepper .stepper-step').forEach((el, index) => {
-    el.className = 'stepper-step';
     const sNum = index + 1;
+    if (APP_STATE.isEditingCustomer && sNum > 2) {
+      el.style.display = 'none';
+    } else {
+      el.style.display = '';
+    }
+
+    el.className = 'stepper-step';
     if (sNum < step) {
       el.classList.add('completed');
     } else if (sNum === step) {
       el.classList.add('active');
+    }
+
+    if (APP_STATE.isEditingCustomer && sNum === 2) {
+      el.classList.add('hide-line');
+    } else {
+      el.classList.remove('hide-line');
     }
   });
 
@@ -543,7 +556,13 @@ export function renderCustomerCreateStep(step) {
 
   if (backBtn) backBtn.style.visibility = 'visible';
   if (nextBtn) {
-    nextBtn.innerText = step === 4 ? (APP_STATE.isEditingCustomer ? 'Update Profile' : 'Create Profile & Proceed') : 'Continue';
+    if (APP_STATE.isEditingCustomer && step === 2) {
+      nextBtn.innerText = 'Update Profile';
+    } else if (step === 4) {
+      nextBtn.innerText = APP_STATE.isEditingCustomer ? 'Update Profile' : 'Create Profile & Proceed';
+    } else {
+      nextBtn.innerText = 'Continue';
+    }
     nextBtn.className = 'btn btn-primary';
   }
 
@@ -614,55 +633,50 @@ export function renderCustomerCreateStep(step) {
         <h3 style="margin-bottom: 16px;">Step 2: Employment, Employer Address & Income Details</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Provide employment details, employer address, and monthly financial streams.</p>
         
-        <div class="accordion ${APP_STATE.employmentAccordionOpen ? 'open' : ''}" id="employment-accordion">
-          <div class="accordion-header" onclick="toggleEmploymentAccordion()">
-            <span>Employment Details</span>
-            <span class="accordion-arrow">▼</span>
+        <div style="margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px 20px; background-color: var(--bg-light);">
+          <h4 style="margin-bottom: 16px; color: var(--telkom-blue-dark); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Employment Details</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Employment Status</label>
+              <select id="new-cust-empstatus" class="form-control" onchange="saveCustomerCreateInputs()">
+                <option value="">-- Select Status --</option>
+                <option value="Employed" ${employment.status === 'Employed' ? 'selected' : ''}>Employed</option>
+                <option value="Self-Employed" ${employment.status === 'Self-Employed' ? 'selected' : ''}>Self-Employed</option>
+                <option value="Unemployed" ${employment.status === 'Unemployed' ? 'selected' : ''}>Unemployed</option>
+                <option value="Student" ${employment.status === 'Student' ? 'selected' : ''}>Student</option>
+                <option value="Retired" ${employment.status === 'Retired' ? 'selected' : ''}>Retired</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Employment Type</label>
+              <select id="new-cust-emptype" class="form-control" onchange="saveCustomerCreateInputs()">
+                <option value="">-- Select Type --</option>
+                <option value="Permanent" ${employment.type === 'Permanent' ? 'selected' : ''}>Permanent</option>
+                <option value="Contract" ${employment.type === 'Contract' ? 'selected' : ''}>Contract</option>
+                <option value="Temporary" ${employment.type === 'Temporary' ? 'selected' : ''}>Temporary</option>
+              </select>
+            </div>
           </div>
-          <div class="accordion-body">
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Employment Status</label>
-                <select id="new-cust-empstatus" class="form-control" onchange="saveCustomerCreateInputs()">
-                  <option value="">-- Select Status --</option>
-                  <option value="Employed" ${employment.status === 'Employed' ? 'selected' : ''}>Employed</option>
-                  <option value="Self-Employed" ${employment.status === 'Self-Employed' ? 'selected' : ''}>Self-Employed</option>
-                  <option value="Unemployed" ${employment.status === 'Unemployed' ? 'selected' : ''}>Unemployed</option>
-                  <option value="Student" ${employment.status === 'Student' ? 'selected' : ''}>Student</option>
-                  <option value="Retired" ${employment.status === 'Retired' ? 'selected' : ''}>Retired</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Employment Type</label>
-                <select id="new-cust-emptype" class="form-control" onchange="saveCustomerCreateInputs()">
-                  <option value="">-- Select Type --</option>
-                  <option value="Permanent" ${employment.type === 'Permanent' ? 'selected' : ''}>Permanent</option>
-                  <option value="Contract" ${employment.type === 'Contract' ? 'selected' : ''}>Contract</option>
-                  <option value="Temporary" ${employment.type === 'Temporary' ? 'selected' : ''}>Temporary</option>
-                </select>
-              </div>
-            </div>
 
-            <div class="form-row" style="margin-top: 16px;">
-              <div class="form-group">
-                <label class="form-label">Occupation</label>
-                <input type="text" id="new-cust-occupation" class="form-control" placeholder="e.g. Engineer" value="${employment.occupation || ''}" oninput="saveCustomerCreateInputs()">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Employer Name</label>
-                <input type="text" id="new-cust-empname" class="form-control" placeholder="e.g. Telkom Corporate" value="${employment.employerName || ''}" oninput="saveCustomerCreateInputs()">
-              </div>
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Occupation</label>
+              <input type="text" id="new-cust-occupation" class="form-control" placeholder="e.g. Engineer" value="${employment.occupation || ''}" oninput="saveCustomerCreateInputs()">
             </div>
+            <div class="form-group">
+              <label class="form-label">Employer Name</label>
+              <input type="text" id="new-cust-empname" class="form-control" placeholder="e.g. Telkom Corporate" value="${employment.employerName || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+          </div>
 
-            <div class="form-row" style="margin-top: 16px;">
-              <div class="form-group">
-                <label class="form-label">Employer Contact Number</label>
-                <input type="text" id="new-cust-empcontact" class="form-control" placeholder="e.g. 0123111111" value="${employment.employerContact || ''}" oninput="saveCustomerCreateInputs()">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Employment Start Date</label>
-                <input type="date" id="new-cust-empstart" class="form-control" value="${employment.startDate || ''}" onchange="saveCustomerCreateInputs()">
-              </div>
+          <div class="form-row" style="margin-top: 16px;">
+            <div class="form-group">
+              <label class="form-label">Employer Contact Number</label>
+              <input type="text" id="new-cust-empcontact" class="form-control" placeholder="e.g. 0123111111" value="${employment.employerContact || ''}" oninput="saveCustomerCreateInputs()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Employment Start Date</label>
+              <input type="date" id="new-cust-empstart" class="form-control" value="${employment.startDate || ''}" onchange="saveCustomerCreateInputs()">
             </div>
           </div>
         </div>
@@ -769,28 +783,21 @@ export function renderCustomerCreateStep(step) {
           </label>
         </div>
 
-        ${(() => {
-          if (APP_STATE.isEditingCustomer) {
-            return `
-              <div style="margin-top: 20px; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-light);">
-                <div style="font-weight: 700; font-size: 12px; color: var(--telkom-blue-dark); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Banking Validations</div>
-                <div style="display: flex; gap: 24px; margin-bottom: 14px; font-size: 13px;">
-                  <div>
-                    <span style="color: var(--text-secondary); font-weight: 600; margin-right: 6px;">Account Verification (AHV):</span>
-                    <span class="badge ${banking.accountVerificationStatus === 'Verified' ? 'badge-success' : 'badge-neutral'}">${banking.accountVerificationStatus || 'Not run'}</span>
-                  </div>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                  ${banking.accountVerificationStatus === 'Verified' ? 
-                    `<span style="color: var(--success); font-weight: 600; font-size: 13px;">✓ Account Holder Verification Successful (Verified & Matched)</span>` : 
-                    `<button type="button" class="btn btn-sm btn-outline" onclick="runCustomerAccountVerification()" style="font-size: 11px; padding: 6px 12px;">Run Account Holder Verification</button>`
-                  }
-                </div>
-              </div>
-            `;
-          }
-          return '';
-        })()}
+        <div style="margin-top: 20px; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-light);">
+          <div style="font-weight: 700; font-size: 12px; color: var(--telkom-blue-dark); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Banking Validations</div>
+          <div style="display: flex; gap: 24px; margin-bottom: 14px; font-size: 13px;">
+            <div>
+              <span style="color: var(--text-secondary); font-weight: 600; margin-right: 6px;">Account Verification (AHV):</span>
+              <span class="badge ${banking.accountVerificationStatus === 'Verified' ? 'badge-success' : 'badge-neutral'}">${banking.accountVerificationStatus || 'Not run'}</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            ${banking.accountVerificationStatus === 'Verified' ? 
+              `<span style="color: var(--success); font-weight: 600; font-size: 13px;">✓ Account Holder Verification Successful (Verified & Matched)</span>` : 
+              `<button type="button" class="btn btn-sm btn-outline" onclick="runCustomerAccountVerification()" style="font-size: 11px; padding: 6px 12px;">Run Account Holder Verification</button>`
+            }
+          </div>
+        </div>
       `;
       break;
 
@@ -838,6 +845,10 @@ export function renderCustomerCreateStep(step) {
               </div>
               <div>
                 <div style="color: var(--success); font-weight: 600; margin-bottom: 6px;">✓ DebiCheck Debit Collection Signed</div>
+                <div style="margin-top: 8px;">
+                  <span style="color: var(--text-secondary); font-weight: 600; margin-right: 6px;">Account Verification (AHV):</span>
+                  <span class="badge ${banking.accountVerificationStatus === 'Verified' ? 'badge-success' : 'badge-neutral'}">${banking.accountVerificationStatus || 'Not run'}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1141,6 +1152,10 @@ export function handleCustomerCreateNext() {
     }
     if (!financial.grossIncome || !financial.netIncome || !financial.expenses) {
       showToast("Please fill in Gross Income, Net Income, and Expenses (*)", "warning");
+      return;
+    }
+    if (APP_STATE.isEditingCustomer) {
+      submitNewCustomerProfile();
       return;
     }
   }
@@ -1639,6 +1654,21 @@ export function runCustomerCreditVetting() {
 window.runCustomerCreditVetting = runCustomerCreditVetting;
 
 export function runCustomerAccountVerification() {
+  if (APP_STATE.activeRoute === 'customer-create') {
+    saveCustomerCreateInputs();
+  }
+
+  const banking = APP_STATE.newCustomerData.banking || {};
+  if (!banking.bankName || !banking.branchCode || !banking.accountNumber) {
+    showToast("Please capture Bank Name, Branch Code, and Account Number before running verification.", "warning");
+    return;
+  }
+
+  if (!/^\d{7,16}$/.test(banking.accountNumber)) {
+    showToast("Account number must be numeric and between 7 and 16 digits.", "danger");
+    return;
+  }
+
   showToast("Initiating Account Holder Verification with settlement bank...", "info");
   setTimeout(() => {
     if (!APP_STATE.newCustomerData.banking) {
@@ -1646,7 +1676,7 @@ export function runCustomerAccountVerification() {
     }
     APP_STATE.newCustomerData.banking.accountVerificationStatus = "Verified";
     
-    if (APP_STATE.selectedCustomer) {
+    if (APP_STATE.isEditingCustomer && APP_STATE.selectedCustomer) {
       if (!APP_STATE.selectedCustomer.bankingDetails) {
         APP_STATE.selectedCustomer.bankingDetails = {};
       }

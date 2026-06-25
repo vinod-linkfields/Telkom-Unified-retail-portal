@@ -78,20 +78,6 @@
         </div>
       </header>
 
-      <!-- ACTIVE CUSTOMER SESSION BANNER -->
-      <div class="session-bar" id="session-banner" style="display: none;">
-        <div class="session-customer-info">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-          <span>Active Journey for Customer: <strong id="session-customer-name">Jan du Toit</strong> | Account: <strong id="session-account-no">TEL-90812739</strong></span>
-          <span class="session-tag" id="session-cim-status">CIM Session Active</span>
-        </div>
-        <div class="session-actions">
-          <button class="session-btn" id="session-continue-journey-btn" onclick="continueOrderJourney()" style="display: none; background-color: var(--success); color: white; margin-right: 8px;">Continue Order Journey</button>
-          <button class="session-btn" id="session-view-360-btn" onclick="switchRoute('customer-360')">View 360 Profile</button>
-          <button type="button" class="session-btn danger-btn" id="session-cancel-order-btn" onclick="handleCancelOrder(event)" style="display: none; background-color: var(--danger); margin-right: 8px;">Cancel Order</button>
-          <button class="session-btn danger-btn" id="session-end-journey-btn" onclick="closeCustomerSession()">End Customer Session</button>
-        </div>
-      </div>
 
       <!-- MAIN CONTENT VIEWPORT -->
       <div class="content-viewport">
@@ -999,6 +985,11 @@
             <div>
               <h2>New Order Configuration Wizard</h2>
               <p class="screen-title-desc">Guided order provisioning steps to capture product specifications, check availability, and register consent.</p>
+            </div>
+            <div class="screen-header-actions">
+              <button type="button" class="btn btn-outline-danger" id="stepper-cancel-order-btn" onclick="handleCancelOrder(event)">
+                Cancel Order
+              </button>
             </div>
           </div>
 

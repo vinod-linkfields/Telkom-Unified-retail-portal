@@ -658,6 +658,18 @@ button, input, select, textarea {
   background-color: #e03f3f;
 }
 
+.btn-outline-danger {
+  border: 1.5px solid var(--danger);
+  color: var(--danger);
+  background-color: var(--bg-card);
+  transition: all 0.2s ease;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--danger-light);
+  color: var(--danger);
+}
+
 .btn-success {
   background-color: var(--success);
   color: var(--telkom-blue-dark);
@@ -1213,6 +1225,10 @@ input:checked + .uat-slider:before {
 
 .stepper-step.completed:not(:last-child)::after {
   background-color: var(--telkom-blue);
+}
+
+.stepper-step.hide-line::after {
+  display: none !important;
 }
 
 .step-icon {
