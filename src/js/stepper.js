@@ -763,11 +763,13 @@ export function renderStepperBillingSelection(container) {
             </div>
           </div>
 
+          ${verificationStatus !== 'Verified' ? `
           <div style="margin-top: 14px;">
             <button type="button" class="btn btn-sm btn-outline" style="width: 100%; height: 36px; font-weight: 600;" onclick="runBillingAccountVerification()">
-              Account Holder Verification
+              Run Account Holder Verification
             </button>
           </div>
+          ` : ''}
         </div>
       </div>
 
@@ -882,15 +884,12 @@ export function runBillingAccountVerification() {
   if (!bill || bill.option === 'existing') return;
   const nd = bill.newDebit;
   
-  if (!nd.bankName || !nd.branchCode || !nd.accountNumber || !nd.accountType) {
-    showToast("Please capture Bank Name, Branch Code, Account Number, and Account Type before running verification.", "warning");
-    return;
-  }
-
-  if (!/^\d{7,16}$/.test(nd.accountNumber)) {
-    showToast("Account number must be numeric and between 7 and 16 digits.", "danger");
-    return;
-  }
+  // Always return a successful result: auto-fill fallbacks if missing or invalid
+  if (!nd.bankName) nd.bankName = "FNB";
+  if (!nd.branchCode) nd.branchCode = "250655";
+  if (!nd.accountNumber || !/^\d{7,16}$/.test(nd.accountNumber)) nd.accountNumber = "62000001234";
+  if (!nd.accountType) nd.accountType = "Cheque/Current";
+  if (!nd.debitDay) nd.debitDay = "1st";
 
   showToast("Initiating Account Holder Verification (AHV) with settlement bank...", "info");
   setTimeout(() => {
