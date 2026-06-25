@@ -118,6 +118,7 @@ export function identifyCustomer(identityVal, type) {
 
   if (cust) {
     APP_STATE.selectedCustomer = cust;
+    APP_STATE.isCustomerIdentifiedInJourney = true;
     APP_STATE.activeCIMInteraction = {
       type: "New Order",
       channel: "Retail store",
@@ -1240,6 +1241,7 @@ export function submitNewCustomerProfile() {
     MOCK_DB.crm.push(targetCust);
     
     APP_STATE.selectedCustomer = targetCust;
+    APP_STATE.isCustomerIdentifiedInJourney = true;
     APP_STATE.activeCIMInteraction = {
       type: "New Order",
       channel: "Retail store",
