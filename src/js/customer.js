@@ -135,6 +135,7 @@ export function identifyCustomer(identityVal, type) {
 export function closeCustomerSession() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.cart = {
     product: null,
     contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
@@ -227,105 +228,100 @@ export function renderCustomer360() {
     creditConsent: true
   };
 
-  const onboardingContent = document.getElementById('c360-onboarding-content');
-  if (onboardingContent) {
-    onboardingContent.innerHTML = `
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px;">
-        
-        <!-- Column 1: Personal & Marketing -->
+  const empContent = document.getElementById('c360-employment-content');
+  if (empContent) {
+    empContent.innerHTML = `
+      <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div>
-          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">PERSONAL & MARKETING</h4>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">ALT CONTACT</div>
-            <div style="font-weight:600; font-size:13px;">${personal.altContact || 'N/A'}</div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">MARKETING CONSENT</div>
-            <div style="margin-top: 2px;">
-              <span class="badge ${personal.marketingConsent ? 'badge-success' : 'badge-neutral'}" style="font-size: 10px; padding: 2px 6px;">
-                ${personal.marketingConsent ? 'Opted In' : 'Opted Out'}
-              </span>
-            </div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">STATUS</div>
+          <div style="font-weight:600; font-size:12px;">${employment.status || 'N/A'}</div>
+        </div>
+        <div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">TYPE</div>
+          <div style="font-weight:600; font-size:12px;">${employment.type || 'N/A'}</div>
+        </div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">OCCUPATION</div>
+        <div style="font-weight:600; font-size:12px;">${employment.occupation || 'N/A'}</div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">EMPLOYER</div>
+        <div style="font-weight:600; font-size:12px;">${employment.employerName || 'N/A'} (${employment.employerContact || 'N/A'})</div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">START DATE</div>
+        <div style="font-weight:600; font-size:12px;">${employment.startDate || 'N/A'}</div>
+      </div>
+    `;
+  }
+
+  const finContent = document.getElementById('c360-financial-content');
+  if (finContent) {
+    finContent.innerHTML = `
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">GROSS MONTHLY INCOME</div>
+        <div style="font-weight:600; font-size:13px; color: var(--text-primary);">R${financial.grossIncome ? parseFloat(financial.grossIncome).toLocaleString() : '0'}</div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">NET MONTHLY INCOME</div>
+        <div style="font-weight:600; font-size:13px; color: var(--text-primary);">R${financial.netIncome ? parseFloat(financial.netIncome).toLocaleString() : '0'}</div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">MONTHLY EXPENSES</div>
+        <div style="font-weight:600; font-size:13px; color: var(--text-primary);">R${financial.expenses ? parseFloat(financial.expenses).toLocaleString() : '0'}</div>
+      </div>
+    `;
+  }
+
+  const bankContent = document.getElementById('c360-banking-content');
+  if (bankContent) {
+    bankContent.innerHTML = `
+      <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">BANK</div>
+          <div style="font-weight:600; font-size:12px;">${banking.bankName || 'N/A'}</div>
+        </div>
+        <div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">TYPE</div>
+          <div style="font-weight:600; font-size:12px;">${banking.accountType || 'N/A'}</div>
+        </div>
+      </div>
+      <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">ACCOUNT NUMBER</div>
+          <div style="font-weight:600; font-size:12px; font-family: monospace;">${banking.accountNumber ? '••••' + banking.accountNumber.slice(-4) : 'N/A'}</div>
+        </div>
+        <div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBIT DATE</div>
+          <div style="font-weight:600; font-size:12px;">${banking.debitDate || 'N/A'}</div>
+        </div>
+      </div>
+      <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBICHECK</div>
+          <div style="margin-top: 2px;">
+            <span class="badge ${banking.debiCheckConsent ? 'badge-success' : 'badge-danger'}" style="font-size: 10px; padding: 2px 6px;">
+              ${banking.debiCheckConsent ? 'Authorized' : 'Refused'}
+            </span>
           </div>
         </div>
-
-        <!-- Column 2: Employment Info -->
         <div>
-          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">EMPLOYMENT DETAILS</h4>
-          <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">STATUS</div>
-              <div style="font-weight:600; font-size:12px;">${employment.status || 'N/A'}</div>
-            </div>
-            <div>
-              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">TYPE</div>
-              <div style="font-weight:600; font-size:12px;">${employment.type || 'N/A'}</div>
-            </div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">OCCUPATION</div>
-            <div style="font-weight:600; font-size:12px;">${employment.occupation || 'N/A'}</div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">EMPLOYER</div>
-            <div style="font-weight:600; font-size:12px;">${employment.employerName || 'N/A'} (${employment.employerContact || 'N/A'})</div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">START DATE</div>
-            <div style="font-weight:600; font-size:12px;">${employment.startDate || 'N/A'}</div>
+          <div style="color:var(--text-muted); font-size:10px; font-weight:700;">CREDIT CONSENT</div>
+          <div style="margin-top: 2px;">
+            <span class="badge ${banking.creditConsent ? 'badge-success' : 'badge-danger'}" style="font-size: 10px; padding: 2px 6px;">
+              ${banking.creditConsent ? 'Consent Given' : 'Consent Refused'}
+            </span>
           </div>
         </div>
-
-        <!-- Column 3: Financial Details -->
-        <div>
-          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">FINANCIAL PROFILE</h4>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">GROSS MONTHLY INCOME</div>
-            <div style="font-weight:600; font-size:13px; color: var(--success);">R${financial.grossIncome ? parseFloat(financial.grossIncome).toLocaleString() : '0'}</div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">NET MONTHLY INCOME</div>
-            <div style="font-weight:600; font-size:13px; color: var(--success);">R${financial.netIncome ? parseFloat(financial.netIncome).toLocaleString() : '0'}</div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">MONTHLY EXPENSES</div>
-            <div style="font-weight:600; font-size:13px; color: var(--danger);">R${financial.expenses ? parseFloat(financial.expenses).toLocaleString() : '0'}</div>
-          </div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color:var(--text-muted); font-size:10px; font-weight:700;">Account holder verification (AHV) status</div>
+        <div style="margin-top: 2px;">
+          <span class="badge ${banking.accountVerificationStatus === 'Verified' ? 'badge-success' : 'badge-neutral'}" style="font-size: 10px; padding: 2px 6px;">
+            ${banking.accountVerificationStatus || 'Not Run'}
+          </span>
         </div>
-
-        <!-- Column 4: Banking Information -->
-        <div>
-          <h4 style="color: var(--telkom-blue-dark); border-bottom: 2px solid var(--border-color); padding-bottom: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 700; margin-top: 0;">BANKING & DEBICHECK</h4>
-          <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">BANK</div>
-              <div style="font-weight:600; font-size:12px;">${banking.bankName || 'N/A'}</div>
-            </div>
-            <div>
-              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">TYPE</div>
-              <div style="font-weight:600; font-size:12px;">${banking.accountType || 'N/A'}</div>
-            </div>
-          </div>
-          <div style="margin-bottom: 8px;">
-            <div style="color:var(--text-muted); font-size:10px; font-weight:700;">ACCOUNT NUMBER</div>
-            <div style="font-weight:600; font-size:12px; font-family: monospace;">${banking.accountNumber ? '••••' + banking.accountNumber.slice(-4) : 'N/A'}</div>
-          </div>
-          <div style="margin-bottom: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div>
-              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBIT DATE</div>
-              <div style="font-weight:600; font-size:12px;">${banking.debitDate || 'N/A'}</div>
-            </div>
-            <div>
-              <div style="color:var(--text-muted); font-size:10px; font-weight:700;">DEBICHECK</div>
-              <div style="margin-top: 2px;">
-                <span class="badge ${banking.debiCheckConsent ? 'badge-success' : 'badge-danger'}" style="font-size: 10px; padding: 2px 6px;">
-                  ${banking.debiCheckConsent ? 'Authorized' : 'Refused'}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     `;
   }
@@ -334,10 +330,13 @@ export function renderCustomer360() {
   if (prodContainer) {
     prodContainer.innerHTML = '';
     cust.activeProducts.forEach(p => {
+      // Find actual matching product in catalogue by name or fallback
+      const catalogProd = APP_STATE.products.find(cp => cp.name.toLowerCase() === p.name.toLowerCase()) || p;
+      const displayName = catalogProd ? catalogProd.name : p.name;
       prodContainer.innerHTML += `
         <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div style="font-weight: 700; color: var(--telkom-blue-dark);">${p.name}</div>
+            <div style="font-weight: 700; color: var(--telkom-blue-dark);">${displayName}</div>
             <div style="font-size: 11px; color: var(--text-secondary);">Expires: ${p.expiry}</div>
           </div>
           <div style="font-weight: 700; color: var(--telkom-blue);">R${p.cost} pm</div>
@@ -357,11 +356,6 @@ export function renderCustomer360() {
       `;
       document.getElementById('c360-start-order-btn').disabled = true;
     } else {
-      warningsBox.innerHTML = `
-        <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 14px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600; margin-bottom: 20px;">
-          ELIGIBLE: Account is in good standing. Consumer segment mobile & fixed order journeys authorized.
-        </div>
-      `;
       document.getElementById('c360-start-order-btn').disabled = false;
     }
   }
@@ -475,7 +469,7 @@ export function openNewCustomerWizard() {
   APP_STATE.newCustomerData = {
     personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
     employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },
-    address: { line1: "", street: "", suburb: "", city: "", postalCode: "" },
+    address: { line1: "", employerAddr: "" },
     financial: { grossIncome: "", netIncome: "", expenses: "" },
     banking: { bankName: "", branchCode: "", accountType: "", accountNumber: "", branchName: "", debitDate: "1st", debiCheckConsent: false, creditConsent: false }
   };
@@ -495,6 +489,14 @@ export function openNewCustomerWizard() {
 
   switchRoute('customer-create');
 }
+
+export function handleCustStepperClick(stepNum) {
+  if (APP_STATE.isEditingCustomer) {
+    saveCustomerCreateInputs();
+    renderCustomerCreateStep(stepNum);
+  }
+}
+window.handleCustStepperClick = handleCustStepperClick;
 export function renderCustomerCreateStep(step) {
   APP_STATE.customerCreateStep = step;
 
@@ -538,7 +540,7 @@ export function renderCustomerCreateStep(step) {
 
   if (backBtn) backBtn.style.visibility = 'visible';
   if (nextBtn) {
-    nextBtn.innerText = step === 6 ? (APP_STATE.isEditingCustomer ? 'Update Profile' : 'Create Profile & Proceed') : 'Continue';
+    nextBtn.innerText = step === 4 ? (APP_STATE.isEditingCustomer ? 'Update Profile' : 'Create Profile & Proceed') : 'Continue';
     nextBtn.className = 'btn btn-primary';
   }
 
@@ -586,9 +588,15 @@ export function renderCustomerCreateStep(step) {
           </div>
         </div>
 
-        <div class="form-group" style="margin-top: 16px;">
-          <label class="form-label">Alternative Contact Number (Optional)</label>
-          <input type="text" id="new-cust-altcontact" class="form-control" placeholder="e.g. 0111234567" value="${personal.altContact || ''}" oninput="saveCustomerCreateInputs()">
+        <div class="form-row" style="margin-top: 16px;">
+          <div class="form-group">
+            <label class="form-label">Alternative Contact Number (Optional)</label>
+            <input type="text" id="new-cust-altcontact" class="form-control" placeholder="e.g. 0111234567" value="${personal.altContact || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Physical Address <span class="required">*</span></label>
+            <input type="text" id="new-cust-addr-personal" class="form-control" placeholder="Enter complete physical address..." value="${address.line1 || ''}" oninput="saveCustomerCreateInputs()">
+          </div>
         </div>
 
         <label class="checkbox-group" style="margin-top: 20px;">
@@ -600,8 +608,8 @@ export function renderCustomerCreateStep(step) {
 
     case 2:
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 2: Employment Status & Occupational Details</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Optional: Provide employer context. Required later for credit-related purchases.</p>
+        <h3 style="margin-bottom: 16px;">Step 2: Employment, Employer Address & Income Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Provide employment details, employer address, and monthly financial streams.</p>
         
         <div class="accordion ${APP_STATE.employmentAccordionOpen ? 'open' : ''}" id="employment-accordion">
           <div class="accordion-header" onclick="toggleEmploymentAccordion()">
@@ -656,74 +664,42 @@ export function renderCustomerCreateStep(step) {
           </div>
         </div>
 
+        <div class="form-group" style="position: relative; margin-top: 16px;">
+          <label class="form-label">Employer Address <span class="required">*</span></label>
+          <input type="text" id="new-cust-addr-employer" class="form-control" placeholder="Type or enter complete employer address..." value="${address.employerAddr || ''}" oninput="handleEmployerAddressInput(this)">
+          <div id="addr-autocomplete-menu" class="searchable-dropdown-menu" style="width: 100%;"></div>
+        </div>
 
+        <div style="margin-top: 24px;">
+          <h4 style="margin-bottom: 16px;">Income & Expenses</h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Gross Monthly Income <span class="required">*</span></label>
+              <input type="text" id="new-cust-gross" class="form-control" placeholder="e.g. 25000" value="${financial.grossIncome ? formatCurrencySimple(financial.grossIncome) : ''}" oninput="handleFinancialInput(this, 'grossIncome')" onblur="handleFinancialBlur(this, 'grossIncome')" onfocus="handleFinancialFocus(this, 'grossIncome')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Net Monthly Income <span class="required">*</span></label>
+              <input type="text" id="new-cust-net" class="form-control" placeholder="e.g. 18000" value="${financial.netIncome ? formatCurrencySimple(financial.netIncome) : ''}" oninput="handleFinancialInput(this, 'netIncome')" onblur="handleFinancialBlur(this, 'netIncome')" onfocus="handleFinancialFocus(this, 'netIncome')">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 16px;">
+            <label class="form-label">Typical Monthly Expenses <span class="required">*</span></label>
+            <input type="text" id="new-cust-expenses" class="form-control" placeholder="e.g. 12000" value="${financial.expenses ? formatCurrencySimple(financial.expenses) : ''}" oninput="handleFinancialInput(this, 'expenses')" onblur="handleFinancialBlur(this, 'expenses')" onfocus="handleFinancialFocus(this, 'expenses')">
+          </div>
+        </div>
       `;
       break;
 
     case 3:
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 3: Employer Address</h3>
-        
-        <div class="form-group" style="position: relative;">
-          <label class="form-label">Employer Address Line 1</label>
-          <input type="text" id="new-cust-addr1" class="form-control" placeholder="Type address (e.g. 15 Alice)..." value="${address.line1 || ''}" oninput="handleEmployerAddressInput(this)">
-          <div id="addr-autocomplete-menu" class="searchable-dropdown-menu" style="width: 100%;"></div>
-        </div>
-
-        <div class="form-group" style="margin-top: 16px;">
-          <label class="form-label">Street Address</label>
-          <input type="text" id="new-cust-street" class="form-control ${address.street ? 'auto-populated-field' : ''}" placeholder="Street name..." value="${address.street || ''}" oninput="saveCustomerCreateInputs()">
-        </div>
-
-        <div class="form-row-3col" style="margin-top: 16px;">
-          <div class="form-group">
-            <label class="form-label">Suburb</label>
-            <input type="text" id="new-cust-suburb" class="form-control ${address.suburb ? 'auto-populated-field' : ''}" placeholder="Suburb..." value="${address.suburb || ''}" oninput="saveCustomerCreateInputs()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">City</label>
-            <input type="text" id="new-cust-city" class="form-control ${address.city ? 'auto-populated-field' : ''}" placeholder="City..." value="${address.city || ''}" oninput="saveCustomerCreateInputs()">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Postal Code</label>
-            <input type="text" id="new-cust-postal" class="form-control ${address.postalCode ? 'auto-populated-field' : ''}" placeholder="Code..." value="${address.postalCode || ''}" oninput="saveCustomerCreateInputs()">
-          </div>
-        </div>
-      `;
-      break;
-
-    case 4:
-      stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 4: Net Worth & Financial Health Parameters</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Optional: Declare monthly net revenue streams. Numeric-only values will auto-format to ZAR.</p>
-        
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Gross Monthly Income</label>
-            <input type="text" id="new-cust-gross" class="form-control" placeholder="e.g. 25000" value="${financial.grossIncome ? formatCurrencySimple(financial.grossIncome) : ''}" oninput="handleFinancialInput(this, 'grossIncome')" onblur="handleFinancialBlur(this, 'grossIncome')" onfocus="handleFinancialFocus(this, 'grossIncome')">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Net Monthly Income</label>
-            <input type="text" id="new-cust-net" class="form-control" placeholder="e.g. 18000" value="${financial.netIncome ? formatCurrencySimple(financial.netIncome) : ''}" oninput="handleFinancialInput(this, 'netIncome')" onblur="handleFinancialBlur(this, 'netIncome')" onfocus="handleFinancialFocus(this, 'netIncome')">
-          </div>
-        </div>
-
-        <div class="form-group" style="margin-top: 16px;">
-          <label class="form-label">Typical Monthly Expenses</label>
-          <input type="text" id="new-cust-expenses" class="form-control" placeholder="e.g. 12000" value="${financial.expenses ? formatCurrencySimple(financial.expenses) : ''}" oninput="handleFinancialInput(this, 'expenses')" onblur="handleFinancialBlur(this, 'expenses')" onfocus="handleFinancialFocus(this, 'expenses')">
-        </div>
-      `;
-      break;
-
-    case 5:
-      stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 5: Capture Postpaid Settlement Banking Details</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Set up monthly payment deductions. DebiCheck authorization and Credit Bureau checks are required.</p>
+        <h3 style="margin-bottom: 16px;">Step 3: Capture Postpaid Settlement Banking Details</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Set up monthly payment deductions. DebiCheck authorization is required.</p>
         
         <div class="form-row">
           <div class="form-group searchable-dropdown-container">
             <label class="form-label">Settlement Bank Name <span class="required">*</span></label>
-            <input type="text" id="new-cust-bankname" class="form-control searchable-dropdown-input" placeholder="Select bank name..." value="${banking.bankName || ''}" onclick="toggleBankMenu(event)" readonly>
+            <input type="text" id="new-cust-bankname" class="form-control searchable-dropdown-input" placeholder="Select bank name..." value="${banking.bankName || ''}" ${APP_STATE.isEditingCustomer ? 'disabled' : 'onclick="toggleBankMenu(event)"'} readonly>
             <div id="bank-dropdown-menu" class="searchable-dropdown-menu">
               <div class="searchable-dropdown-search-box">
                 <input type="text" class="form-control" placeholder="Filter banks..." oninput="filterBankOptions(this)" onclick="event.stopPropagation()">
@@ -734,14 +710,14 @@ export function renderCustomerCreateStep(step) {
           
           <div class="form-group">
             <label class="form-label">Branch Code <span class="required">*</span></label>
-            <input type="text" id="new-cust-branchcode" class="form-control" placeholder="e.g. 632005" value="${banking.branchCode || ''}" oninput="handleBranchCodeInput(this)">
+            <input type="text" id="new-cust-branchcode" class="form-control" placeholder="e.g. 632005" value="${banking.branchCode || ''}" oninput="handleBranchCodeInput(this)" ${APP_STATE.isEditingCustomer ? 'disabled' : ''}>
           </div>
         </div>
 
         <div class="form-row" style="margin-top: 16px;">
           <div class="form-group">
             <label class="form-label">Account Type <span class="required">*</span></label>
-            <select id="new-cust-acctype" class="form-control" onchange="saveCustomerCreateInputs()">
+            <select id="new-cust-acctype" class="form-control" onchange="saveCustomerCreateInputs()" ${APP_STATE.isEditingCustomer ? 'disabled' : ''}>
               <option value="">-- Select Type --</option>
               <option value="Cheque" ${banking.accountType === 'Cheque' ? 'selected' : ''}>Cheque / Current Account</option>
               <option value="Savings" ${banking.accountType === 'Savings' ? 'selected' : ''}>Savings Account</option>
@@ -752,8 +728,8 @@ export function renderCustomerCreateStep(step) {
           <div class="form-group">
             <label class="form-label">Account Number <span class="required">*</span></label>
             <div class="secure-input-container">
-              <input type="${APP_STATE.accountNumberVisible ? 'text' : 'password'}" id="new-cust-accnum" class="form-control" placeholder="Enter bank account..." value="${banking.accountNumber || ''}" oninput="handleAccountNumberInput(this)">
-              <button type="button" class="secure-toggle-btn" onclick="toggleAccountNumberVisibility()">
+              <input type="${APP_STATE.accountNumberVisible ? 'text' : 'password'}" id="new-cust-accnum" class="form-control" placeholder="Enter bank account..." value="${banking.accountNumber || ''}" oninput="handleAccountNumberInput(this)" ${APP_STATE.isEditingCustomer ? 'disabled' : ''}>
+              <button type="button" class="secure-toggle-btn" ${APP_STATE.isEditingCustomer ? 'disabled' : 'onclick="toggleAccountNumberVisibility()"'} style="${APP_STATE.isEditingCustomer ? 'cursor: not-allowed; opacity: 0.6;' : ''}">
                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   ${APP_STATE.accountNumberVisible ? 
                     `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />` : 
@@ -769,11 +745,11 @@ export function renderCustomerCreateStep(step) {
         <div class="form-row" style="margin-top: 16px;">
           <div class="form-group">
             <label class="form-label">Branch Name (Optional)</label>
-            <input type="text" id="new-cust-branchname" class="form-control ${banking.branchName ? 'auto-populated-field' : ''}" placeholder="Branch name..." value="${banking.branchName || ''}" oninput="saveCustomerCreateInputs()">
+            <input type="text" id="new-cust-branchname" class="form-control ${banking.branchName ? 'auto-populated-field' : ''}" placeholder="Branch name..." value="${banking.branchName || ''}" oninput="saveCustomerCreateInputs()" ${APP_STATE.isEditingCustomer ? 'disabled' : ''}>
           </div>
           <div class="form-group">
             <label class="form-label">Preferred Debit Order Date <span class="required">*</span></label>
-            <select id="new-cust-debitdate" class="form-control" onchange="saveCustomerCreateInputs()">
+            <select id="new-cust-debitdate" class="form-control" onchange="saveCustomerCreateInputs()" ${APP_STATE.isEditingCustomer ? 'disabled' : ''}>
               <option value="1st" ${banking.debitDate === '1st' ? 'selected' : ''}>1st of the month</option>
               <option value="15th" ${banking.debitDate === '15th' ? 'selected' : ''}>15th of the month</option>
               <option value="25th" ${banking.debitDate === '25th' ? 'selected' : ''}>25th of the month</option>
@@ -785,20 +761,39 @@ export function renderCustomerCreateStep(step) {
 
         <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 16px;">
           <label class="checkbox-group" style="margin-bottom: 12px; align-items: flex-start;">
-            <input type="checkbox" id="new-cust-debicheck" ${banking.debiCheckConsent ? 'checked' : ''} onchange="saveCustomerCreateInputs()" style="margin-top: 3px;">
+            <input type="checkbox" id="new-cust-debicheck" ${banking.debiCheckConsent ? 'checked' : ''} onchange="saveCustomerCreateInputs()" style="margin-top: 3px;" ${APP_STATE.isEditingCustomer ? 'disabled' : ''}>
             <span class="checkbox-label"><strong>Debit Collection Authorization (Required):</strong> I authorize Telkom and/or its approved debt collection partners to use DEBICHECK for the collection of any outstanding amounts from my account.</span>
           </label>
-          <label class="checkbox-group" style="align-items: flex-start;">
-            <input type="checkbox" id="new-cust-creditcheck" ${banking.creditConsent ? 'checked' : ''} onchange="saveCustomerCreateInputs()" style="margin-top: 3px;">
-            <span class="checkbox-label"><strong>Credit Bureau Verification (Required):</strong> I authorize Telkom to verify my information with the Credit Bureau.</span>
-          </label>
         </div>
+
+        ${(() => {
+          if (APP_STATE.isEditingCustomer) {
+            return `
+              <div style="margin-top: 20px; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background-color: var(--bg-light);">
+                <div style="font-weight: 700; font-size: 12px; color: var(--telkom-blue-dark); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Banking Validations</div>
+                <div style="display: flex; gap: 24px; margin-bottom: 14px; font-size: 13px;">
+                  <div>
+                    <span style="color: var(--text-secondary); font-weight: 600; margin-right: 6px;">Account Verification (AHV):</span>
+                    <span class="badge ${banking.accountVerificationStatus === 'Verified' ? 'badge-success' : 'badge-neutral'}">${banking.accountVerificationStatus || 'Not run'}</span>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  ${banking.accountVerificationStatus === 'Verified' ? 
+                    `<span style="color: var(--success); font-weight: 600; font-size: 13px;">✓ Account Holder Verification Successful (Verified & Matched)</span>` : 
+                    `<button type="button" class="btn btn-sm btn-outline" onclick="runCustomerAccountVerification()" style="font-size: 11px; padding: 6px 12px;">Run Account Holder Verification</button>`
+                  }
+                </div>
+              </div>
+            `;
+          }
+          return '';
+        })()}
       `;
       break;
 
-    case 6:
+    case 4:
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 6: ${APP_STATE.isEditingCustomer ? 'Review & Finalize Customer Profile Updates' : 'Review & Finalize Customer Registration'}</h3>
+        <h3 style="margin-bottom: 16px;">Step 4: ${APP_STATE.isEditingCustomer ? 'Review & Finalize Customer Profile Updates' : 'Review & Finalize Customer Registration'}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Confirm all captured customer specifications before sending the profile transaction payload to Clarify CRM.</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -810,6 +805,7 @@ export function renderCustomerCreateStep(step) {
               <div><strong>Email Address:</strong> ${personal.email}</div>
               <div><strong>Mobile Phone:</strong> ${personal.mobile}</div>
               ${personal.altContact ? `<div><strong>Alt Contact:</strong> ${personal.altContact}</div>` : ''}
+              <div><strong>Physical Address:</strong> ${address.line1 || 'Not declared'}</div>
               <div><strong>Marketing Choice:</strong> ${personal.marketingConsent ? 'Opt-In' : 'Opt-Out'}</div>
             </div>
           </div>
@@ -821,6 +817,7 @@ export function renderCustomerCreateStep(step) {
               <div><strong>Occupation:</strong> ${employment.occupation || 'Not declared'}</div>
               <div><strong>Employer Name:</strong> ${employment.employerName || 'Not declared'}</div>
               <div><strong>Employer Phone:</strong> ${employment.employerContact || 'Not declared'}</div>
+              <div><strong>Employer Address:</strong> ${address.employerAddr || 'Not declared'}</div>
               <div><strong>Gross Income:</strong> ${financial.grossIncome ? formatCurrencySimple(financial.grossIncome) : 'Not declared'}</div>
               <div><strong>Net Income:</strong> ${financial.netIncome ? formatCurrencySimple(financial.netIncome) : 'Not declared'}</div>
               <div><strong>Expenses:</strong> ${financial.expenses ? formatCurrencySimple(financial.expenses) : 'Not declared'}</div>
@@ -838,7 +835,6 @@ export function renderCustomerCreateStep(step) {
               </div>
               <div>
                 <div style="color: var(--success); font-weight: 600; margin-bottom: 6px;">✓ DebiCheck Debit Collection Signed</div>
-                <div style="color: var(--success); font-weight: 600;">✓ Credit Bureau Verification Authorized</div>
               </div>
             </div>
           </div>
@@ -864,6 +860,9 @@ export function saveCustomerCreateInputs() {
     personal.mobile = document.getElementById('new-cust-mobile').value.trim();
     personal.altContact = document.getElementById('new-cust-altcontact').value.trim();
     personal.marketingConsent = document.getElementById('new-cust-marketing').checked;
+    
+    const personalAddrEl = document.getElementById('new-cust-addr-personal');
+    if (personalAddrEl) address.line1 = personalAddrEl.value.trim();
   } else if (step === 2) {
     const statusSel = document.getElementById('new-cust-empstatus');
     const typeSel = document.getElementById('new-cust-emptype');
@@ -879,32 +878,34 @@ export function saveCustomerCreateInputs() {
     if (nameInput) employment.employerName = nameInput.value.trim();
     if (contactInput) employment.employerContact = contactInput.value.trim();
     if (startInput) employment.startDate = startInput.value;
+
+    const empAddrEl = document.getElementById('new-cust-addr-employer');
+    if (empAddrEl) address.employerAddr = empAddrEl.value.trim();
+
+    const grossEl = document.getElementById('new-cust-gross');
+    const netEl = document.getElementById('new-cust-net');
+    const expEl = document.getElementById('new-cust-expenses');
+    if (grossEl) APP_STATE.newCustomerData.financial.grossIncome = grossEl.value.replace(/[^0-9]/g, '');
+    if (netEl) APP_STATE.newCustomerData.financial.netIncome = netEl.value.replace(/[^0-9]/g, '');
+    if (expEl) APP_STATE.newCustomerData.financial.expenses = expEl.value.replace(/[^0-9]/g, '');
   } else if (step === 3) {
-    const l1 = document.getElementById('new-cust-addr1');
-    const str = document.getElementById('new-cust-street');
-    const sub = document.getElementById('new-cust-suburb');
-    const city = document.getElementById('new-cust-city');
-    const post = document.getElementById('new-cust-postal');
+    if (!APP_STATE.isEditingCustomer) {
+      const bankEl = document.getElementById('new-cust-bankname');
+      const typeEl = document.getElementById('new-cust-acctype');
+      const debitEl = document.getElementById('new-cust-debitdate');
+      const debiCheckEl = document.getElementById('new-cust-debicheck');
+      const branchNameEl = document.getElementById('new-cust-branchname');
+      const branchCodeEl = document.getElementById('new-cust-branchcode');
+      const accNumEl = document.getElementById('new-cust-accnum');
 
-    if (l1) address.line1 = l1.value.trim();
-    if (str) address.street = str.value.trim();
-    if (sub) address.suburb = sub.value.trim();
-    if (city) address.city = city.value.trim();
-    if (post) address.postalCode = post.value.trim();
-  } else if (step === 5) {
-    const bankEl = document.getElementById('new-cust-bankname');
-    const typeEl = document.getElementById('new-cust-acctype');
-    const debitEl = document.getElementById('new-cust-debitdate');
-    const debiCheckEl = document.getElementById('new-cust-debicheck');
-    const creditEl = document.getElementById('new-cust-creditcheck');
-    const branchNameEl = document.getElementById('new-cust-branchname');
-
-    if (bankEl) banking.bankName = bankEl.value;
-    if (typeEl) banking.accountType = typeEl.value;
-    if (debitEl) banking.debitDate = debitEl.value;
-    if (debiCheckEl) banking.debiCheckConsent = debiCheckEl.checked;
-    if (creditEl) banking.creditConsent = creditEl.checked;
-    if (branchNameEl) banking.branchName = branchNameEl.value.trim();
+      if (bankEl) banking.bankName = bankEl.value;
+      if (branchCodeEl) banking.branchCode = branchCodeEl.value.trim();
+      if (typeEl) banking.accountType = typeEl.value;
+      if (accNumEl) banking.accountNumber = accNumEl.value.trim();
+      if (debitEl) banking.debitDate = debitEl.value;
+      if (debiCheckEl) banking.debiCheckConsent = debiCheckEl.checked;
+      if (branchNameEl) banking.branchName = branchNameEl.value.trim();
+    }
   }
 }
 
@@ -948,15 +949,10 @@ export function handleEmployerAddressInput(el) {
 export function selectEmployerAddressSuggestion(index) {
   const addr = MOCK_EMPLOYER_ADDRESSES[index];
   if (addr) {
-    APP_STATE.newCustomerData.address = {
-      line1: addr.line1,
-      street: addr.street,
-      suburb: addr.suburb,
-      city: addr.city,
-      postalCode: addr.postalCode
-    };
+    const formatted = `${addr.line1}, ${addr.suburb}, ${addr.city}, ${addr.postalCode}`;
+    APP_STATE.newCustomerData.address.employerAddr = formatted;
     
-    renderCustomerCreateStep(3);
+    renderCustomerCreateStep(2);
     showToast("Employer address auto-completed.", "success");
   }
 
@@ -1062,7 +1058,7 @@ export function handleAccountNumberInput(el) {
 
 export function toggleAccountNumberVisibility() {
   APP_STATE.accountNumberVisible = !APP_STATE.accountNumberVisible;
-  renderCustomerCreateStep(5);
+  renderCustomerCreateStep(3);
 }
 
 export function maskAccountNumber(accNum) {
@@ -1093,10 +1089,12 @@ export function handleCustomerCreateNext() {
   saveCustomerCreateInputs();
   const step = APP_STATE.customerCreateStep;
   const personal = APP_STATE.newCustomerData.personal;
+  const address = APP_STATE.newCustomerData.address;
+  const financial = APP_STATE.newCustomerData.financial;
   const banking = APP_STATE.newCustomerData.banking;
 
   if (step === 1) {
-    if (!personal.idNum || !personal.firstName || !personal.lastName || !personal.email || !personal.mobile) {
+    if (!personal.idNum || !personal.firstName || !personal.lastName || !personal.email || !personal.mobile || !address.line1) {
       showToast("Please fill in all mandatory customer details (*)", "warning");
       return;
     }
@@ -1133,31 +1131,44 @@ export function handleCustomerCreateNext() {
     }
   }
 
-  if (step === 5) {
-    if (!banking.bankName || !banking.branchCode || !banking.accountType || !banking.accountNumber) {
-      showToast("Please capture all required settlement banking parameters (*).", "warning");
+  if (step === 2) {
+    if (!address.employerAddr) {
+      showToast("Please enter the complete Employer Address (*)", "warning");
       return;
     }
-
-    if (!/^\d+$/.test(banking.branchCode)) {
-      showToast("Branch Code must be numeric digits only.", "danger");
-      return;
-    }
-
-    if (!/^\d{7,16}$/.test(banking.accountNumber)) {
-      document.getElementById('cust-accnum-error').style.display = 'block';
-      return;
-    } else {
-      document.getElementById('cust-accnum-error').style.display = 'none';
-    }
-
-    if (!banking.debiCheckConsent || !banking.creditConsent) {
-      showToast("Debit DebiCheck and Credit Bureau verification consents must be checked to register account.", "warning");
+    if (!financial.grossIncome || !financial.netIncome || !financial.expenses) {
+      showToast("Please fill in Gross Income, Net Income, and Expenses (*)", "warning");
       return;
     }
   }
 
-  if (step === 6) {
+  if (step === 3) {
+    if (!APP_STATE.isEditingCustomer) {
+      if (!banking.bankName || !banking.branchCode || !banking.accountType || !banking.accountNumber) {
+        showToast("Please capture all required settlement banking parameters (*).", "warning");
+        return;
+      }
+
+      if (!/^\d+$/.test(banking.branchCode)) {
+        showToast("Branch Code must be numeric digits only.", "danger");
+        return;
+      }
+
+      if (!/^\d{7,16}$/.test(banking.accountNumber)) {
+        document.getElementById('cust-accnum-error').style.display = 'block';
+        return;
+      } else {
+        document.getElementById('cust-accnum-error').style.display = 'none';
+      }
+
+      if (!banking.debiCheckConsent) {
+        showToast("Debit DebiCheck Debit Collection consent must be checked to register account.", "warning");
+        return;
+      }
+    }
+  }
+
+  if (step === 4) {
     submitNewCustomerProfile();
     return;
   }
@@ -1171,7 +1182,7 @@ export function submitNewCustomerProfile() {
   const address = APP_STATE.newCustomerData.address;
   const financial = APP_STATE.newCustomerData.financial;
   const banking = APP_STATE.newCustomerData.banking;
-  const formattedAddress = address.line1 ? `${address.line1}, ${address.suburb}, ${address.city}, ${address.postalCode}` : "12 Main Rd, Rosebank, Johannesburg, 2196";
+  const formattedAddress = address.line1 || "12 Main Rd, Rosebank, Johannesburg, 2196";
 
   let targetCust;
 
@@ -1198,6 +1209,8 @@ export function submitNewCustomerProfile() {
         MOCK_DB.crm[idx] = targetCust;
       }
     }
+    showToast("CRM Customer profile updated successfully.", "success");
+    returnToCustomer360FromEdit();
   } else {
     targetCust = {
       id: personal.idType === 'SA ID' ? personal.idNum : "",
@@ -1211,7 +1224,10 @@ export function submitNewCustomerProfile() {
       address: formattedAddress,
       billingAddress: formattedAddress,
       preferredContact: "SMS",
-      activeProducts: [],
+      activeProducts: [
+        { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "2027-06-30" },
+        { name: "iPhone 15 Pro Max Contract", type: "Handset contracts", cost: 999, expiry: "2026-12-01" }
+      ],
       interactions: [],
       
       personalDetails: { ...personal },
@@ -1222,76 +1238,19 @@ export function submitNewCustomerProfile() {
     };
     targetCust.documents = {};
     MOCK_DB.crm.push(targetCust);
-  }
-  
-  const content = document.getElementById('customer-create-content');
-  const backBtn = document.getElementById('cust-back-btn');
-  const nextBtn = document.getElementById('cust-next-btn');
-
-  if (backBtn) backBtn.style.visibility = 'hidden';
-  if (nextBtn) nextBtn.style.display = 'none';
-
-  if (content) {
-    if (APP_STATE.isEditingCustomer) {
-      content.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px;">
-          <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
-          <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Profile Updated Successfully</h3>
-          <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
-            The customer profile for <strong>${targetCust.name}</strong> has been successfully updated in Clarify CRM.
-          </p>
-          
-          <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
-            Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${targetCust.accountNumber}</strong>
-          </div>
-
-          <div style="display: flex; justify-content: center; gap: 16px;">
-            <button class="btn btn-primary" onclick="returnToCustomer360FromEdit()">Return to Customer 360</button>
-          </div>
-        </div>
-      `;
-      showToast("CRM Customer profile updated successfully.", "success");
-    } else {
-      if (APP_STATE.openedCustomerWizardFromStepper) {
-        content.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px;">
-            <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
-            <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
-            <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
-              The customer profile for <strong>${targetCust.name}</strong> has been created. Click below to return and continue configuring the order.
-            </p>
-            
-            <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
-              Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${targetCust.accountNumber}</strong>
-            </div>
-
-            <div style="display: flex; justify-content: center; gap: 16px;">
-              <button class="btn btn-primary" onclick="linkCustomerAndReturnToStepper('${targetCust.id || targetCust.passport}', '${!!targetCust.id ? 'id' : 'passport'}')">Link & Return to Stepper</button>
-            </div>
-          </div>
-        `;
-      } else {
-        content.innerHTML = `
-          <div style="text-align: center; padding: 40px 20px;">
-            <div style="width: 56px; height: 56px; border-radius: 50%; background-color: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; font-weight: bold;">✓</div>
-            <h3 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">Customer Created Successfully</h3>
-            <p style="font-size: 14px; color: var(--text-secondary); max-width: 500px; margin: 0 auto 24px; line-height: 1.6;">
-              The customer profile for <strong>${targetCust.name}</strong> has been created and is now available in the system.
-            </p>
-            
-            <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); font-size: 13px; max-width: 500px; margin: 0 auto 24px; color: var(--text-secondary);">
-              Customer Account Number: <strong style="color: var(--telkom-blue-dark);">${targetCust.accountNumber}</strong>
-            </div>
-
-            <div style="display: flex; justify-content: center; gap: 16px;">
-              <button class="btn btn-secondary" onclick="identifyCustomer('${targetCust.id || targetCust.passport}', '${!!targetCust.id ? 'id' : 'passport'}')">View Customer Profile</button>
-              <button class="btn btn-primary" onclick="proceedToCatalogueForCustomer('${targetCust.id || targetCust.passport}', '${!!targetCust.id ? 'id' : 'passport'}')">Proceed to Product Selection</button>
-            </div>
-          </div>
-        `;
-      }
-      showToast("CRM Customer profile created successfully.", "success");
-    }
+    
+    APP_STATE.selectedCustomer = targetCust;
+    APP_STATE.activeCIMInteraction = {
+      type: "New Order",
+      channel: "Retail store",
+      storeId: APP_STATE.currentUser.branch,
+      agentId: APP_STATE.currentUser.id,
+      timestamp: new Date().toISOString(),
+      notes: ""
+    };
+    APP_STATE.openedCustomerWizardFromStepper = false;
+    showToast("CRM Customer profile created successfully.", "success");
+    switchRoute('customer-360');
   }
 }
 
@@ -1307,8 +1266,15 @@ export function returnToCustomer360FromEdit() {
 }
 window.returnToCustomer360FromEdit = returnToCustomer360FromEdit;
 
+export function startOrderCaptureForCustomer() {
+  APP_STATE.isCustomerIdentifiedInJourney = true;
+  switchRoute('catalogue');
+}
+window.startOrderCaptureForCustomer = startOrderCaptureForCustomer;
+
 export function proceedToCatalogueForCustomer(idVal, type) {
   identifyCustomer(idVal, type);
+  APP_STATE.isCustomerIdentifiedInJourney = true;
   switchRoute('catalogue');
 }
 
@@ -1323,8 +1289,7 @@ export function renderCustomer360Documents() {
   const docTypes = [
     { key: "idDoc", label: "Identity Document" },
     { key: "bankStatements", label: "Last 3 Months Bank Statements" },
-    { key: "proofAddress", label: "Proof of Address" },
-    { key: "companyReg", label: "Company Registration Document" }
+    { key: "proofAddress", label: "Proof of Address" }
   ];
 
   const panel = document.getElementById('c360-documents-panel');
@@ -1538,7 +1503,10 @@ export function handleCreateCustomerSubmit(e) {
     address: address,
     billingAddress: address,
     preferredContact: "SMS",
-    activeProducts: [],
+    activeProducts: [
+      { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "2027-06-30" },
+      { name: "iPhone 15 Pro Max Contract", type: "Handset contracts", cost: 999, expiry: "2026-12-01" }
+    ],
     interactions: []
   };
 
@@ -1583,12 +1551,9 @@ export function openEditCustomerModal() {
     startDate: '2020-03-01'
   };
 
-  const address = cust.addressDetails || {
-    line1: cust.address ? cust.address.split(',')[0] : '12 Main Rd',
-    street: cust.address ? cust.address.split(',')[0] : 'Main Rd',
-    suburb: cust.address && cust.address.split(',')[1] ? cust.address.split(',')[1].trim() : 'Rosebank',
-    city: cust.address && cust.address.split(',')[2] ? cust.address.split(',')[2].trim() : 'Johannesburg',
-    postalCode: cust.address && cust.address.split(',')[3] ? cust.address.split(',')[3].trim() : '2196'
+  const address = {
+    line1: cust.address || (cust.addressDetails ? cust.addressDetails.line1 : '') || '12 Main Rd, Rosebank, Johannesburg, 2196',
+    employerAddr: (cust.addressDetails && cust.addressDetails.employerAddr) || '15 Alice Lane, Sandton, Johannesburg, 2196'
   };
 
   const financial = cust.financialDetails || {
@@ -1638,3 +1603,63 @@ export function handleEditCustomerSubmit(e) {
   renderCustomer360();
 }
 window.handleEditCustomerSubmit = handleEditCustomerSubmit;
+
+export function runCustomerCreditVetting() {
+  showToast("Initiating Credit Vetting with Credit Bureau...", "info");
+  setTimeout(() => {
+    if (!APP_STATE.newCustomerData.banking) {
+      APP_STATE.newCustomerData.banking = {};
+    }
+    APP_STATE.newCustomerData.banking.creditVettingStatus = "Approved";
+    
+    if (APP_STATE.selectedCustomer) {
+      if (!APP_STATE.selectedCustomer.bankingDetails) {
+        APP_STATE.selectedCustomer.bankingDetails = {};
+      }
+      APP_STATE.selectedCustomer.bankingDetails.creditVettingStatus = "Approved";
+      
+      const idx = MOCK_DB.crm.findIndex(c => c.accountNumber === APP_STATE.selectedCustomer.accountNumber);
+      if (idx !== -1) {
+        MOCK_DB.crm[idx] = APP_STATE.selectedCustomer;
+      }
+    }
+    showToast("Credit Vetting completed successfully: Approved (Score: 710)", "success");
+    
+    if (APP_STATE.activeRoute === 'customer-360') {
+      renderCustomer360();
+    } else if (APP_STATE.activeRoute === 'customer-create') {
+      renderCustomerCreateStep(3);
+    }
+  }, 500);
+}
+window.runCustomerCreditVetting = runCustomerCreditVetting;
+
+export function runCustomerAccountVerification() {
+  showToast("Initiating Account Holder Verification with settlement bank...", "info");
+  setTimeout(() => {
+    if (!APP_STATE.newCustomerData.banking) {
+      APP_STATE.newCustomerData.banking = {};
+    }
+    APP_STATE.newCustomerData.banking.accountVerificationStatus = "Verified";
+    
+    if (APP_STATE.selectedCustomer) {
+      if (!APP_STATE.selectedCustomer.bankingDetails) {
+        APP_STATE.selectedCustomer.bankingDetails = {};
+      }
+      APP_STATE.selectedCustomer.bankingDetails.accountVerificationStatus = "Verified";
+      
+      const idx = MOCK_DB.crm.findIndex(c => c.accountNumber === APP_STATE.selectedCustomer.accountNumber);
+      if (idx !== -1) {
+        MOCK_DB.crm[idx] = APP_STATE.selectedCustomer;
+      }
+    }
+    showToast("Account Holder Verification successful: Verified & Matched", "success");
+    
+    if (APP_STATE.activeRoute === 'customer-360') {
+      renderCustomer360();
+    } else if (APP_STATE.activeRoute === 'customer-create') {
+      renderCustomerCreateStep(3);
+    }
+  }, 500);
+}
+window.runCustomerAccountVerification = runCustomerAccountVerification;

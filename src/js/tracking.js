@@ -1102,6 +1102,7 @@ export function handleSaveDraft() {
   // Reset cart and customer state
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.cart = {
     product: null,
     contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
@@ -1129,6 +1130,7 @@ export function resumeDraftOrder(draftId) {
 
   APP_STATE.selectedCustomer = d.selectedCustomer;
   APP_STATE.activeCIMInteraction = d.activeCIMInteraction;
+  APP_STATE.isCustomerIdentifiedInJourney = !!d.selectedCustomer;
   APP_STATE.cart = { ...d.cart };
   APP_STATE.currentStep = d.step;
 
@@ -1189,20 +1191,36 @@ export function renderOrderActivationWorkflow(order, container, isModal) {
       </div>
     `;
   } else if (step === 'enter_sim') {
-    container.innerHTML = `
-      <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
-        <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Enter SIM Serial Number</h5>
-        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">RICA verification passed. Provide the 19-digit ICCID SIM card number to activate the cellular line.</p>
-        <div style="display: flex; gap: 12px; align-items: flex-end;">
-          <div style="flex: 1;">
-            <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${order.simActivationNumber || ''}">
-          </div>
-          <button class="btn btn-primary" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600;">
-            Activate SIM & Complete
+    if (!isModal) {
+      container.innerHTML = `
+        <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 20px; border-radius: var(--radius-lg); text-align: center; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+          <div style="width: 48px; height: 48px; border-radius: 50%; background-color: var(--success); color: var(--text-white); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; font-size: 24px; font-weight: bold; box-shadow: 0 4px 10px rgba(79, 179, 61, 0.3);">✓</div>
+          <h5 style="color: var(--success-dark); font-weight: 700; margin-bottom: 6px; font-size: 16px;">RICA Verification Completed</h5>
+          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; max-width: 400px;">
+            The customer has been successfully verified in compliance with RICA regulations. The order is ready for submission.
+          </p>
+          <button class="btn btn-primary" onclick="submitOrderAfterRica('${orderRef}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 700; padding: 10px 24px; font-size: 14px; border-radius: var(--radius-md); color: var(--text-white); box-shadow: var(--shadow-md); display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+            Submit Order
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </button>
         </div>
-      </div>
-    `;
+      `;
+    } else {
+      container.innerHTML = `
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 18px; border-radius: var(--radius-md);">
+          <h5 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 8px;">Enter SIM Serial Number</h5>
+          <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">RICA verification passed. Provide the 19-digit ICCID SIM card number to activate the cellular line.</p>
+          <div style="display: flex; gap: 12px; align-items: flex-end;">
+            <div style="flex: 1;">
+              <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${order.simActivationNumber || ''}">
+            </div>
+            <button class="btn btn-primary" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600;">
+              Activate SIM & Complete
+            </button>
+          </div>
+        </div>
+      `;
+    }
   } else if (step === 'completed') {
     container.innerHTML = `
       <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 18px; border-radius: var(--radius-md); text-align: center;">
@@ -1292,7 +1310,11 @@ export function runRicaActivationWorkflow(orderRef, containerId) {
       order.activationStep = 'enter_sim';
       saveOrders();
 
-      showToast("RICA Verification Successful! Now capture the SIM number.", "success");
+      if (containerId === 'order-details-rica-panel') {
+        showToast("RICA Verification Successful! Now capture the SIM number.", "success");
+      } else {
+        showToast("RICA Verification Successful!", "success");
+      }
       
       const container = document.getElementById(containerId);
       if (container) {
@@ -1310,6 +1332,42 @@ export function runRicaActivationWorkflow(orderRef, containerId) {
   }, 200);
 }
 
+export function submitOrderAfterRica(orderRef) {
+  const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
+  if (order) {
+    order.status = 'Submitted';
+    order.ricaStatus = 'Verified';
+    saveOrders();
+  }
+
+  // Clear active customer/cart session
+  APP_STATE.selectedCustomer = null;
+  APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
+  APP_STATE.cart = {
+    product: null,
+    contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+    billingSelection: null,
+    creditVetting: null,
+    supportingDocs: null,
+    consent: false,
+    hasSignature: false,
+    gisStatus: "Not checked",
+    gisRef: "",
+    stockChecked: false,
+    stockStatus: "",
+    paymentStatus: "Pending",
+    posTxnRef: "",
+    receiptNo: "",
+    orderRef: "",
+    draftId: ""
+  };
+  APP_STATE.currentStep = 1;
+
+  showToast("Order submitted successfully.", "success");
+  switchRoute('catalogue');
+}
+
 // Bind to window for global inline HTML execution
 window.renderOrderTracking = renderOrderTracking;
 window.switchTrackingTab = switchTrackingTab;
@@ -1324,3 +1382,4 @@ window.renderOrderActivationWorkflow = renderOrderActivationWorkflow;
 window.setPostOrderActivationStep = setPostOrderActivationStep;
 window.submitPostOrderSimNumber = submitPostOrderSimNumber;
 window.runRicaActivationWorkflow = runRicaActivationWorkflow;
+window.submitOrderAfterRica = submitOrderAfterRica;

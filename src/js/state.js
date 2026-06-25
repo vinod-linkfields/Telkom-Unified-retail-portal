@@ -36,7 +36,7 @@ export const MOCK_DB = {
       preferredContact: "SMS",
       activeProducts: [
         { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "2027-02-14" },
-        { name: "Telkom LTE Home Router 100GB", type: "Mobile Data", cost: 299, expiry: "2026-12-01" }
+        { name: "iPhone 15 Pro Max Contract", type: "Handset contracts", cost: 999, expiry: "2026-12-01" }
       ],
       interactions: [
         { date: "2026-06-01 10:20", agent: "AGT-101", type: "Account Query", notes: "Customer queried billing on LTE Router." },
@@ -56,7 +56,7 @@ export const MOCK_DB = {
       billingAddress: "45 Garsfontein Rd, Pretoria East, Pretoria, 0081",
       preferredContact: "Email",
       activeProducts: [
-        { name: "Prepaid SIM Starter Pack", type: "SIM-only", cost: 0, expiry: "N/A" }
+        { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "N/A" }
       ],
       interactions: [
         { date: "2026-05-15 09:45", agent: "AGT-104", type: "New Order", notes: "Assisted with prepaid SIM registration." }
@@ -75,7 +75,7 @@ export const MOCK_DB = {
       billingAddress: "78 Seventh Ave, Melville, Johannesburg, 2092",
       preferredContact: "Phone",
       activeProducts: [
-        { name: "Telkom LTE Smart Router (Suspended)", type: "Mobile Data", cost: 399, expiry: "Suspended" }
+        { name: "Samsung Galaxy S24 Contract", type: "Handset contracts", cost: 699, expiry: "Suspended" }
       ],
       interactions: [
         { date: "2026-06-10 11:30", agent: "AGT-101", type: "Complaint", notes: "Customer complained about suspended status due to payment delay." }
@@ -218,6 +218,7 @@ export const APP_STATE = {
   activeTrackingTab: "submitted",
   customerCreateStep: 1,
   isEditingCustomer: false,
+  isCustomerIdentifiedInJourney: false,
   newCustomerData: {
     personal: { idNum: "", idType: "SA ID", firstName: "", lastName: "", email: "", mobile: "", altContact: "", marketingConsent: false },
     employment: { status: "", type: "", occupation: "", employerName: "", employerContact: "", startDate: "" },

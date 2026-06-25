@@ -56,80 +56,42 @@ export function renderAgentDashboard() {
   
   const agentStockAlertsCountEl = document.getElementById('agent-stock-alerts-count');
   if (agentStockAlertsCountEl) agentStockAlertsCountEl.innerText = oosCount;
-  
-  const stockAlertContainer = document.getElementById('agent-stock-alerts');
-  if (stockAlertContainer) {
-    stockAlertContainer.innerHTML = '';
-    for (const [sku, detail] of Object.entries(branchStock)) {
-      if (detail.available === 0) {
-        const p = MOCK_DB.products.find(prod => prod.deviceSKU === sku) || findProductById(sku);
-        stockAlertContainer.innerHTML += `
-          <div style="background-color: var(--danger-light); border-left: 4px solid var(--danger); padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-              <strong>OUT OF STOCK:</strong> ${p ? p.name : sku}
-            </div>
-            <button class="btn btn-sm btn-danger" onclick="initiateStockRequest('${sku}', '${p ? p.name : sku}')">Request Stock</button>
-          </div>
-        `;
-      }
-    }
-    if (oosCount === 0) {
-      stockAlertContainer.innerHTML = `<p style="font-size: 13px; color: var(--text-secondary);">All catalogue devices are fully stocked in this branch.</p>`;
-    }
-  }
 
-  const draftTbody = document.getElementById('agent-draft-orders-tbody');
-  if (draftTbody) {
-    const rows = myDrafts.map(d => {
-      const prodName = d.cart && d.cart.product ? d.cart.product.name : 'No Product';
-      const getActiveStepsForProduct = window.getActiveStepsForProduct;
-      let stepLabel = `Step ${d.currentStep}`;
-      if (getActiveStepsForProduct) {
-        const steps = getActiveStepsForProduct(d.cart.product);
-        const stepIndex = steps.findIndex(s => s.id === d.currentStep);
-        stepLabel = stepIndex > -1 ? `Step ${stepIndex + 1}: ${steps[stepIndex].label}` : `Step ${d.currentStep}`;
-      }
-
-      return `
-        <tr>
-          <td><strong>${d.draftId}</strong></td>
-          <td>${d.customerName || '<span style="color: var(--text-muted);">No Customer Linked</span>'}</td>
-          <td>${prodName}</td>
-          <td><span class="badge badge-warning">${stepLabel}</span></td>
-          <td>${d.timestamp ? d.timestamp.replace('T', ' ').substring(0,16) : d.date}</td>
-          <td>
-            <button class="btn btn-sm btn-primary" onclick="resumeDraftOrder('${d.draftId}')">Continue</button>
-          </td>
-        </tr>
-      `;
-    });
-    renderPaginatedRows(draftTbody, rows, {
-      emptyRow: `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No saved drafts found.</td></tr>`
-    });
-  }
-
-  // Render Promotions & Best Sellers
+  // Render Promotions & Best Sellers dynamically from catalogue
   const promoContainer = document.getElementById('dashboard-promotions-list');
   if (promoContainer) {
-    // Show top promo products from the real catalogue registry
-    const promoProducts = PRODUCTS_REGISTRY.filter(p => p.promo).slice(0, 3);
-    const fallbackPromos = MOCK_DB.products.filter(p => p.promo || ['p-dev-2','p-sim-2','p-dev-1'].includes(p.id));
-    const displayPromos = promoProducts.length > 0 ? promoProducts : fallbackPromos;
+    const promoOrBest = PRODUCTS_REGISTRY.filter(p => p.promo || p.bestSeller).slice(0, 3);
+    const fallback = MOCK_DB.products.filter(p => p.promo || p.bestSeller || ['p-dev-2','p-sim-2','p-dev-1'].includes(p.id));
+    const displayItems = promoOrBest.length > 0 ? promoOrBest : fallback;
     
-    promoContainer.innerHTML = displayPromos.map(p => {
+    promoContainer.innerHTML = displayItems.map(p => {
       const monthlyFee = p.monthlyFee ?? p.price ?? 0;
       const catColors = { 'Handset': '#0066cc', 'SIM Only': '#00875a', 'Mobile Data': '#7b2d8b', 'Tablets': '#d14900', 'Laptops': '#505050' };
       const accent = catColors[p.category] || '#0066cc';
+
+      let badgesHtml = '';
+      if (p.promo) {
+        badgesHtml += `<span class="badge badge-success" style="font-size: 10px; margin-right: 4px;">PROMO</span>`;
+      }
+      if (p.bestSeller) {
+        badgesHtml += `<span class="badge" style="font-size: 10px; background-color: rgba(230, 126, 34, 0.1); color: #e67e22; border: 1px solid #e67e22; margin-right: 4px;">Best Seller</span>`;
+      }
+      
+      const shortDesc = (p.description || '').length > 80
+        ? (p.description || '').substring(0, 80).trim() + '…'
+        : (p.description || '');
 
       return `
         <div class="product-card" style="margin: 0; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 16px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card);">
           <div>
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-              <span class="badge badge-success" style="font-size: 10px;">PROMO</span>
-              <span style="font-size: 10px; color: var(--text-muted); font-family: monospace;">${p.dealId}</span>
+              <div style="display: flex; flex-wrap: wrap; gap: 4px;">${badgesHtml}</div>
+              <span style="font-size: 10px; color: var(--text-muted); font-family: monospace;">${p.dealId || p.id}</span>
             </div>
             <div style="font-size: 11px; color: ${accent}; font-weight: 700; margin-bottom: 4px;">${p.category}</div>
             <div style="font-size: 13px; font-weight: 700; color: var(--telkom-blue-dark); margin: 4px 0; font-family: var(--font-display); line-height: 1.3;">${p.name}</div>
+            ${p.tag ? `<div style="font-size: 11px; font-weight: 600; color: var(--warning); margin-bottom: 6px;">🔥 ${p.tag}</div>` : ''}
+            ${shortDesc ? `<p style="font-size: 11.5px; color: var(--text-secondary); margin: 6px 0; line-height: 1.4;">${shortDesc}</p>` : ''}
             ${p.additionalData ? `<div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">+ ${p.additionalData}</div>` : ''}
             <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">${p.term} months contract</div>
           </div>
@@ -145,7 +107,7 @@ export function renderAgentDashboard() {
     }).join('');
   }
 
-  // Render Top Products This Week
+  // Render Top Products This Week (no progress bar, no status badges)
   const topProductsContainer = document.getElementById('dashboard-top-products-container');
   if (topProductsContainer) {
     const productSales = {};
@@ -160,21 +122,16 @@ export function renderAgentDashboard() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 3);
 
-    const maxCount = Math.max(...sortedProducts.map(p => p.count), 1);
-    const ranks = ['🥇', '🥈', '🥉'];
+    const ranks = ['1', '2', '3'];
     
     topProductsContainer.innerHTML = sortedProducts.map((item, index) => {
-      const pct = (item.count / maxCount) * 100;
       return `
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="font-size: 20px; font-weight: bold; width: 24px; text-align: center;">${ranks[index] || (index + 1)}</div>
           <div style="flex: 1;">
-            <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">
+            <div style="display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: var(--text-primary);">
               <span>${item.name} <span style="font-size: 11px; color: var(--text-muted); font-weight: normal;">(${item.category})</span></span>
               <span style="font-weight: 700; color: var(--telkom-blue-dark);">${item.count} sold</span>
-            </div>
-            <div style="background-color: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; width: 100%;">
-              <div style="background: linear-gradient(90deg, var(--telkom-blue) 0%, var(--success) 100%); width: ${pct}%; height: 100%; border-radius: 4px;"></div>
             </div>
           </div>
         </div>
@@ -182,7 +139,7 @@ export function renderAgentDashboard() {
     }).join('');
   }
 
-  // Render Order Status Distribution (Pie Chart)
+  // Render Order Status Distribution (Pie Chart with shades of Telkom Blue brand colors)
   const chartContainer = document.getElementById('dashboard-status-chart-container');
   if (chartContainer) {
     const statusCounts = {};
@@ -191,11 +148,11 @@ export function renderAgentDashboard() {
     });
 
     const segmentData = [
-      { label: "Fulfilled", value: statusCounts["Fulfilled"] || 0, color: "#2e6600" },
-      { label: "Active", value: statusCounts["Active"] || 0, color: "#2e6600" },
-      { label: "In Progress", value: statusCounts["In Progress"] || 0, color: "#faad14" },
-      { label: "Cancelled", value: statusCounts["Cancelled"] || 0, color: "#ff4d4f" },
-      { label: "Failed", value: statusCounts["Failed"] || 0, color: "#7f8c8d" }
+      { label: "Fulfilled", value: statusCounts["Fulfilled"] || 0, color: "#003b66" },
+      { label: "Active", value: statusCounts["Active"] || 0, color: "#005288" },
+      { label: "In Progress", value: statusCounts["In Progress"] || 0, color: "#0099ff" },
+      { label: "Cancelled", value: statusCounts["Cancelled"] || 0, color: "#66c2ff" },
+      { label: "Failed", value: statusCounts["Failed"] || 0, color: "#b8e3ff" }
     ].filter(s => s.value > 0);
 
     drawSVGDonutChart('dashboard-status-chart-container', segmentData);
@@ -488,24 +445,6 @@ export function showProductDetails(productId) {
       </div>
     </div>
     
-    ${highlights.length > 0 ? `
-    <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 8px; margin-top: 16px;">Key Highlights</h4>
-    <ul class="highlights-list">
-      ${highlights.map(h => `
-        <li class="highlight-item">
-          <span class="highlight-icon-check">✓</span>
-          <span>${h}</span>
-        </li>
-      `).join('')}
-    </ul>
-    ` : ''}
-    
-    ${accessories.length > 0 ? `
-    <h4 style="font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--telkom-blue-dark); margin-bottom: 8px; margin-top: 16px;">Included in the box</h4>
-    <div class="accessories-container">
-      ${accessories.map(a => `<span class="accessory-tag">${a}</span>`).join('')}
-    </div>
-    ` : ''}
   `;
   
   const bodyEl = document.getElementById('product-details-modal-body');

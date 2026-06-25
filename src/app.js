@@ -51,7 +51,9 @@ import {
   renderCustomer360Documents,
   identifyCustomer,
   openCreateCustomerModal,
-  openEditCustomerModal
+  openEditCustomerModal,
+  startOrderCaptureForCustomer,
+  handleCustStepperClick
 } from './js/customer.js';
 
 import {
@@ -400,6 +402,7 @@ export function doLogin() {
 export function handleLogout() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.isAuthenticated = false;
   clearAuthSession();
   switchRoute('login');
@@ -447,6 +450,7 @@ document.addEventListener('click', function(e) {
 export function startNewOrderFlow() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.cart = {
     product: null,
     contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
@@ -530,6 +534,8 @@ window.renderCustomer360Documents = renderCustomer360Documents;
 window.identifyCustomer = identifyCustomer;
 window.openCreateCustomerModal = openCreateCustomerModal;
 window.openEditCustomerModal = openEditCustomerModal;
+window.startOrderCaptureForCustomer = startOrderCaptureForCustomer;
+window.handleCustStepperClick = handleCustStepperClick;
 
 // Catalogue
 window.renderCatalogue = renderCatalogue;

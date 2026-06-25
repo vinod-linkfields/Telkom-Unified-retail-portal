@@ -463,6 +463,7 @@ export function linkCustomerInStepper(idVal, type) {
 
   if (cust) {
     APP_STATE.selectedCustomer = cust;
+    APP_STATE.isCustomerIdentifiedInJourney = true;
     
     APP_STATE.activeCIMInteraction = {
       type: "New Order",
@@ -481,6 +482,7 @@ export function linkCustomerInStepper(idVal, type) {
 
 export function unlinkCustomerInStepper() {
   APP_STATE.selectedCustomer = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.stepperCustomerSearchResults = null;
   APP_STATE.stepperCustomerSearchedKey = "";
   
@@ -1055,8 +1057,7 @@ export function renderStepperSupportingDocs(container) {
     const docTypes = [
       { key: "idDoc", label: "Identity Document (ID Card/Passport)" },
       { key: "bankStatements", label: "Last 3 Months Bank Statements" },
-      { key: "proofAddress", label: "Proof of Address (Utility Bill)" },
-      { key: "companyReg", label: "Company Registration Document (CIPC)" }
+      { key: "proofAddress", label: "Proof of Address (Utility Bill)" }
     ];
 
     docTypes.forEach(doc => {
@@ -2110,8 +2111,8 @@ export function handleStepperNext() {
     const sd = APP_STATE.cart.supportingDocs;
     if (sd && sd.option === 'now') {
       const uploads = sd.uploads;
-      if (!uploads.idDoc || !uploads.bankStatements || !uploads.proofAddress || !uploads.companyReg) {
-        showToast("Please upload all four required supporting documents or select 'Skip for now'.", "warning");
+      if (!uploads.idDoc || !uploads.bankStatements || !uploads.proofAddress) {
+        showToast("Please upload all three required supporting documents or select 'Skip for now'.", "warning");
         return;
       }
     }
@@ -2297,6 +2298,7 @@ export function handlePOSPaymentTrigger() {
       );
 
       showToast("POS payment success. Receipt generated.", "success");
+      APP_STATE.isCustomerIdentifiedInJourney = false;
       switchRoute('confirmation');
     }, 300);
   }, 300);
@@ -2701,6 +2703,7 @@ export function submitCustomCancellation() {
 
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.cart = {
     product: null,
     contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
@@ -2783,6 +2786,7 @@ export function cancelToSaveDraft() {
 
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
+  APP_STATE.isCustomerIdentifiedInJourney = false;
   APP_STATE.cart = {
     product: null,
     contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },

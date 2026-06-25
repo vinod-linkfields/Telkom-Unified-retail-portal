@@ -86,6 +86,7 @@
           <span class="session-tag" id="session-cim-status">CIM Session Active</span>
         </div>
         <div class="session-actions">
+          <button class="session-btn" id="session-continue-journey-btn" onclick="continueOrderJourney()" style="display: none; background-color: var(--success); color: white; margin-right: 8px;">Continue Order Journey</button>
           <button class="session-btn" id="session-view-360-btn" onclick="switchRoute('customer-360')">View 360 Profile</button>
           <button type="button" class="session-btn danger-btn" id="session-cancel-order-btn" onclick="handleCancelOrder(event)" style="display: none; background-color: var(--danger); margin-right: 8px;">Cancel Order</button>
           <button class="session-btn danger-btn" id="session-end-journey-btn" onclick="closeCustomerSession()">End Customer Session</button>
@@ -294,7 +295,7 @@
               <div class="card-metric" id="agent-completed-count">0</div>
               <div class="card-label">Orders Completed today</div>
             </div>
-            <div class="dashboard-card">
+            <div class="dashboard-card" onclick="switchRoute('stock-requests'); switchStockTab('lowstock');" style="cursor: pointer;">
               <div class="card-icon-wrapper red">
                 <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
               </div>
@@ -388,51 +389,19 @@
                 <div class="panel-header">
                   <span class="panel-title">Order Status Distribution</span>
                 </div>
-                <div class="panel-body" style="display: flex; align-items: center; justify-content: space-around; padding: 20px 16px; gap: 16px;">
-                  <div id="dashboard-status-chart-container" style="width: 120px; height: 120px; position: relative;">
+                <div class="panel-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; gap: 20px;">
+                  <div id="dashboard-status-chart-container" style="width: 200px; height: 200px; position: relative;">
                     <!-- SVG Donut Chart dynamically rendered -->
                   </div>
-                  <div id="dashboard-status-chart-legend" style="display: flex; flex-direction: column; gap: 8px; font-size: 11px; font-weight: 600;">
+                  <div id="dashboard-status-chart-legend" style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 16px; font-size: 12px; font-weight: 600; width: 100%;">
                     <!-- Legend dynamically rendered -->
                   </div>
                 </div>
               </div>
 
-              <div class="panel">
-                <div class="panel-header">
-                  <span class="panel-title">Branch Stock Status & Alerts</span>
-                </div>
-                <div class="panel-body" id="agent-stock-alerts">
-                </div>
-              </div>
             </div>
           </div>
 
-          <!-- Agent Draft / Pending Orders Panel -->
-          <div class="panel" style="margin-top: 20px;" id="agent-draft-orders-panel">
-            <div class="panel-header">
-              <span class="panel-title">My Saved Order Drafts</span>
-            </div>
-            <div class="panel-body">
-              <div class="table-container">
-                <table class="custom-table">
-                  <thead>
-                    <tr>
-                      <th>Draft ID</th>
-                      <th>Customer Name</th>
-                      <th>Selected Product</th>
-                      <th>Last Saved Step</th>
-                      <th>Saved Timestamp</th>
-                      <th style="width: 100px;">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="agent-draft-orders-tbody">
-                    <!-- Dynamic -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- ========================================== -->
@@ -731,28 +700,20 @@
 
           <!-- Customer Creation Stepper Header -->
           <div class="stepper-container" id="cust-create-stepper">
-            <div class="stepper-step active" data-cust-step="1">
+            <div class="stepper-step active" data-cust-step="1" onclick="handleCustStepperClick(1)" style="cursor: pointer;">
               <div class="step-icon">1</div>
               <span class="step-label">Personal Info</span>
             </div>
-            <div class="stepper-step" data-cust-step="2">
+            <div class="stepper-step" data-cust-step="2" onclick="handleCustStepperClick(2)" style="cursor: pointer;">
               <div class="step-icon">2</div>
-              <span class="step-label">Employment</span>
+              <span class="step-label">Employment & Address</span>
             </div>
-            <div class="stepper-step" data-cust-step="3">
+            <div class="stepper-step" data-cust-step="3" onclick="handleCustStepperClick(3)" style="cursor: pointer;">
               <div class="step-icon">3</div>
-              <span class="step-label">Employer Address</span>
-            </div>
-            <div class="stepper-step" data-cust-step="4">
-              <div class="step-icon">4</div>
-              <span class="step-label">Income & Expenses</span>
-            </div>
-            <div class="stepper-step" data-cust-step="5">
-              <div class="step-icon">5</div>
               <span class="step-label">Banking Setup</span>
             </div>
-            <div class="stepper-step" data-cust-step="6">
-              <div class="step-icon">6</div>
+            <div class="stepper-step" data-cust-step="4" onclick="handleCustStepperClick(4)" style="cursor: pointer;">
+              <div class="step-icon">4</div>
               <span class="step-label">Review Summary</span>
             </div>
           </div>
@@ -784,15 +745,14 @@
           <div id="crm-data-card">
             <div class="screen-header">
               <div>
-                <h2>Customer 360 Consolidated View</h2>
-                <p class="screen-title-desc">Integrated profile from Amdocs Clarify CRM & active interaction logs.</p>
+                <h2>Customer Details</h2>
               </div>
               <div class="screen-header-actions">
                 <button class="btn btn-secondary" onclick="openEditCustomerModal()">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                   Edit Customer Profile
                 </button>
-                <button class="btn btn-primary" id="c360-start-order-btn" onclick="switchRoute('catalogue')">
+                <button class="btn btn-primary" id="c360-start-order-btn" onclick="startOrderCaptureForCustomer()">
                   <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                   Start Order Capture
                 </button>
@@ -802,12 +762,9 @@
             <!-- Eligibility banner -->
             <div id="c360-eligibility"></div>
 
-            <div class="layout-2col">
-              
-              <!-- Left Col: Profile Details & active subscriptions -->
-              <div>
+            <div>
                 <div class="panel">
-                  <div class="panel-header"><span class="panel-title">Inquiry Profile Summary</span></div>
+                  <div class="panel-header"><span class="panel-title">Personal Details</span></div>
                   <div class="panel-body">
                     <div class="profile-summary-grid">
                       <div>
@@ -850,10 +807,26 @@
                   </div>
                 </div>
 
-                <!-- Onboarding Profile Details Panel -->
-                <div class="panel" id="c360-onboarding-panel">
-                  <div class="panel-header"><span class="panel-title">Onboarding Profile Details</span></div>
-                  <div class="panel-body" id="c360-onboarding-content" style="padding: 20px;">
+                <!-- Employment Details Panel -->
+                <div class="panel" id="c360-employment-panel">
+                  <div class="panel-header"><span class="panel-title">Employment Details</span></div>
+                  <div class="panel-body" id="c360-employment-content" style="padding: 20px;">
+                    <!-- Populated dynamically in JS -->
+                  </div>
+                </div>
+
+                <!-- Income and Expense Details Panel -->
+                <div class="panel" id="c360-financial-panel">
+                  <div class="panel-header"><span class="panel-title">Income and Expense details</span></div>
+                  <div class="panel-body" id="c360-financial-content" style="padding: 20px;">
+                    <!-- Populated dynamically in JS -->
+                  </div>
+                </div>
+
+                <!-- Banking Details Panel -->
+                <div class="panel" id="c360-banking-panel">
+                  <div class="panel-header"><span class="panel-title">Banking Details</span></div>
+                  <div class="panel-body" id="c360-banking-content" style="padding: 20px;">
                     <!-- Populated dynamically in JS -->
                   </div>
                 </div>
@@ -883,23 +856,6 @@
                   </div>
                 </div>
 
-                <div class="panel">
-                  <div class="panel-header"><span class="panel-title">Uploaded Supporting Documents</span></div>
-                  <div class="panel-body" id="c360-documents-panel">
-                    <!-- Populated dynamically in JS -->
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right Col: Interactions Log -->
-              <div class="panel">
-                <div class="panel-header"><span class="panel-title">CIM Interaction Timeline</span></div>
-                <div class="panel-body" style="padding: 0;">
-                  <div id="c360-interactions-list" style="max-height: 480px; overflow-y: auto;">
-                    <!-- Populated dynamically -->
-                  </div>
-                </div>
-              </div>
 
             </div>
           </div>

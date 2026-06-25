@@ -15,8 +15,9 @@ export function updateSessionBanner() {
 
   const hasCustomer = !!APP_STATE.selectedCustomer;
   const hasProduct = !!APP_STATE.cart.product;
+  const isIdentified = !!APP_STATE.isCustomerIdentifiedInJourney;
 
-  if (hasCustomer) {
+  if (hasCustomer && isIdentified) {
     banner.style.display = 'flex';
     const nameEl = document.getElementById('session-customer-name');
     const accEl = document.getElementById('session-account-no');
@@ -59,6 +60,12 @@ export function updateSessionBanner() {
       view360Btn.disabled = false;
       view360Btn.style.opacity = '1';
       view360Btn.style.cursor = 'pointer';
+    }
+
+    const continueBtn = document.getElementById('session-continue-journey-btn');
+    if (continueBtn) {
+      const showContinue = APP_STATE.activeRoute !== 'order-stepper' && hasProduct;
+      continueBtn.style.display = showContinue ? 'inline-block' : 'none';
     }
   } else {
     banner.style.display = 'none';
@@ -287,6 +294,11 @@ window.switchRoute = switchRoute;
 window.renderScreen = renderScreen;
 window.updateSidebarMenuOptions = updateSidebarMenuOptions;
 window.updateSessionBanner = updateSessionBanner;
+
+export function continueOrderJourney() {
+  switchRoute('order-stepper');
+}
+window.continueOrderJourney = continueOrderJourney;
 
 // UAT panel interactions
 export function toggleUatPanel() {
