@@ -479,7 +479,9 @@ window.showProductDetails = showProductDetails;
 window.closeProductDrawer = closeProductDrawer;
 
 export function handleUatRoleChange() {
-  const role = document.getElementById('uat-role').value;
+  const uatRoleEl = document.getElementById('uat-role');
+  if (!uatRoleEl) return;
+  const role = uatRoleEl.value;
   APP_STATE.currentUser.role = role;
   
   if (role === 'agent') {

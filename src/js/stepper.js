@@ -586,7 +586,10 @@ export function renderStepperBillingSelection(container) {
     `<span class="badge badge-success">${APP_STATE.cart.creditVetting.outcome}</span>` : 
     `<span class="badge badge-warning">Pending Assessment (Card 5)</span>`;
 
-  const authStatus = `<span class="badge badge-warning">Pending Customer Auth</span>`;
+  let authStatus = `<span class="badge badge-warning">Pending Customer Auth</span>`;
+  if (verificationStatus === 'Verified') {
+    authStatus = `<span class="badge badge-success">successful</span>`;
+  }
   const dbcRef = APP_STATE.cart.draftId ? `DBC-DFT-${APP_STATE.cart.draftId}` : "DBC-PENDING";
 
   // Render credit vetting panel
@@ -838,7 +841,7 @@ export function renderStepperBillingSelection(container) {
 
     <!-- 5. Credit Bureau Vetting Assessment -->
     <div style="margin-top: 24px; background-color: var(--bg-light); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; border-left: 5px solid var(--telkom-blue);">
-      <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">5. Credit Bureau Vetting Assessment</h6>
+      <h6 style="color: var(--telkom-blue-dark); margin-bottom: 12px; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;">Credit Bureau Vetting Assessment</h6>
       <div id="billing-credit-vetting-container">
         ${creditVettingHtml}
       </div>
