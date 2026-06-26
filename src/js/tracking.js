@@ -81,10 +81,10 @@ export function renderOrderTracking() {
 
   const tab = APP_STATE.activeTrackingTab || 'submitted';
 
-  // Populate dynamic product dropdown
   const productSelect = document.getElementById('tracking-filter-product');
   if (productSelect && productSelect.options.length <= 1) {
-    APP_STATE.products.forEach(p => {
+    const productsList = APP_STATE.products || MOCK_DB.products || [];
+    productsList.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.name;
       opt.textContent = p.name;

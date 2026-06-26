@@ -380,8 +380,8 @@ export function renderCustomer360() {
   if (prodContainer) {
     prodContainer.innerHTML = '';
     cust.activeProducts.forEach(p => {
-      // Find actual matching product in catalogue by name or fallback
-      const catalogProd = APP_STATE.products.find(cp => cp.name.toLowerCase() === p.name.toLowerCase());
+      const productList = APP_STATE.products || MOCK_DB.products || [];
+      const catalogProd = productList.find(cp => cp.name.toLowerCase() === p.name.toLowerCase());
       const displayName = catalogProd ? catalogProd.name : p.name;
       const cost = catalogProd ? catalogProd.price : (p.cost || p.price || 0);
       const category = catalogProd ? catalogProd.category : (p.type || p.category || "SIM-only");

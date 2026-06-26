@@ -190,6 +190,7 @@ export const APP_STATE = {
   activeRoute: "login",
   selectedCustomer: null,
   activeCIMInteraction: null,
+  products: MOCK_DB.products,
   cart: {
     product: null,
     contractDetails: {
