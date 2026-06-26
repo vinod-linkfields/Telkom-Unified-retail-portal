@@ -381,15 +381,29 @@ export function renderCustomer360() {
     prodContainer.innerHTML = '';
     cust.activeProducts.forEach(p => {
       // Find actual matching product in catalogue by name or fallback
-      const catalogProd = APP_STATE.products.find(cp => cp.name.toLowerCase() === p.name.toLowerCase()) || p;
+      const catalogProd = APP_STATE.products.find(cp => cp.name.toLowerCase() === p.name.toLowerCase());
       const displayName = catalogProd ? catalogProd.name : p.name;
+      const cost = catalogProd ? catalogProd.price : (p.cost || p.price || 0);
+      const category = catalogProd ? catalogProd.category : (p.type || p.category || "SIM-only");
+      const allocation = catalogProd ? catalogProd.allocation : (p.allocation || "");
+      const term = catalogProd ? `${catalogProd.term} Months` : "";
+      
       prodContainer.innerHTML += `
-        <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-md); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-card);">
           <div>
-            <div style="font-weight: 700; color: var(--telkom-blue-dark);">${displayName}</div>
-            <div style="font-size: 11px; color: var(--text-secondary);">Expires: ${p.expiry}</div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span class="badge ${category.toLowerCase().includes('sim') ? 'badge-success' : 'badge-primary'}" style="font-size: 9px; padding: 2px 6px;">
+                ${category}
+              </span>
+              ${term ? `<span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">(${term})</span>` : ''}
+            </div>
+            <div style="font-weight: 700; color: var(--telkom-blue-dark); font-size: 13px;">${displayName}</div>
+            ${allocation ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">${allocation}</div>` : ''}
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Expires: ${p.expiry}</div>
           </div>
-          <div style="font-weight: 700; color: var(--telkom-blue);">R${p.cost} pm</div>
+          <div style="text-align: right;">
+            <div style="font-weight: 700; color: var(--telkom-blue); font-size: 14px;">R${cost} pm</div>
+          </div>
         </div>
       `;
     });
@@ -725,7 +739,7 @@ export function renderCustomerCreateStep(step) {
 
     case 2:
       stepContainer.innerHTML = `
-        <h3 style="margin-bottom: 16px;">Step 2: Employment, Employer Address & Income Details</h3>
+        <h3 style="margin-bottom: 16px;">Employment and Incomer details</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Provide employment details, employer address, and monthly financial streams.</p>
         
         <div style="margin-bottom: 24px; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 16px 20px; background-color: var(--bg-light);">

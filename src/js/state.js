@@ -15,7 +15,9 @@ export function isSimOrLteProduct(product) {
     pkg.includes('lte') ||
     name.includes('lte') ||
     pkg.includes('sim') ||
-    name.includes('sim')
+    name.includes('sim') ||
+    cat.includes('contract') ||
+    name.includes('contract')
   );
 }
 
@@ -36,7 +38,8 @@ export const MOCK_DB = {
       preferredContact: "SMS",
       activeProducts: [
         { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "2027-02-14" },
-        { name: "iPhone 15 Pro Max Contract", type: "Handset contracts", cost: 999, expiry: "2026-12-01" }
+        { name: "iPhone 15 Pro Max Contract", type: "Handset contracts", cost: 999, expiry: "2026-12-01" },
+        { name: "Flexi SIM 10GB Promo", type: "SIM-only", cost: 99, expiry: "2027-04-30" }
       ],
       interactions: [
         { date: "2026-06-01 10:20", agent: "AGT-101", type: "Account Query", notes: "Customer queried billing on LTE Router." },
@@ -56,7 +59,8 @@ export const MOCK_DB = {
       billingAddress: "45 Garsfontein Rd, Pretoria East, Pretoria, 0081",
       preferredContact: "Email",
       activeProducts: [
-        { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "N/A" }
+        { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "N/A" },
+        { name: "Samsung Galaxy S24 Contract", type: "Handset contracts", cost: 699, expiry: "2027-08-15" }
       ],
       interactions: [
         { date: "2026-05-15 09:45", agent: "AGT-104", type: "New Order", notes: "Assisted with prepaid SIM registration." }
@@ -75,7 +79,8 @@ export const MOCK_DB = {
       billingAddress: "78 Seventh Ave, Melville, Johannesburg, 2092",
       preferredContact: "Phone",
       activeProducts: [
-        { name: "Samsung Galaxy S24 Contract", type: "Handset contracts", cost: 699, expiry: "Suspended" }
+        { name: "Samsung Galaxy S24 Contract", type: "Handset contracts", cost: 699, expiry: "Suspended" },
+        { name: "Flexi SIM 10GB Promo", type: "SIM-only", cost: 99, expiry: "2027-03-31" }
       ],
       interactions: [
         { date: "2026-06-10 11:30", agent: "AGT-101", type: "Complaint", notes: "Customer complained about suspended status due to payment delay." }
@@ -94,7 +99,8 @@ export const MOCK_DB = {
       billingAddress: "78 Sandton Dr, Sandton, Johannesburg, 2146",
       preferredContact: "SMS",
       activeProducts: [
-        { name: "Flexi SIM 10GB Promo", type: "SIM-only", cost: 99, expiry: "2027-04-30" }
+        { name: "Flexi SIM 10GB Promo", type: "SIM-only", cost: 99, expiry: "2027-04-30" },
+        { name: "Infinite Pay-Month SIM Only", type: "SIM-only", cost: 199, expiry: "2027-11-20" }
       ],
       interactions: [
         { date: "2026-06-11 16:30", agent: "AGT-101", type: "Account Query", notes: "Assisted customer with billing details setup." }

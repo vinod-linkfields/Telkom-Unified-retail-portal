@@ -202,7 +202,7 @@ export function showLoginForm() {
   document.getElementById('otp-verify-form').style.display = 'none';
   document.getElementById('password-reset-form').style.display = 'none';
   
-  document.querySelector('.login-card-title').innerText = "Welcome Back";
+  document.querySelector('.login-card-title').innerText = "Welcome to Telkom Retail Connect";
   document.querySelector('.login-card-sub').innerText = "Sign in to your workspace";
   document.getElementById('login-form-error').style.display = 'none';
 }

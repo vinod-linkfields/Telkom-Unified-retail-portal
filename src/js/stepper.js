@@ -39,7 +39,9 @@ export function isSimOrLteProduct(product) {
     pkg.includes('lte') ||
     name.includes('lte') ||
     pkg.includes('sim') ||
-    name.includes('sim')
+    name.includes('sim') ||
+    cat.includes('contract') ||
+    name.includes('contract')
   );
 }
 
