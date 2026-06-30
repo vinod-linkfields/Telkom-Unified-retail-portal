@@ -1469,9 +1469,19 @@ export function submitNewCustomerProfile() {
       timestamp: new Date().toISOString(),
       notes: ""
     };
-    APP_STATE.openedCustomerWizardFromStepper = false;
-    showToast("CRM Customer profile created successfully.", "success");
-    switchRoute('customer-360');
+    if (APP_STATE.openedCustomerWizardFromStepper) {
+      APP_STATE.openedCustomerWizardFromStepper = false;
+      showToast("CRM Customer profile created successfully.", "success");
+      if (window.linkCustomerAndReturnToStepper) {
+        window.linkCustomerAndReturnToStepper(targetCust.id || targetCust.passport, targetCust.id ? 'id' : 'passport');
+      } else {
+        switchRoute('order-stepper');
+      }
+    } else {
+      APP_STATE.openedCustomerWizardFromStepper = false;
+      showToast("CRM Customer profile created successfully.", "success");
+      switchRoute('customer-360');
+    }
   }
 }
 

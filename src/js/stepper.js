@@ -520,6 +520,7 @@ export function linkCustomerAndReturnToStepper(idVal, type) {
   APP_STATE.openedCustomerWizardFromStepper = false;
   APP_STATE.currentStep = 3;
   switchRoute('order-stepper');
+  renderStepper();
 }
 
 export function updateTempAddress(val) {
