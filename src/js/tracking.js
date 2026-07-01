@@ -1191,15 +1191,20 @@ export function renderOrderActivationWorkflow(order, container, isModal) {
       </div>
     `;
   } else if (step === 'enter_sim') {
+    const defaultSimVal = order.simActivationNumber || '';
+    const isDefaultValid = /^\d{19}$/.test(defaultSimVal);
     if (!isModal) {
       container.innerHTML = `
         <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 20px; border-radius: var(--radius-lg); text-align: center; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; justify-content: center;">
           <div style="width: 48px; height: 48px; border-radius: 50%; background-color: var(--success); color: var(--text-white); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; font-size: 24px; font-weight: bold; box-shadow: 0 4px 10px rgba(79, 179, 61, 0.3);">✓</div>
           <h5 style="color: var(--success-dark); font-weight: 700; margin-bottom: 6px; font-size: 16px;">RICA Verification Completed</h5>
           <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 18px; max-width: 400px;">
-            The customer has been successfully verified in compliance with RICA regulations. The order is ready for submission.
+            The customer has been successfully verified in compliance with RICA regulations. Please enter the 19-digit SIM serial number (ICCID) to submit the order.
           </p>
-          <button class="btn btn-primary" onclick="submitOrderAfterRica('${orderRef}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 700; padding: 10px 24px; font-size: 14px; border-radius: var(--radius-md); color: var(--text-white); box-shadow: var(--shadow-md); display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <div style="width: 100%; max-width: 320px; margin-bottom: 16px;">
+            <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px; text-align: center; font-weight: 600;" value="${defaultSimVal}" oninput="validateConfirmationSimInput(this.value)">
+          </div>
+          <button class="btn btn-primary" id="btn-submit-order-after-rica" onclick="submitOrderWithSimNumber('${orderRef}')" style="background-color: var(--telkom-blue-dark); border-color: var(--telkom-blue-dark); font-weight: 700; padding: 10px 24px; font-size: 14px; border-radius: var(--radius-md); color: var(--text-white); box-shadow: var(--shadow-md); display: inline-flex; align-items: center; gap: 8px; ${isDefaultValid ? 'cursor: pointer; opacity: 1;' : 'cursor: not-allowed; opacity: 0.5;'}" ${isDefaultValid ? '' : 'disabled'}>
             Submit Order
             <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left: 2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
           </button>
@@ -1212,9 +1217,9 @@ export function renderOrderActivationWorkflow(order, container, isModal) {
           <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">RICA verification passed. Provide the 19-digit ICCID SIM card number to activate the cellular line.</p>
           <div style="display: flex; gap: 12px; align-items: flex-end;">
             <div style="flex: 1;">
-              <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${order.simActivationNumber || ''}">
+              <input type="text" id="activation-sim-iccid" class="form-control" placeholder="19-digit ICCID e.g. 8927..." style="height: 38px;" value="${defaultSimVal}" oninput="validateConfirmationSimInput(this.value)">
             </div>
-            <button class="btn btn-primary" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600;">
+            <button class="btn btn-primary" id="btn-activate-sim-post-rica" onclick="submitPostOrderSimNumber('${orderRef}', '${containerId}')" style="height: 38px; font-weight: 600; ${isDefaultValid ? 'cursor: pointer; opacity: 1;' : 'cursor: not-allowed; opacity: 0.5;'}" ${isDefaultValid ? '' : 'disabled'}>
               Activate SIM & Complete
             </button>
           </div>
@@ -1332,10 +1337,16 @@ export function runRicaActivationWorkflow(orderRef, containerId) {
   }, 200);
 }
 
-export function submitOrderAfterRica(orderRef) {
+export function submitOrderAfterRica(orderRef, simNumber) {
   const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
   if (order) {
-    order.status = 'Submitted';
+    if (simNumber) {
+      order.simActivationNumber = simNumber;
+      order.status = 'Active';
+      order.activationStep = 'completed';
+    } else {
+      order.status = 'Submitted';
+    }
     order.ricaStatus = 'Verified';
     saveOrders();
   }
@@ -1368,6 +1379,41 @@ export function submitOrderAfterRica(orderRef) {
   switchRoute('catalogue');
 }
 
+export function validateConfirmationSimInput(val) {
+  const btnSubmit = document.getElementById('btn-submit-order-after-rica');
+  const btnActivate = document.getElementById('btn-activate-sim-post-rica');
+  const btn = btnSubmit || btnActivate;
+  if (!btn) return;
+  const cleaned = val.replace(/[^0-9]/g, '');
+  
+  const input = document.getElementById('activation-sim-iccid');
+  if (input && input.value !== cleaned) {
+    input.value = cleaned;
+  }
+
+  const isValid = /^\d{19}$/.test(cleaned);
+  if (isValid) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+export function submitOrderWithSimNumber(orderRef) {
+  const input = document.getElementById('activation-sim-iccid');
+  if (!input) return;
+  const simNum = input.value.trim();
+  if (!/^\d{19}$/.test(simNum)) {
+    showToast("SIM serial number must be exactly 19 digits.", "danger");
+    return;
+  }
+  submitOrderAfterRica(orderRef, simNum);
+}
+
 // Bind to window for global inline HTML execution
 window.renderOrderTracking = renderOrderTracking;
 window.switchTrackingTab = switchTrackingTab;
@@ -1383,3 +1429,5 @@ window.setPostOrderActivationStep = setPostOrderActivationStep;
 window.submitPostOrderSimNumber = submitPostOrderSimNumber;
 window.runRicaActivationWorkflow = runRicaActivationWorkflow;
 window.submitOrderAfterRica = submitOrderAfterRica;
+window.validateConfirmationSimInput = validateConfirmationSimInput;
+window.submitOrderWithSimNumber = submitOrderWithSimNumber;
