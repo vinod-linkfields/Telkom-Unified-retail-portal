@@ -300,21 +300,46 @@
             </div>
           </div>
 
+          <div class="layout-2col" style="align-items: stretch; margin-bottom: 20px;">
+            <!-- Top products this week -->
+            <div class="panel" style="margin-bottom: 0; display: flex; flex-direction: column;">
+              <div class="panel-header">
+                <span class="panel-title">Top products this week</span>
+              </div>
+              <div class="panel-body" style="padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <div id="dashboard-top-products-container" style="display: flex; flex-direction: column; gap: 14px;">
+                  <!-- Leaderboard of top products -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Links Actions -->
+            <div class="panel" style="margin-bottom: 0; display: flex; flex-direction: column;">
+              <div class="panel-header">
+                <span class="panel-title">Quick Actions</span>
+              </div>
+              <div class="panel-body" style="padding: 16px; flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                <div class="quick-link-grid">
+                  <button class="quick-link-btn" onclick="switchRoute('catalogue')">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    <span>Product catalogue</span>
+                  </button>
+                  <button class="quick-link-btn" onclick="switchRoute('customer-search')">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>Customer Search</span>
+                  </button>
+                  <button class="quick-link-btn" onclick="switchRoute('order-tracking')">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <span>View all Orders</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="layout-2col">
             <!-- Left Column -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
-              <!-- Top products this week -->
-              <div class="panel">
-                <div class="panel-header">
-                  <span class="panel-title">Top products this week</span>
-                </div>
-                <div class="panel-body" style="padding: 20px;">
-                  <div id="dashboard-top-products-container" style="display: flex; flex-direction: column; gap: 14px;">
-                    <!-- Leaderboard of top products -->
-                  </div>
-                </div>
-              </div>
-
               <!-- My Recent Order Transactions -->
               <div class="panel">
                 <div class="panel-header">
@@ -344,29 +369,6 @@
 
             <!-- Right Column -->
             <div style="display: flex; flex-direction: column; gap: 20px;">
-              <!-- Quick Links Actions -->
-              <div class="panel">
-                <div class="panel-header">
-                  <span class="panel-title">Quick Actions</span>
-                </div>
-                <div class="panel-body" style="padding: 16px;">
-                  <div class="quick-link-grid">
-                    <button class="quick-link-btn" onclick="switchRoute('catalogue')">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
-                      <span>Product catalogue</span>
-                    </button>
-                    <button class="quick-link-btn" onclick="switchRoute('customer-search')">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                      <span>Customer Search</span>
-                    </button>
-                    <button class="quick-link-btn" onclick="switchRoute('order-tracking')">
-                      <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                      <span>View all Orders</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
               <!-- Order Status Distribution (Pie Chart) -->
               <div class="panel">
                 <div class="panel-header">
@@ -381,7 +383,6 @@
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
 
