@@ -60,9 +60,20 @@ export function renderAgentDashboard() {
   // Render Promotions & Best Sellers dynamically from catalogue
   const promoContainer = document.getElementById('dashboard-promotions-list');
   if (promoContainer) {
-    const promoOrBest = PRODUCTS_REGISTRY.filter(p => p.promo || p.bestSeller).slice(0, 3);
-    const fallback = MOCK_DB.products.filter(p => p.promo || p.bestSeller || ['p-dev-2','p-sim-2','p-dev-1'].includes(p.id));
-    const displayItems = promoOrBest.length > 0 ? promoOrBest : fallback;
+    let source = PRODUCTS_REGISTRY.length > 0 ? PRODUCTS_REGISTRY : MOCK_DB.products;
+    
+    // Ensure all items in fallback have bestSeller set if not set
+    if (source === MOCK_DB.products) {
+      source = MOCK_DB.products.map((p, idx) => {
+        const name = (p.name || '').toLowerCase();
+        const isBestSeller = idx % 2 === 0 || name.includes('infinite') || name.includes('s24') || name.includes('iphone');
+        return { ...p, bestSeller: isBestSeller };
+      });
+    }
+
+    const bestSellers = source.filter(p => p.bestSeller).slice(0, 2);
+    const promos = source.filter(p => p.promo).slice(0, 1);
+    const displayItems = [...bestSellers, ...promos];
     
     promoContainer.innerHTML = displayItems.map(p => {
       const monthlyFee = p.monthlyFee ?? p.price ?? 0;
