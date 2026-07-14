@@ -143,7 +143,7 @@ const sidebars = {
       <li class="sidebar-menu-item"><a class="sidebar-link [ACTIVE_admin-dashboard]" href="admin-dashboard.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg><span>Health Portal</span></a></li>
       <li class="sidebar-menu-item"><a class="sidebar-link [ACTIVE_reports]" href="reports.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg><span>Reports</span></a></li>
       <li class="sidebar-menu-item"><a class="sidebar-link [ACTIVE_record-logs]" href="record-logs.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg><span>Record Logs</span></a></li>
-      <li class="sidebar-menu-item"><a class="sidebar-link [ACTIVE_notifications]" href="notifications.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg><span>Integration Alerts</span></a></li>
+      <li class="sidebar-menu-item"><a class="sidebar-link [ACTIVE_notifications]" href="notifications.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg><span>Notifications</span></a></li>
     </ul>
     <div class="menu-section-title">System & Settings</div>
     <ul class="sidebar-menu-list">
@@ -195,26 +195,43 @@ views.forEach(view => {
       .replace('<!-- Best Selling Products Rendered here -->', `
         <div class="product-card">
           <div class="product-badge-promo">PROMO</div>
-          <img class="product-image" src="Images/iphone_15_pro_max.png" alt="iPhone 15 Pro Max">
-          <div class="product-card-body">
-            <span class="product-category" style="padding-right: 55px;">Handsets</span>
-            <h4 class="product-name">iPhone 15 Pro Max 256GB</h4>
-            <p class="product-subtitle">Natural Titanium - Top Seller</p>
-            <div class="product-price-row" style="margin-top:12px;">
-              <span class="product-price">R 1,299 <small>/ month</small></span>
-              <span class="product-term-badge">24 mos</span>
+          <div class="product-info-area">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;">
+              <span class="product-category" style="background: #0066cc18; color: #0066cc; border: 1px solid #0066cc30; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; padding-right: 55px;">Handsets</span>
+              <span class="badge" style="background: #ff7a00; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 6px; display: inline-flex; align-items: center; gap: 4px;">🔥 Best Seller</span>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">DEAL ID: DEAL-0938</div>
+            <div class="product-name" style="margin-top: 4px; font-size: 14px; line-height: 1.3; min-height: 36px;">iPhone 15 Pro Max 256GB</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📱 iPhone 15 Pro Max</div>
+            <div class="product-allocation" style="margin-top: 10px;">
+              <div class="allocation-row" style="font-size: 12px;">
+                <span style="color: var(--text-secondary);">Natural Titanium, 24-Month Term Deal</span>
+              </div>
+            </div>
+            <div class="product-pricing" style="margin-top: 12px;">
+              <span class="price-currency">R</span>
+              <span class="price-amount">1299</span>
+              <span class="price-period">/mo</span>
             </div>
           </div>
         </div>
         <div class="product-card">
-          <img class="product-image" src="Images/samsung_galaxy_s24.png" alt="Samsung S24">
-          <div class="product-card-body">
-            <span class="product-category">Handsets</span>
-            <h4 class="product-name">Samsung Galaxy S24 Ultra</h4>
-            <p class="product-subtitle">Titanium Gray - Promo Deal</p>
-            <div class="product-price-row" style="margin-top:12px;">
-              <span class="product-price">R 1,199 <small>/ month</small></span>
-              <span class="product-term-badge">24 mos</span>
+          <div class="product-info-area">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;">
+              <span class="product-category" style="background: #0066cc18; color: #0066cc; border: 1px solid #0066cc30; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">Handsets</span>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">DEAL ID: DEAL-0940</div>
+            <div class="product-name" style="margin-top: 4px; font-size: 14px; line-height: 1.3; min-height: 36px;">Samsung Galaxy S24 Ultra</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📱 Samsung Galaxy S24</div>
+            <div class="product-allocation" style="margin-top: 10px;">
+              <div class="allocation-row" style="font-size: 12px;">
+                <span style="color: var(--text-secondary);">Titanium Gray, 24-Month Term Deal</span>
+              </div>
+            </div>
+            <div class="product-pricing" style="margin-top: 12px;">
+              <span class="price-currency">R</span>
+              <span class="price-amount">1199</span>
+              <span class="price-period">/mo</span>
             </div>
           </div>
         </div>
@@ -306,42 +323,151 @@ views.forEach(view => {
         </tr>
       `);
   } else if (view.name === 'catalogue') {
-    // Correctly replace the "Rendered dynamically" placeholder inside catalogue grid
+    // Correctly replace the "Rendered dynamically" placeholder inside catalogue grid with exact product card structures
     viewContent = viewContent.replace('<!-- Rendered dynamically -->', `
       <div class="product-card">
         <div class="product-badge-promo">PROMO</div>
-        <img class="product-image" src="Images/iphone_15_pro_max.png" alt="iPhone 15 Pro Max">
-        <div class="product-card-body">
-          <span class="product-category" style="padding-right:55px;">Handsets</span>
-          <h4 class="product-name">iPhone 15 Pro Max 256GB</h4>
-          <div class="product-price-row">
-            <span class="product-price">R 1,299 <small>/ month</small></span>
+        <div class="product-info-area">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;">
+            <span class="product-category" style="background: #0066cc18; color: #0066cc; border: 1px solid #0066cc30; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; padding-right: 55px;">Handsets</span>
+            <span class="badge" style="background: #ff7a00; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-left: 6px; display: inline-flex; align-items: center; gap: 4px;">🔥 Best Seller</span>
           </div>
-          <button class="btn btn-sm btn-primary" style="width:100%; margin-top:12px;">Select Product</button>
+
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">DEAL ID: DEAL-0938</div>
+          <div class="product-name" style="margin-top: 4px; font-size: 14px; line-height: 1.3; min-height: 36px;">iPhone 15 Pro Max 256GB</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📱 iPhone 15 Pro Max</div>
+
+          <div class="product-allocation" style="margin-top: 10px;">
+            <div class="allocation-row" style="font-size: 12px;">
+              <span style="color: var(--text-secondary);">256GB Storage, Natural Titanium, Super Retina XDR OLED display, A17 Pro Chip.</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <div style="flex: 1;">
+              <label style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px;">Color</label>
+              <select class="form-select" style="width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer;">
+                <option value="Natural Titanium" selected>Natural Titanium</option>
+                <option value="Blue Titanium">Blue Titanium</option>
+                <option value="White Titanium">White Titanium</option>
+                <option value="Black Titanium">Black Titanium</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px;">Term</label>
+              <select class="form-select" style="width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer;">
+                <option value="24" selected>24 Months</option>
+                <option value="36">36 Months</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+            <span style="color: var(--text-secondary); font-weight: 600;">Stock Node:</span>
+            <span style="font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #edf7ed; color: #2e7d32; border: 1px solid #c8e6c9;">
+              15 Available
+            </span>
+          </div>
+
+          <div class="product-pricing" style="margin-top: 12px;">
+            <span class="price-currency">R</span>
+            <span class="price-amount">1299</span>
+            <span class="price-period">/mo</span>
+          </div>
+          <div class="price-onceoff">Once-off Connection Fee: R99</div>
+
+          <div style="margin-top: 14px; display: flex; gap: 8px;">
+            <button class="btn btn-primary product-cta-btn" style="flex: 1; font-size: 13px;">Select Product</button>
+            <button class="btn btn-outline" style="padding: 0 12px; font-size: 13px;">Details</button>
+          </div>
         </div>
       </div>
+
       <div class="product-card">
-        <img class="product-image" src="Images/samsung_galaxy_s24.png" alt="Samsung S24">
-        <div class="product-card-body">
-          <span class="product-category">Handsets</span>
-          <h4 class="product-name">Samsung Galaxy S24 Ultra</h4>
-          <div class="product-price-row">
-            <span class="product-price">R 1,199 <small>/ month</small></span>
+        <div class="product-info-area">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;">
+            <span class="product-category" style="background: #0066cc18; color: #0066cc; border: 1px solid #0066cc30; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">Handsets</span>
           </div>
-          <button class="btn btn-sm btn-primary" style="width:100%; margin-top:12px;">Select Product</button>
+
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">DEAL ID: DEAL-0940</div>
+          <div class="product-name" style="margin-top: 4px; font-size: 14px; line-height: 1.3; min-height: 36px;">Samsung Galaxy S24 Ultra</div>
+          <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">📱 Samsung Galaxy S24</div>
+
+          <div class="product-allocation" style="margin-top: 10px;">
+            <div class="allocation-row" style="font-size: 12px;">
+              <span style="color: var(--text-secondary);">256GB Storage, Titanium Gray, Quad HD+ Dynamic AMOLED 2X, S-Pen included.</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <div style="flex: 1;">
+              <label style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px;">Color</label>
+              <select class="form-select" style="width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer;">
+                <option value="Titanium Gray" selected>Titanium Gray</option>
+                <option value="Onyx Black">Onyx Black</option>
+                <option value="Cobalt Violet">Cobalt Violet</option>
+              </select>
+            </div>
+            <div style="flex: 1;">
+              <label style="font-size: 9px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 2px;">Term</label>
+              <select class="form-select" style="width: 100%; font-size: 11px; padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-primary); cursor: pointer;">
+                <option value="24" selected>24 Months</option>
+                <option value="36">36 Months</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 12px;">
+            <span style="color: var(--text-secondary); font-weight: 600;">Stock Node:</span>
+            <span style="font-weight: 700; font-size: 11px; padding: 2px 6px; border-radius: 4px; background: #edf7ed; color: #2e7d32; border: 1px solid #c8e6c9;">
+              9 Available
+            </span>
+          </div>
+
+          <div class="product-pricing" style="margin-top: 12px;">
+            <span class="price-currency">R</span>
+            <span class="price-amount">1199</span>
+            <span class="price-period">/mo</span>
+          </div>
+          <div class="price-onceoff">Once-off Connection Fee: R99</div>
+
+          <div style="margin-top: 14px; display: flex; gap: 8px;">
+            <button class="btn btn-primary product-cta-btn" style="flex: 1; font-size: 13px;">Select Product</button>
+            <button class="btn btn-outline" style="padding: 0 12px; font-size: 13px;">Details</button>
+          </div>
         </div>
       </div>
+
       <div class="product-card">
-        <div style="height:150px; background:#F3F4F6; display:flex; align-items:center; justify-content:center; border-radius:8px;">
-          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071a9.9 9.9 0 0114.14 0M1.06 6.06a14.9 14.9 0 0121.88 0"></path></svg>
-        </div>
-        <div class="product-card-body">
-          <span class="product-category">LTE Broadband</span>
-          <h4 class="product-name">LTE Unlimited Premium</h4>
-          <div class="product-price-row">
-            <span class="product-price">R 599 <small>/ month</small></span>
+        <div class="product-info-area">
+          <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap;">
+            <span class="product-category" style="background: #00875a18; color: #00875a; border: 1px solid #00875a30; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">SIM Only</span>
           </div>
-          <button class="btn btn-sm btn-primary" style="width:100%; margin-top:12px;">Select Product</button>
+
+          <div style="font-size: 10px; color: var(--text-muted); font-weight: 700; font-family: monospace; letter-spacing: 0.5px;">DEAL ID: DEAL-0112</div>
+          <div class="product-name" style="margin-top: 4px; font-size: 14px; line-height: 1.3; min-height: 36px;">LTE Unlimited Premium</div>
+
+          <div class="product-allocation" style="margin-top: 10px;">
+            <div class="allocation-row" style="font-size: 12px;">
+              <span style="color: var(--text-secondary);">Unlimited home data, uncapped data speeds up to 10Mbps, free SIM card included.</span>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; align-items: center; margin-top: 10px;">
+            <div style="background: var(--bg-light); border-radius: 6px; padding: 4px 8px; font-size: 11px; color: var(--text-secondary); border: 1px solid var(--border-color);">
+              ⏱ 24 months
+            </div>
+          </div>
+
+          <div class="product-pricing" style="margin-top: 12px;">
+            <span class="price-currency">R</span>
+            <span class="price-amount">599</span>
+            <span class="price-period">/mo</span>
+          </div>
+          <div class="price-onceoff">Once-off Connection Fee: R99</div>
+
+          <div style="margin-top: 14px; display: flex; gap: 8px;">
+            <button class="btn btn-primary product-cta-btn" style="flex: 1; font-size: 13px;">Select Product</button>
+            <button class="btn btn-outline" style="padding: 0 12px; font-size: 13px;">Details</button>
+          </div>
         </div>
       </div>
     `);
