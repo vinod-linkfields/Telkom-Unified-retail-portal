@@ -1,0 +1,765 @@
+<!-- Standalone Static Design File for Screen: notifications -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telkom Retail Connect</title>
+  <link rel="stylesheet" href="app.css">
+  <script>
+    window.__JS_ERRORS__ = [];
+    window.addEventListener('error', function(e) {
+      window.__JS_ERRORS__.push({ msg: e.message, src: e.filename, line: e.lineno, col: e.colno, stack: e.error && e.error.stack });
+      console.error('[CAUGHT ERROR]', e.message, 'at', e.filename, 'line', e.lineno);
+      localStorage.setItem('portal_js_errors', JSON.stringify(window.__JS_ERRORS__));
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      window.__JS_ERRORS__.push({ msg: String(e.reason), type: 'unhandledrejection' });
+      localStorage.setItem('portal_js_errors', JSON.stringify(window.__JS_ERRORS__));
+    });
+  </script>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- LEFT SIDEBAR NAVIGATION -->
+    <aside class="sidebar" id="app-sidebar" style="display: flex;">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo">
+          <img src="Images/Telkom.svg" alt="Telkom Retail" style="height: 36px; object-fit: contain; display: block;">
+        </div>
+        <div class="sidebar-role-badge" id="sidebar-role-indicator">agent</div>
+      </div>
+
+      <nav class="sidebar-menu" id="sidebar-dynamic-menu">
+        
+    <div class="menu-section-title">Retail Agent Operations</div>
+    <ul class="sidebar-menu-list">
+      <li class="sidebar-menu-item"><a class="sidebar-link " href="agent-dashboard.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span>Dashboard</span></a></li>
+      <li class="sidebar-menu-item"><a class="sidebar-link " href="customer-search.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><span>Customer Search</span></a></li>
+      <li class="sidebar-menu-item"><a class="sidebar-link " href="catalogue.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg><span>Product Catalogue</span></a></li>
+      <li class="sidebar-menu-item"><a class="sidebar-link " href="order-tracking.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg><span>Orders</span></a></li>
+    </ul>
+    <div class="menu-section-title">Branch Tools</div>
+    <ul class="sidebar-menu-list">
+      <li class="sidebar-menu-item"><a class="sidebar-link " href="check-coverage.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span>Coverage Check</span></a></li>
+      <li class="sidebar-menu-item"><a class="sidebar-link " href="stock-requests.html"><svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg><span>Stocks</span></a></li>
+    </ul>
+    <div class="menu-section-title">System & Settings</div>
+    <ul class="sidebar-menu-list">
+      <li class="sidebar-menu-item"><a class="sidebar-link active" href="notifications.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg><span>Notifications</span></a></li>
+      <li class="sidebar-menu-item"><a class="sidebar-link" href="login.html"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg><span>Log Out</span></a></li>
+    </ul>
+  
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-summary">
+          <div class="user-avatar" id="nav-avatar">PZ</div>
+          <div class="user-info">
+            <span class="user-name" id="nav-user-fullname">Piet van Zyl</span>
+            <span class="user-role" id="nav-user-rolename">AGENT</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <main class="main-wrapper" id="main-content-layout">
+      
+      <!-- HEADER -->
+      <header class="header" id="app-header" style="display: flex;">
+        <div class="header-left">
+          <div class="store-badge" id="header-store-badge">PTA-001 (Pretoria Main)</div>
+          
+          <div class="integration-health-status">
+            <span>CRM: <span class="health-dot" id="dot-crm"></span></span>
+            <span>OMS: <span class="health-dot" id="dot-oms"></span></span>
+            <span>POS: <span class="health-dot" id="dot-pos"></span></span>
+            <span>Transact: <span class="health-dot" id="dot-transact"></span></span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <div class="header-actions">
+            <button class="header-btn" onclick="toggleNotificationsDrawer()">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+              <span class="btn-badge" id="notifications-count-badge" style="display: none;">0</span>
+            </button>
+            <button class="header-btn" onclick="switchRoute('profile')">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </button>
+            <button class="header-btn" onclick="handleLogout()" style="color: var(--danger);">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+
+
+      <!-- MAIN CONTENT VIEWPORT -->
+      <div class="content-viewport">
+<div id="view-notifications" class="view-container" style="display: block;">
+          <div class="screen-header">
+            <div>
+              <h2>Integrated Notification Center</h2>
+              <p class="screen-title-desc">Track automated alerts for order submission failures, payment logs, and stock manager request updates.</p>
+            </div>
+          </div>
+
+          <div class="panel" style="max-width: 800px; margin: 0 auto;">
+            <div class="panel-body" id="notifications-page-list">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </main>
+    
+    <!-- NOTIFICATIONS OVERLAY DRAWER -->
+    <div class="notifications-drawer" id="notifications-drawer">
+      <div class="drawer-header">
+        <h4 style="margin: 0; font-size: 15px;">Pending Notifications</h4>
+        <button class="modal-close" onclick="toggleNotificationsDrawer()">&times;</button>
+      </div>
+      <div class="drawer-body" id="drawer-notifications-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- FLOATING UAT CONTROLLER PANEL -->
+    <!-- ========================================== -->
+    <div class="uat-panel" id="uat-controller-panel">
+      <div class="uat-panel-header" onclick="toggleUatPanel()">
+        <span class="uat-panel-title">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          UAT State Controller
+        </span>
+        <button class="uat-toggle-btn">↕</button>
+      </div>
+      
+      <div class="uat-panel-body">
+        <!-- <div class="uat-section-title">Active Testing Role</div>
+        <select class="uat-role-select" id="uat-role" onchange="handleUatRoleChange()">
+          <option value="agent">Store Agent (PTA-001)</option>
+          <option value="manager">Store Manager (PTA-001)</option>
+          <option value="area_manager">Area Manager (Gauteng Region)</option>
+          <option value="admin">Telkom IT / Admin</option>
+        </select> -->
+
+        <div class="uat-section-title" style="margin-top: 12px;">Simulate System Outages</div>
+        <ul class="uat-switch-list">
+          <li class="uat-switch-item">
+            <span>Clarify CRM Offline</span>
+            <label class="uat-switch">
+              <input type="checkbox" id="outage-crm" onchange="handleUatOutageToggle('crm')">
+              <span class="uat-slider"></span>
+            </label>
+          </li>
+          <li class="uat-switch-item">
+            <span>Amdocs CIM Offline</span>
+            <label class="uat-switch">
+              <input type="checkbox" id="outage-cim" onchange="handleUatOutageToggle('cim')">
+              <span class="uat-slider"></span>
+            </label>
+          </li>
+          <li class="uat-switch-item">
+            <span>Order Management (OMS) Offline</span>
+            <label class="uat-switch">
+              <input type="checkbox" id="outage-oms" onchange="handleUatOutageToggle('oms')">
+              <span class="uat-slider"></span>
+            </label>
+          </li>
+          <li class="uat-switch-item">
+            <span>POS terminal Outage</span>
+            <label class="uat-switch">
+              <input type="checkbox" id="outage-pos" onchange="handleUatOutageToggle('pos')">
+              <span class="uat-slider"></span>
+            </label>
+          </li>
+          <li class="uat-switch-item">
+            <span>Transact Stock Offline</span>
+            <label class="uat-switch">
+              <input type="checkbox" id="outage-transact" onchange="handleUatOutageToggle('transact')">
+              <span class="uat-slider"></span>
+            </label>
+          </li>
+          <li class="uat-switch-item">
+            <span>GIS coverage Checker Offline</span>
+            <label class="uat-switch">
+              <input type="checkbox" id="outage-gis" onchange="handleUatOutageToggle('gis')">
+              <span class="uat-slider"></span>
+            </label>
+          </li>
+        </ul>
+
+        <div class="uat-section-title" style="margin-top: 12px;">Simulate User Actions</div>
+        <button class="btn btn-sm btn-outline" style="width:100%; justify-content:center; font-size:11px;" onclick="triggerSessionTimeoutSimulation()">Trigger Inactivity Warning</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODALS -->
+  <!-- ========================================== -->
+
+  <!-- MODAL: Create Customer -->
+  <div class="modal-overlay" id="customer-create-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Create Customer Profile</h4>
+        <button class="modal-close" onclick="closeModal('customer-create-modal')">&times;</button>
+      </div>
+      <form onsubmit="handleCreateCustomerSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">South African ID Number <span class="required">*</span></label>
+            <input type="text" id="new-cust-id" class="form-control" placeholder="13-digit numeric SA ID..." required pattern="[0-9]{13}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Customer Full Name <span class="required">*</span></label>
+            <input type="text" id="new-cust-name" class="form-control" placeholder="First and last name..." required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mobile Number <span class="required">*</span></label>
+              <input type="text" id="new-cust-mobile" class="form-control" placeholder="e.g. 0821234567" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address <span class="required">*</span></label>
+              <input type="email" id="new-cust-email" class="form-control" placeholder="customer@mail.com" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Physical Street Address <span class="required">*</span></label>
+            <textarea id="new-cust-address" class="form-control" rows="2" placeholder="Street, suburb, city, code..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('customer-create-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save CRM Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Edit Customer Contact Details -->
+  <div class="modal-overlay" id="customer-edit-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Edit Customer Profile</h4>
+        <button class="modal-close" onclick="closeModal('customer-edit-modal')">&times;</button>
+      </div>
+      <form onsubmit="handleEditCustomerSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Email Address <span class="required">*</span></label>
+            <input type="email" id="edit-cust-email" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mobile Number <span class="required">*</span></label>
+            <input type="text" id="edit-cust-mobile" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Physical Installation Address <span class="required">*</span></label>
+            <input type="text" id="edit-cust-address" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Billing Address <span class="required">*</span></label>
+            <input type="text" id="edit-cust-billing" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Communication Preference Choice</label>
+            <select id="edit-cust-pref" class="form-control">
+              <option value="SMS">SMS Message Alerts</option>
+              <option value="Email">Email Newsletters</option>
+              <option value="Phone">Direct Voice Calls</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('customer-edit-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Contact Updates</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Raise Stock Request -->
+  <div class="modal-overlay" id="stock-request-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Initiate Stock Request</h4>
+        <button class="modal-close" onclick="closeModal('stock-request-modal')">&times;</button>
+      </div>
+      <form onsubmit="handleStockRequestSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group" id="stock-req-select-container" style="display: none; margin-bottom: 12px;">
+            <label class="form-label">Select Device <span class="required">*</span></label>
+            <select id="stock-req-device-select" class="form-control" onchange="handleStockReqDeviceSelectChange(this.value)">
+              <option value="">-- Select Device --</option>
+              <option value="SKU-S24-128|Samsung Galaxy S24">Samsung Galaxy S24 (SKU-S24-128)</option>
+              <option value="SKU-IP15-256|iPhone 15 Pro Max">iPhone 15 Pro Max (SKU-IP15-256)</option>
+              <option value="SKU-A54-128|Samsung Galaxy A54">Samsung Galaxy A54 (SKU-A54-128)</option>
+              <option value="SKU-TAB-S9|Samsung Galaxy Tab S9">Samsung Galaxy Tab S9 (SKU-TAB-S9)</option>
+              <option value="SKU-IPAD-10|iPad 10th Gen">iPad 10th Gen (SKU-IPAD-10)</option>
+              <option value="SKU-MAC-AIR|MacBook Air M2">MacBook Air M2 (SKU-MAC-AIR)</option>
+              <option value="SKU-HP-PRO|HP ProBook 450">HP ProBook 450 (SKU-HP-PRO)</option>
+            </select>
+          </div>
+          <div class="form-row" id="stock-req-readonly-row">
+            <div class="form-group">
+              <label class="form-label">Device SKU</label>
+              <input type="text" id="stock-req-sku" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Device Name</label>
+              <input type="text" id="stock-req-product" class="form-control" readonly>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Quantity Requested <span class="required">*</span></label>
+              <input type="number" id="stock-req-qty" class="form-control" min="1" max="100" required value="5">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Reason for Request</label>
+              <select id="stock-req-reason" class="form-control">
+                <option value="Customer Order">Immediate Customer Order</option>
+                <option value="Replenishment">Weekly Store Replenishment</option>
+                <option value="Promotion">Marketing Campaign / Promotion</option>
+                <option value="Urgent Demand">Urgent Area Demand</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Priority Level</label>
+            <select id="stock-req-priority" class="form-control">
+              <option value="Urgent">Urgent (Customer waiting)</option>
+              <option value="Normal">Normal replenishing</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Additional Notes</label>
+            <textarea id="stock-req-notes" class="form-control" rows="2" placeholder="Add justification details..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('stock-request-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Request Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Area Manager Stock Decider -->
+  <div class="modal-overlay" id="approval-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Authorize Stock Allocation</h4>
+        <button class="modal-close" onclick="closeModal('approval-modal')">&times;</button>
+      </div>
+      <form onsubmit="handleApprovalSubmit(event)">
+        <div class="modal-body">
+          <div style="background-color: var(--bg-light); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 20px; font-size: 13px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span>Request ID</span>
+              <strong id="approve-req-id">REQ-0000</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span>Requesting Store</span>
+              <strong id="approve-store">JHB-002</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span>Product Selection</span>
+              <strong id="approve-product">iPhone 15</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span>Quantity Requested</span>
+              <strong><span id="approve-qty">3</span> units</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span>Priority Level</span>
+              <span class="badge" id="approve-priority">Urgent</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span>Justification Notes</span>
+              <span id="approve-notes" style="font-style: italic;">Notes here</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Authorize Decision</label>
+              <select id="approve-decision-type" class="form-control" onchange="toggleDeclineReasonArea()">
+                <option value="Approve">Approve Allocation</option>
+                <option value="Decline">Decline Request</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Approved Quantity</label>
+              <input type="number" id="approve-decision-qty" class="form-control" min="1" max="100">
+            </div>
+          </div>
+
+          <div class="form-group" id="decline-reason-group" style="display: none;">
+            <label class="form-label">Decline Reason Choice <span class="required">*</span></label>
+            <select id="approve-decline-reason" class="form-control">
+              <option value="Insufficient regional stock">Insufficient regional stock</option>
+              <option value="Alternative product suggested">Alternative product suggested</option>
+              <option value="Store replenishment limit reached">Store replenishment limit reached</option>
+              <option value="Duplicate request detected">Duplicate request detected</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Approval Comments / Audit Notes</label>
+            <textarea id="approve-decision-notes" class="form-control" rows="2" placeholder="Record comments for branch logs..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('approval-modal')">Close</button>
+          <button type="submit" class="btn btn-primary">Record Allocation Decision</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Order Details & Traceability -->
+  <div class="modal-overlay" id="order-details-modal" style="display: none;">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h4 class="modal-title">Order Reference Lifecycle Details</h4>
+        <button class="modal-close" onclick="closeModal('order-details-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Tabs Navigation -->
+        <div class="tab-navigation" style="display: flex; gap: 8px; border-bottom: 2px solid var(--border-color); margin-bottom: 20px; padding-bottom: 0;">
+          <button class="tab-btn active" id="modal-tab-btn-oms" onclick="switchModalTab('oms')" style="padding: 10px 16px; border: none; background: none; font-weight: 700; cursor: pointer; border-bottom: 3px solid var(--telkom-blue); color: var(--telkom-blue-dark); font-size: 14px;">OMS Lifecycle Tracker</button>
+          <button class="tab-btn" id="modal-tab-btn-debicheck" onclick="switchModalTab('debicheck')" style="padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-size: 14px;">DebiCheck Mandate Details</button>
+          <button class="tab-btn" id="modal-tab-btn-cancellation" onclick="switchModalTab('cancellation')" style="display: none; padding: 10px 16px; border: none; background: none; font-weight: 600; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-secondary); font-size: 14px;">Cancellation Audit</button>
+        </div>
+
+        <!-- OMS PANEL -->
+        <div id="modal-panel-oms" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 32px;">
+          <div>
+            <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">Order Header</h5>
+            <div style="font-size:13px; color:var(--text-secondary)">
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Order Reference</span>
+                <strong id="view-order-ref" style="color:var(--telkom-blue)">ORD-00000</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>OMS Provision Status</span>
+                <span class="badge badge-warning" id="view-order-status">Pending</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Customer</span>
+                <span id="view-order-cust">Jan du Toit</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Account Number</span>
+                <span id="view-order-acct">TEL-000000</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Product</span>
+                <span id="view-order-prod">SIM Plan</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Contract Plan</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <span id="view-order-contract-plan">-</span>
+                  <button id="modal-download-contract-btn" class="btn btn-sm btn-outline" style="padding: 2px 6px; display: none; align-items: center; justify-content: center; height: 24px; width: 24px; border-radius: var(--radius-sm); border-color: var(--telkom-blue); color: var(--telkom-blue); cursor: pointer;" title="Download Contract Only">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Once-off Charge</span>
+                <span id="view-order-once-off">-</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Store branch</span>
+                <span id="view-order-store">PTA-001</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Agent ID</span>
+                <span id="view-order-agent">AGT-101</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Date Captured</span>
+                <span id="view-order-date">2026-06-12</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>Payment State</span>
+                <span class="badge badge-success" id="view-order-pay">Paid</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color)">
+                <span>RICA Status</span>
+                <span class="badge badge-warning" id="view-order-rica-status">Pending</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:8px 0;">
+                <span>SIM Activation</span>
+                <span class="badge badge-warning" id="view-order-sim-status">Pending</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">OMS Lifecycle Tracker & Auditing</h5>
+            <div id="view-order-timeline" style="position:relative; padding-left: 24px; border-left: 2px solid var(--telkom-blue); font-size:13px; margin-bottom: 24px;">
+              <!-- Timeline injected dynamically -->
+            </div>
+            
+            <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">Supporting Documents</h5>
+            <div id="view-order-docs" style="font-size:13px;">
+              <!-- Documents injected dynamically -->
+            </div>
+          </div>
+          <div id="order-details-rica-panel" style="grid-column: 1 / -1; display: none; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 16px;"></div>
+        </div>
+
+        <!-- DEBICHECK PANEL -->
+        <div id="modal-panel-debicheck" style="display: none;">
+          <!-- Content populated dynamically by viewOrderDetails in js/tracking.js -->
+        </div>
+
+        <!-- CANCELLATION PANEL -->
+        <div id="modal-panel-cancellation" style="display: none;">
+          <!-- Content populated dynamically by viewOrderDetails in js/tracking.js -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Custom Order Cancellation -->
+  <div class="modal-overlay" id="cancellation-confirm-modal" style="display: none; z-index: 2000;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+        <h4 class="modal-title" style="color: var(--danger); display: flex; align-items: center; gap: 8px; margin: 0;">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="color: var(--danger);"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Confirm Order Cancellation
+        </h4>
+        <button class="modal-close" onclick="closeModal('cancellation-confirm-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding-top: 16px;">
+        <p style="font-size: 14px; color: var(--text-primary); margin-bottom: 12px; font-weight: 500;">
+          Are you sure you want to cancel this order? This will discard your current configuration.
+        </p>
+        
+        <div class="form-group" style="margin-top: 16px;">
+          <label class="form-label" style="font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block;">Reason for Cancellation (Optional)</label>
+          <textarea id="custom-cancellation-reason" class="form-control" rows="3" placeholder="Please enter a reason for cancellation..." style="width: 100%; border-radius: var(--radius-md); padding: 8px 12px; border: 1px solid var(--border-color); font-size: 13px;"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 16px;">
+        <button type="button" class="btn btn-secondary" onclick="cancelToSaveDraft()">Save as Draft</button>
+        <button type="button" class="btn btn-danger" onclick="submitCustomCancellation()" style="background-color: var(--danger); color: white;">Yes, Cancel Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Stock Request Details -->
+  <div class="modal-overlay" id="stock-request-details-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Stock Request Lifecycle Details</h4>
+        <button class="modal-close" onclick="closeModal('stock-request-details-modal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background-color: var(--bg-light); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 20px; font-size: 13px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Request Reference</span>
+            <strong id="det-req-id" style="color: var(--telkom-blue)">REQ-0000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Current Decision Status</span>
+            <span class="badge badge-warning" id="det-req-status">Submitted</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Store Branch Node</span>
+            <strong id="det-req-store">JHB-002</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Requested By (Staff ID)</span>
+            <span id="det-req-user">MGR-002</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Date Created</span>
+            <span id="det-req-date">2026-06-12</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Selected Product / Device</span>
+            <span id="det-req-product" style="font-weight:600;">iPhone 15 Pro</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Device SKU Code</span>
+            <code id="det-req-sku">SKU-IP15-256</code>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Quantity Requested</span>
+            <strong><span id="det-req-qty">3</span> units</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Priority Rating</span>
+            <span class="badge badge-danger" id="det-req-priority">Urgent</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+            <span>Request Justification Reason</span>
+            <span id="det-req-reason">Customer Order</span>
+          </div>
+          <div style="display:flex; justify-content:space-between;">
+            <span>Store Manager Notes</span>
+            <span id="det-req-notes" style="font-style: italic;">Notes here</span>
+          </div>
+        </div>
+
+        <div id="det-approval-section" style="display:none; border-top:2px solid var(--border-color); padding-top:16px;">
+          <h5 style="margin-bottom:12px; color: var(--telkom-blue-dark)">Area Management Allocation Audit</h5>
+          <div style="font-size:13px; color:var(--text-secondary)">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+              <span>Decided By (Area Director)</span>
+              <strong id="det-approved-by">AM-909</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;">
+              <span>Decision Timestamp</span>
+              <span id="det-approved-date">2026-06-12</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;" id="det-approved-qty-row">
+              <span>Approved Quantity</span>
+              <strong><span id="det-approved-qty">3</span> units</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border-color); padding-bottom:4px;" id="det-decline-reason-row">
+              <span>Decline Justification Reason</span>
+              <span id="det-decline-reason" style="font-weight:600; color:var(--danger)">Stock Limit Reached</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+              <span>Area Manager Audit Notes</span>
+              <span id="det-approval-notes" style="font-style: italic;">Audit notes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('stock-request-details-modal')">Close Details</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Session Timeout warning -->
+  <div class="modal-overlay" id="session-timeout-modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header" style="background-color: var(--danger-light); border-bottom: 1px solid var(--border-color);">
+        <h4 class="modal-title" style="color: var(--danger);">⚠ Security Session Expiry Warning</h4>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 12px;"><strong>Your active secure portal session is about to expire due to inactivity.</strong></p>
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">For security compliance under Telkom security policy, inactive branch terminals will automatically sign out. Please confirm if you are still working.</p>
+        <div style="background-color: var(--bg-light); border: 1px solid var(--border-color); padding: 12px; border-radius: var(--radius-md); text-align: center; font-size: 18px; font-weight: bold; color: var(--danger);">
+          Automatic logout in: <span id="session-timeout-countdown">30</span> seconds
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" onclick="handleTimeoutLogout()">Log Out Immediately</button>
+        <button type="button" class="btn btn-success" onclick="extendSessionLife()">Extend Secure Session</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: EXPORT DATA -->
+  <!-- ========================================== -->
+  <div class="modal-overlay" id="report-export-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h4 class="modal-title">Export Report Data</h4>
+        <button class="modal-close" onclick="closeModal('report-export-modal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 20px;">
+        <div style="background-color: var(--telkom-blue-light); border-left: 4px solid var(--telkom-blue); padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: var(--text-dark);">
+          <strong id="export-modal-report-name">Order Activity & Daily Trends</strong>
+          <div style="font-size: 11px; margin-top: 4px; color: var(--text-secondary);">Scope: <span id="export-modal-scope">All Branches</span></div>
+        </div>
+
+        <div class="form-row" style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label">From Date</label>
+            <input type="date" id="export-from-date" class="form-control" value="2026-06-01">
+          </div>
+          <div class="form-group" style="flex: 1; margin-bottom: 0;">
+            <label class="form-label">To Date</label>
+            <input type="date" id="export-to-date" class="form-control" value="2026-06-12">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="margin-bottom: 8px; display: block;">Select Download Formats</label>
+          <div style="display: flex; flex-direction: column; gap: 10px; padding: 12px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-dark);">
+              <input type="checkbox" id="export-format-pdf" checked style="width: 16px; height: 16px;">
+              <span>PDF Document (.pdf) - <em>Print-ready summary report</em></span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-dark);">
+              <input type="checkbox" id="export-format-csv" checked style="width: 16px; height: 16px;">
+              <span>CSV Spreadsheet (.csv) - <em>Raw database format</em></span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-dark);">
+              <input type="checkbox" id="export-format-excel" checked style="width: 16px; height: 16px;">
+              <span>Excel Workbook (.xls) - <em>Styled sheet format</em></span>
+            </label>
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 6px 0;">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; font-weight: 600; color: var(--text-dark);">
+              <input type="checkbox" id="export-format-all" onchange="toggleSelectAllExportFormats(this)" checked style="width: 16px; height: 16px;">
+              <span>Select All Formats</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div id="export-modal-progress-container" style="display: none; margin-top: 20px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 6px; font-weight: 600; color: var(--telkom-blue);">
+            <span>Compiling filtered dataset...</span>
+            <span id="export-modal-progress-pct">0%</span>
+          </div>
+          <div style="background-color: var(--border-color); height: 8px; border-radius: 4px; overflow: hidden; width: 100%;">
+            <div id="export-modal-progress-bar" style="background-color: var(--telkom-blue); width: 0%; height: 100%; transition: width 0.1s linear;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" onclick="closeModal('report-export-modal')">Cancel</button>
+        <button class="btn btn-primary" id="btn-confirm-export" onclick="triggerReportDownload()">Confirm & Download</button>
+      </div>
+    </div>
+  </div>
+  <!-- MODAL: Product Details Popup -->
+  <div class="modal-overlay" id="product-details-modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h4 class="modal-title" id="product-details-modal-title">Product Details</h4>
+        <button class="modal-close" onclick="closeModal('product-details-modal')">&times;</button>
+      </div>
+      <div class="modal-body" id="product-details-modal-body" style="padding: 20px;">
+        <!-- Dynamically rendered specifications -->
+      </div>
+      <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--border-color);">
+        <button class="btn btn-secondary" onclick="closeModal('product-details-modal')">Close</button>
+        <button class="btn btn-primary" id="product-details-modal-cta">Start Order</button>
+      </div>
+    </div>
+  </div>
+
+
+
+  
+</body>
+</html>

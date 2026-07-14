@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 72" width="220" height="72">
+  <!-- Telkom "Humanoid" Character Icon -->
+  <g transform="translate(0, 2)">
+    <!-- Head - rounded top -->
+    <ellipse cx="30" cy="12" rx="14" ry="13" fill="#009BDE"/>
+    <!-- Ear bumps -->
+    <ellipse cx="16.5" cy="14" rx="3" ry="4" fill="#009BDE"/>
+    <ellipse cx="43.5" cy="14" rx="3" ry="4" fill="#009BDE"/>
+    <!-- Eyes (white circles) -->
+    <circle cx="23" cy="11" r="5" fill="white"/>
+    <circle cx="37" cy="11" r="5" fill="white"/>
+    <!-- Pupils -->
+    <circle cx="24" cy="11" r="2.8" fill="#009BDE"/>
+    <circle cx="38" cy="11" r="2.8" fill="#009BDE"/>
+    <!-- Smile -->
+    <path d="M22 19 Q30 24 38 19" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- Body -->
+    <rect x="16" y="24" width="28" height="22" rx="5" fill="#4EC72B"/>
+
+    <!-- Left arm -->
+    <rect x="8" y="25" width="9" height="16" rx="4.5" fill="#4EC72B"/>
+    <!-- Left hand -->
+    <circle cx="12.5" cy="42" r="4" fill="#009BDE"/>
+
+    <!-- Right arm -->
+    <rect x="43" y="25" width="9" height="16" rx="4.5" fill="#4EC72B"/>
+    <!-- Right hand -->
+    <circle cx="47.5" cy="42" r="4" fill="#009BDE"/>
+
+    <!-- Legs -->
+    <rect x="18" y="44" width="10" height="18" rx="5" fill="#009BDE"/>
+    <rect x="32" y="44" width="10" height="18" rx="5" fill="#009BDE"/>
+  </g>
+
+  <!-- Telkom wordmark -->
+  <text x="68" y="46" font-family="'Arial', 'Helvetica Neue', sans-serif" font-size="30" font-weight="700" fill="#009BDE" letter-spacing="-0.5">Telkom</text>
+</svg>
