@@ -7,14 +7,6 @@ if (!fs.existsSync(designsDir)) {
   fs.mkdirSync(designsDir);
 }
 
-// Copy stylesheet
-const srcCssPath = path.join(__dirname, 'src', 'styles', 'app.css');
-const destCssPath = path.join(designsDir, 'app.css');
-if (fs.existsSync(srcCssPath)) {
-  fs.copyFileSync(srcCssPath, destCssPath);
-  console.log('Copied app.css to Designs/');
-}
-
 // Copy Images recursively
 const srcImagesDir = path.join(__dirname, 'public', 'Images');
 const destImagesDir = path.join(designsDir, 'Images');
@@ -34,8 +26,9 @@ if (fs.existsSync(srcImagesDir)) {
   console.log('Copied Images to Designs/Images/');
 }
 
-// Read index.html
+// Read index.html and app.css
 const indexHtml = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+const cssContent = fs.readFileSync(path.join(__dirname, 'src', 'styles', 'app.css'), 'utf8');
 
 // Define views list
 const views = [
@@ -164,21 +157,18 @@ const viewPortMarker = '<!-- MAIN CONTENT VIEWPORT -->';
 const markerIdx = indexHtml.indexOf(viewPortMarker);
 
 let baseHeaderHtml = indexHtml.substring(0, markerIdx);
-// Find viewport start and footer start after view-profile
 const contentViewportStartIdx = indexHtml.indexOf('<div class="content-viewport">', markerIdx);
 const baseHeaderPart = indexHtml.substring(0, contentViewportStartIdx + '<div class="content-viewport">'.length);
 
-// Extract footer after the view-profile matching end div
 const lastViewContent = extractViewContent(indexHtml, 'view-profile');
 const lastViewEndIdx = indexHtml.indexOf(lastViewContent) + lastViewContent.length;
 const baseFooterPart = indexHtml.substring(lastViewEndIdx);
 
-// Remove scripts and link to local stylesheet
+// Embed css directly inside a <style> block inside the head
 let processedHeader = baseHeaderPart
-  .replace('<link rel="stylesheet" href="/src/styles/app.css">', '<link rel="stylesheet" href="app.css">')
+  .replace('<link rel="stylesheet" href="/src/styles/app.css">', `<style>${cssContent}</style>`)
   .replace(/Images\//g, 'Images/');
 
-// Remove Vite script module and vercel injects from footer
 let processedFooter = baseFooterPart
   .replace(/<script type="module" src="\/src\/app.js"><\/script>/g, '')
   .replace(/<script[^>]*src="[^"]*app\.js"[^>]*><\/script>/g, '');
@@ -243,24 +233,21 @@ views.forEach(view => {
           <span style="font-weight:700; color: var(--telkom-blue)">22 orders</span>
         </div>
       `)
-      .replace('<!-- Recent Orders Rendered here -->', `
+      .replace('id="agent-recent-orders-tbody">\n                        <!-- Rendered dynamically -->', `id="agent-recent-orders-tbody">
         <tr>
           <td><span class="order-ref-link" style="font-weight:700;">ORD-89472</span></td>
           <td>John Doe</td>
           <td>Infinite Fibre 50M</td>
-          <td><span class="badge badge-success">Active</span></td>
-          <td>R 499.00</td>
           <td>2026-07-14 15:40</td>
+          <td><span class="badge badge-success">Active</span></td>
         </tr>
         <tr>
           <td><span class="order-ref-link" style="font-weight:700;">ORD-89461</span></td>
           <td>Sarah Jenkins</td>
           <td>iPhone 15 Pro Max</td>
-          <td><span class="badge badge-warning">Submitted</span></td>
-          <td>R 1,299.00</td>
           <td>2026-07-14 14:15</td>
-        </tr>
-      `)
+          <td><span class="badge badge-warning">Submitted</span></td>
+        </tr>`)
       .replace('<!-- Draft orders table body -->', `
         <tr>
           <td>DFT-103</td>
@@ -319,7 +306,8 @@ views.forEach(view => {
         </tr>
       `);
   } else if (view.name === 'catalogue') {
-    viewContent = viewContent.replace('<!-- Catalog grid rendered dynamically -->', `
+    // Correctly replace the "Rendered dynamically" placeholder inside catalogue grid
+    viewContent = viewContent.replace('<!-- Rendered dynamically -->', `
       <div class="product-card">
         <div class="product-badge-promo">PROMO</div>
         <img class="product-image" src="Images/iphone_15_pro_max.png" alt="iPhone 15 Pro Max">
@@ -379,27 +367,40 @@ views.forEach(view => {
         </div>
       `);
   } else if (view.name === 'order-tracking') {
-    viewContent = viewContent.replace('<!-- Dynamic orders rows populated by JS -->', `
-      <tr>
-        <td>ORD-89472</td>
-        <td>John Doe</td>
-        <td>Infinite Fibre 50M</td>
-        <td>R 499.00</td>
-        <td><span class="badge badge-success">Active</span></td>
-        <td>PTA-001</td>
-        <td>2026-07-14</td>
-        <td><button class="btn btn-xs btn-outline">Details</button></td>
-      </tr>
-      <tr>
-        <td>ORD-89461</td>
-        <td>Sarah Jenkins</td>
-        <td>iPhone 15 Pro Max</td>
-        <td>R 1,299.00</td>
-        <td><span class="badge badge-warning">Submitted</span></td>
-        <td>PTA-001</td>
-        <td>2026-07-14</td>
-        <td><button class="btn btn-xs btn-outline">Details</button></td>
-      </tr>
+    viewContent = viewContent.replace('<!-- Dynamically rendered by JS -->', `
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Order Ref</th>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Store</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ORD-89472</td>
+            <td>John Doe</td>
+            <td>Infinite Fibre 50M</td>
+            <td>R 499.00</td>
+            <td><span class="badge badge-success">Active</span></td>
+            <td>PTA-001</td>
+            <td>2026-07-14</td>
+          </tr>
+          <tr>
+            <td>ORD-89461</td>
+            <td>Sarah Jenkins</td>
+            <td>iPhone 15 Pro Max</td>
+            <td>R 1,299.00</td>
+            <td><span class="badge badge-warning">Submitted</span></td>
+            <td>PTA-001</td>
+            <td>2026-07-14</td>
+          </tr>
+        </tbody>
+      </table>
     `);
   } else if (view.name === 'stock-requests') {
     viewContent = viewContent.replace('<!-- Stock requests list rows loaded dynamically -->', `

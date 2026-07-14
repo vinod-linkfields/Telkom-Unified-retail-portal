@@ -7,3 +7,5 @@ dist/
 dist/
 .vercel
 .env*
+product_catalogue.zip
+product_catalogue.html
