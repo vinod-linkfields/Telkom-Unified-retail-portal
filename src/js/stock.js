@@ -418,6 +418,14 @@ export function handleStockReqDeviceSelectChange(val) {
 }
 
 export function switchStockTab(tabName) {
+  if (!window.__BYPASS_TAB_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tabName);
+      window.history.pushState({ route: 'stock-requests', tab: tabName }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
   document.querySelectorAll('.stock-tab-panel').forEach(p => p.style.display = 'none');
   const targetPanel = document.getElementById(`stock-panel-${tabName}`);
   if (targetPanel) {

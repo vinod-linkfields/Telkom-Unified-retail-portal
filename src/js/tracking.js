@@ -340,6 +340,15 @@ export function renderOrderTracking() {
 
 export function switchTrackingTab(tabName) {
   APP_STATE.activeTrackingTab = tabName;
+
+  if (!window.__BYPASS_TAB_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tabName);
+      window.history.pushState({ route: 'order-tracking', tab: tabName }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
   const submittedBtn = document.getElementById('tracking-tab-btn-submitted');
   const pendingBtn = document.getElementById('tracking-tab-btn-pending');
   const draftsBtn = document.getElementById('tracking-tab-btn-drafts');

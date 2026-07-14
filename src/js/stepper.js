@@ -123,6 +123,15 @@ export function renderStepper() {
     APP_STATE.currentStep = steps[0].id;
   }
 
+  // Sync URL parameter for step
+  if (!window.__BYPASS_STEP_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('step', APP_STATE.currentStep);
+      window.history.pushState({ route: 'order-stepper', step: APP_STATE.currentStep }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
   // Render step navigation numbers in UI
   renderStepperHeader();
 

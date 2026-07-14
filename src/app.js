@@ -412,10 +412,11 @@ export function handleLogout() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
   APP_STATE.isCustomerIdentifiedInJourney = false;
-  APP_STATE.isAuthenticated = false;
+  APP_STATE.isAuthenticated = true;
   clearAuthSession();
-  switchRoute('login');
-  showToast("User logged out.", "neutral");
+  const landing = APP_STATE.currentUser.role === 'manager' ? 'manager-dashboard' : (APP_STATE.currentUser.role === 'area_manager' ? 'area-dashboard' : (APP_STATE.currentUser.role === 'admin' ? 'admin-dashboard' : 'agent-dashboard'));
+  switchRoute(landing);
+  showToast("Session cleared.", "neutral");
 }
 
 // ==========================================
@@ -485,11 +486,14 @@ export function startNewOrderFlow() {
 // Load local mock database states
 loadStateFromStorage();
 
-// Set navbar and route (using URL query parameter route if authenticated)
+// Force authenticated by default to bypass login screen
+APP_STATE.isAuthenticated = true;
+
+// Set navbar and route (using URL query parameter route)
 updateSidebarMenuOptions();
 const urlParams = new URLSearchParams(window.location.search);
-const initialRoute = urlParams.get('route') || (APP_STATE.isAuthenticated ? (APP_STATE.activeRoute || 'agent-dashboard') : 'login');
-switchRoute(APP_STATE.isAuthenticated ? initialRoute : 'login');
+const initialRoute = urlParams.get('route') || APP_STATE.activeRoute || 'agent-dashboard';
+switchRoute(initialRoute);
 
 // Update badge notifications count
 updateNotificationsBadge();
@@ -497,9 +501,32 @@ updateNotificationsBadge();
 // Listen to URL state changes
 window.addEventListener('popstate', (event) => {
   const params = new URLSearchParams(window.location.search);
-  const route = (event.state && event.state.route) || params.get('route') || 'login';
+  const route = (event.state && event.state.route) || params.get('route') || 'agent-dashboard';
   if (APP_STATE.activeRoute !== route) {
     switchRoute(route);
+  } else {
+    // If the route is the same, check if the nested step or tab changed and update it
+    if (route === 'order-stepper' || route === 'customer-create') {
+      const stepVal = params.get('step');
+      if (stepVal) {
+        const stepNum = parseInt(stepVal);
+        if (route === 'order-stepper' && APP_STATE.currentStep !== stepNum) {
+          APP_STATE.currentStep = stepNum;
+          renderStepper();
+        } else if (route === 'customer-create' && APP_STATE.customerCreateStep !== stepNum) {
+          APP_STATE.customerCreateStep = stepNum;
+          renderCustomerCreateStep(stepNum);
+        }
+      }
+    } else if (route === 'order-tracking') {
+      const tabVal = params.get('tab') || 'submitted';
+      if (APP_STATE.activeTrackingTab !== tabVal) {
+        switchTrackingTab(tabVal);
+      }
+    } else if (route === 'stock-requests') {
+      const tabVal = params.get('tab') || 'inventory';
+      switchStockTab(tabVal);
+    }
   }
 });
 

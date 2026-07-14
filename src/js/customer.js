@@ -580,6 +580,15 @@ window.handleCustStepperClick = handleCustStepperClick;
 export function renderCustomerCreateStep(step) {
   APP_STATE.customerCreateStep = step;
 
+  // Sync URL parameter for customer create step
+  if (!window.__BYPASS_STEP_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('step', step);
+      window.history.pushState({ route: 'customer-create', step }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
   const viewContainer = document.getElementById('view-customer-create');
   if (viewContainer) {
     const h2 = viewContainer.querySelector('h2');

@@ -183,7 +183,14 @@ export function renderScreen(route) {
       } catch(e) { console.warn('customer-search reset error:', e); }
       break;
     case "customer-create":
-      try { renderCustomerCreateStep(APP_STATE.customerCreateStep); } catch(e) { console.error('renderCustomerCreateStep error:', e); }
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const stepVal = urlParams.get('step');
+        if (stepVal) {
+          APP_STATE.customerCreateStep = parseInt(stepVal);
+        }
+        renderCustomerCreateStep(APP_STATE.customerCreateStep);
+      } catch(e) { console.error('renderCustomerCreateStep error:', e); }
       break;
     case "customer-360":
       try { renderCustomer360(); } catch(e) { console.error('renderCustomer360 error:', e); }
@@ -198,7 +205,14 @@ export function renderScreen(route) {
       try { renderCheckCoverageScreen(); } catch(e) { console.error('renderCheckCoverageScreen error:', e); }
       break;
     case "order-stepper":
-      try { renderStepper(); } catch(e) { console.error('renderStepper error:', e); }
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const stepVal = urlParams.get('step');
+        if (stepVal) {
+          APP_STATE.currentStep = parseInt(stepVal);
+        }
+        renderStepper();
+      } catch(e) { console.error('renderStepper error:', e); }
       break;
     case "payment":
       try { renderPaymentScreen(); } catch(e) { console.error('renderPaymentScreen error:', e); }
@@ -207,10 +221,22 @@ export function renderScreen(route) {
       try { renderConfirmationReceipt(); } catch(e) { console.error('renderConfirmationReceipt error:', e); }
       break;
     case "order-tracking":
-      try { renderOrderTracking(); } catch(e) { console.error('renderOrderTracking error:', e); }
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabVal = urlParams.get('tab') || 'submitted';
+        window.__BYPASS_TAB_URL_SYNC__ = true;
+        switchTrackingTab(tabVal);
+        window.__BYPASS_TAB_URL_SYNC__ = false;
+      } catch(e) { console.error('renderOrderTracking error:', e); }
       break;
     case "stock-requests":
-      try { switchStockTab('inventory'); } catch(e) { console.error('switchStockTab error:', e); }
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabVal = urlParams.get('tab') || 'inventory';
+        window.__BYPASS_TAB_URL_SYNC__ = true;
+        switchStockTab(tabVal);
+        window.__BYPASS_TAB_URL_SYNC__ = false;
+      } catch(e) { console.error('switchStockTab error:', e); }
       break;
     case "reports":
       try { renderReports(); } catch(e) { console.error('renderReports error:', e); }
@@ -229,35 +255,68 @@ export function renderScreen(route) {
 }
 
 export function switchRoute(route) {
-  if (!APP_STATE.isAuthenticated && route !== 'login') {
-    route = 'login';
+  // Always force authentication since login is disabled
+  APP_STATE.isAuthenticated = true;
+
+  if (route === 'login') {
+    if (APP_STATE.currentUser.role === 'manager') route = 'manager-dashboard';
+    else if (APP_STATE.currentUser.role === 'area_manager') route = 'area-dashboard';
+    else if (APP_STATE.currentUser.role === 'admin') route = 'admin-dashboard';
+    else route = 'agent-dashboard';
   }
 
-  if (route !== 'login') {
-    if (APP_STATE.currentUser.role === 'agent' && (route === 'area-dashboard' || route === 'reports' || route === 'record-logs' || route === 'admin-dashboard')) {
-      showToast("Access Denied: Store Agent does not have permissions for Area Manager, Reports, or Logs sections.", "danger");
-      return false;
-    }
-    if (APP_STATE.currentUser.role === 'manager' && (route === 'area-dashboard' || route === 'admin-dashboard')) {
-      showToast("Access Denied: Store Managers do not have permissions to access Area Dashboard or IT/Admin.", "danger");
-      return false;
-    }
-    if (APP_STATE.currentUser.role === 'area_manager' && (route === 'admin-dashboard' || route === 'order-stepper' || route === 'customer-search')) {
-      showToast("Access Denied: Area Managers manage store oversight and cannot process orders directly.", "danger");
-      return false;
+  // Determine role: check URL query parameter 'role' first, otherwise check current state role, otherwise default by route
+  const urlParamsForRole = new URLSearchParams(window.location.search);
+  let role = urlParamsForRole.get('role') || APP_STATE.currentUser.role;
+  
+  if (!role || role === 'guest') {
+    if (route === 'manager-dashboard' || route === 'reports' || route === 'record-logs') {
+      role = 'manager';
+    } else if (route === 'area-dashboard') {
+      role = 'area_manager';
+    } else if (route === 'admin-dashboard') {
+      role = 'admin';
+    } else {
+      role = 'agent';
     }
   }
+
+  APP_STATE.currentUser.role = role;
+  
+  // Set default name and ID based on role
+  if (role === 'manager') {
+    APP_STATE.currentUser.name = 'Store Manager';
+    APP_STATE.currentUser.id = 'MGR-101';
+  } else if (role === 'area_manager') {
+    APP_STATE.currentUser.name = 'Area Director';
+    APP_STATE.currentUser.id = 'AM-909';
+  } else if (role === 'admin') {
+    APP_STATE.currentUser.name = 'IT Operations';
+    APP_STATE.currentUser.id = 'IT-808';
+  } else {
+    APP_STATE.currentUser.name = 'Piet van Zyl';
+    APP_STATE.currentUser.id = 'AGT-101';
+  }
+
+  // Update sidebar menu options to match the newly assigned role
+  updateSidebarMenuOptions();
 
   APP_STATE.activeRoute = route;
   
-  // Sync URL parameter for the active route
+  // Sync URL parameter for the active route and preserve nested sub-routes
   try {
     const url = new URL(window.location.href);
-    if (route === 'login') {
-      url.searchParams.delete('route');
-    } else {
-      url.searchParams.set('route', route);
+    url.searchParams.set('route', route);
+    url.searchParams.set('role', role);
+
+    // Clean nested parameters if new route does not support them
+    if (route !== 'order-stepper' && route !== 'customer-create') {
+      url.searchParams.delete('step');
     }
+    if (route !== 'order-tracking' && route !== 'stock-requests') {
+      url.searchParams.delete('tab');
+    }
+
     const currentParam = new URLSearchParams(window.location.search).get('route');
     if (currentParam !== route) {
       window.history.pushState({ route }, '', url.pathname + url.search + url.hash);
@@ -270,15 +329,10 @@ export function switchRoute(route) {
   const header = document.getElementById('app-header');
   const mainLayout = document.getElementById('main-content-layout');
 
-  if (route === 'login') {
-    if (sidebar) sidebar.style.display = 'none';
-    if (header) header.style.display = 'none';
-    if (mainLayout) mainLayout.style.setProperty('margin-left', '0', 'important');
-  } else {
-    if (sidebar) sidebar.style.display = 'flex';
-    if (header) header.style.display = 'flex';
-    if (mainLayout) mainLayout.style.setProperty('margin-left', '');
-  }
+  // Always show sidebar and header since login is bypassed
+  if (sidebar) sidebar.style.display = 'flex';
+  if (header) header.style.display = 'flex';
+  if (mainLayout) mainLayout.style.setProperty('margin-left', '');
   
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.classList.remove('active');
@@ -297,12 +351,8 @@ export function switchRoute(route) {
     renderScreen(route);
   }
 
-  if (route === 'login') {
-    clearAuthSession();
-    APP_STATE.isAuthenticated = false;
-  } else if (APP_STATE.isAuthenticated) {
-    saveAuthSession();
-  }
+  // Keep auth session saved and active
+  saveAuthSession();
 
   return true;
 }
