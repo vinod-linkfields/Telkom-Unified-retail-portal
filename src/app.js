@@ -412,10 +412,41 @@ export function handleLogout() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
   APP_STATE.isCustomerIdentifiedInJourney = false;
-  APP_STATE.isAuthenticated = false;
-  clearAuthSession();
-  switchRoute('login');
-  showToast("User logged out.", "neutral");
+  
+  // Clear cart
+  APP_STATE.cart = {
+    product: null,
+    contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+    consent: false,
+    gisRef: "",
+    gisStatus: "Not checked",
+    stockChecked: false,
+    stockStatus: "",
+    ricaStatus: "",
+    simActivationNumber: "",
+    paymentStatus: "Pending",
+    posTxnRef: "",
+    receiptNo: "",
+    orderRef: "",
+    draftId: ""
+  };
+  APP_STATE.currentStep = 1;
+
+  // Auto login to bypass login screen
+  APP_STATE.currentUser = {
+    id: "AGT-101",
+    name: "Piet van Zyl",
+    role: "agent",
+    branch: "PTA-001",
+    assignedStores: ["PTA-001", "JHB-002", "DBN-003"]
+  };
+  APP_STATE.isAuthenticated = true;
+  APP_STATE.activeRoute = 'agent-dashboard';
+  saveAuthSession();
+  updateSidebarMenuOptions();
+  
+  switchRoute('agent-dashboard');
+  showToast("Session reset. Login is bypassed.", "neutral");
 }
 
 // ==========================================
@@ -484,6 +515,20 @@ export function startNewOrderFlow() {
 
 // Load local mock database states
 loadStateFromStorage();
+
+// Auto-login to bypass login screen if not already authenticated
+if (!APP_STATE.isAuthenticated) {
+  APP_STATE.currentUser = {
+    id: "AGT-101",
+    name: "Piet van Zyl",
+    role: "agent",
+    branch: "PTA-001",
+    assignedStores: ["PTA-001", "JHB-002", "DBN-003"]
+  };
+  APP_STATE.isAuthenticated = true;
+  APP_STATE.activeRoute = 'agent-dashboard';
+  saveAuthSession();
+}
 
 // Set navbar and route (using URL query parameter route if authenticated)
 updateSidebarMenuOptions();
