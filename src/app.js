@@ -393,11 +393,19 @@ export function doLogin() {
   
   showToast(`Welcome back, ${APP_STATE.currentUser.name}! Logged into ${branch}.`, "success");
   
-  // Navigate to corresponding dashboard
-  if (APP_STATE.currentUser.role === 'agent') switchRoute('agent-dashboard');
-  else if (APP_STATE.currentUser.role === 'manager') switchRoute('manager-dashboard');
-  else if (APP_STATE.currentUser.role === 'area_manager') switchRoute('area-dashboard');
-  else if (APP_STATE.currentUser.role === 'admin') switchRoute('admin-dashboard');
+  // Navigate to corresponding dashboard or targetRoute from URL query params
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetRoute = urlParams.get('route');
+  let routed = false;
+  if (targetRoute && targetRoute !== 'login') {
+    routed = switchRoute(targetRoute);
+  }
+  if (!routed) {
+    if (APP_STATE.currentUser.role === 'agent') switchRoute('agent-dashboard');
+    else if (APP_STATE.currentUser.role === 'manager') switchRoute('manager-dashboard');
+    else if (APP_STATE.currentUser.role === 'area_manager') switchRoute('area-dashboard');
+    else if (APP_STATE.currentUser.role === 'admin') switchRoute('admin-dashboard');
+  }
 }
 
 export function handleLogout() {
@@ -477,12 +485,23 @@ export function startNewOrderFlow() {
 // Load local mock database states
 loadStateFromStorage();
 
-// Set navbar and route
+// Set navbar and route (using URL query parameter route if authenticated)
 updateSidebarMenuOptions();
-switchRoute(APP_STATE.isAuthenticated ? APP_STATE.activeRoute : 'login');
+const urlParams = new URLSearchParams(window.location.search);
+const initialRoute = urlParams.get('route') || (APP_STATE.isAuthenticated ? (APP_STATE.activeRoute || 'agent-dashboard') : 'login');
+switchRoute(APP_STATE.isAuthenticated ? initialRoute : 'login');
 
 // Update badge notifications count
 updateNotificationsBadge();
+
+// Listen to URL state changes
+window.addEventListener('popstate', (event) => {
+  const params = new URLSearchParams(window.location.search);
+  const route = (event.state && event.state.route) || params.get('route') || 'login';
+  if (APP_STATE.activeRoute !== route) {
+    switchRoute(route);
+  }
+});
 
 // ==========================================
 // WINDOW REGISTRY FOR INLINE HTML COMPATIBILITY

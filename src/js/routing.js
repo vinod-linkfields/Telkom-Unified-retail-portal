@@ -236,20 +236,36 @@ export function switchRoute(route) {
   if (route !== 'login') {
     if (APP_STATE.currentUser.role === 'agent' && (route === 'area-dashboard' || route === 'reports' || route === 'record-logs' || route === 'admin-dashboard')) {
       showToast("Access Denied: Store Agent does not have permissions for Area Manager, Reports, or Logs sections.", "danger");
-      return;
+      return false;
     }
     if (APP_STATE.currentUser.role === 'manager' && (route === 'area-dashboard' || route === 'admin-dashboard')) {
       showToast("Access Denied: Store Managers do not have permissions to access Area Dashboard or IT/Admin.", "danger");
-      return;
+      return false;
     }
     if (APP_STATE.currentUser.role === 'area_manager' && (route === 'admin-dashboard' || route === 'order-stepper' || route === 'customer-search')) {
       showToast("Access Denied: Area Managers manage store oversight and cannot process orders directly.", "danger");
-      return;
+      return false;
     }
   }
 
   APP_STATE.activeRoute = route;
   
+  // Sync URL parameter for the active route
+  try {
+    const url = new URL(window.location.href);
+    if (route === 'login') {
+      url.searchParams.delete('route');
+    } else {
+      url.searchParams.set('route', route);
+    }
+    const currentParam = new URLSearchParams(window.location.search).get('route');
+    if (currentParam !== route) {
+      window.history.pushState({ route }, '', url.pathname + url.search + url.hash);
+    }
+  } catch (e) {
+    console.warn('history pushState error:', e);
+  }
+
   const sidebar = document.getElementById('app-sidebar');
   const header = document.getElementById('app-header');
   const mainLayout = document.getElementById('main-content-layout');
@@ -287,6 +303,8 @@ export function switchRoute(route) {
   } else if (APP_STATE.isAuthenticated) {
     saveAuthSession();
   }
+
+  return true;
 }
 
 // Bind to window for inline onclicks in HTML
