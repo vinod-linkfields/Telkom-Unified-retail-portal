@@ -229,34 +229,53 @@ export function renderScreen(route) {
 }
 
 export function switchRoute(route) {
-  if (!APP_STATE.isAuthenticated && route !== 'login') {
-    route = 'login';
+  // Always force authentication since login is disabled for now
+  APP_STATE.isAuthenticated = true;
+
+  if (route === 'login') {
+    route = 'agent-dashboard';
   }
 
-  if (route !== 'login') {
-    if (APP_STATE.currentUser.role === 'agent' && (route === 'area-dashboard' || route === 'reports' || route === 'record-logs' || route === 'admin-dashboard')) {
-      showToast("Access Denied: Store Agent does not have permissions for Area Manager, Reports, or Logs sections.", "danger");
-      return false;
-    }
-    if (APP_STATE.currentUser.role === 'manager' && (route === 'area-dashboard' || route === 'admin-dashboard')) {
-      showToast("Access Denied: Store Managers do not have permissions to access Area Dashboard or IT/Admin.", "danger");
-      return false;
-    }
-    if (APP_STATE.currentUser.role === 'area_manager' && (route === 'admin-dashboard' || route === 'order-stepper' || route === 'customer-search')) {
-      showToast("Access Denied: Area Managers manage store oversight and cannot process orders directly.", "danger");
-      return false;
+  // Determine role: check URL query parameter 'role' first, otherwise default by route
+  const urlParamsForRole = new URLSearchParams(window.location.search);
+  let role = urlParamsForRole.get('role');
+  
+  if (!role) {
+    if (route === 'manager-dashboard' || route === 'reports' || route === 'record-logs') {
+      role = 'manager';
+    } else if (route === 'area-dashboard') {
+      role = 'area_manager';
+    } else if (route === 'admin-dashboard') {
+      role = 'admin';
+    } else {
+      role = 'agent';
     }
   }
+
+  APP_STATE.currentUser.role = role;
+  
+  // Set default name based on role
+  if (role === 'manager') {
+    APP_STATE.currentUser.name = 'Store Manager';
+  } else if (role === 'area_manager') {
+    APP_STATE.currentUser.name = 'Area Director';
+  } else if (role === 'admin') {
+    APP_STATE.currentUser.name = 'IT Operations';
+  } else {
+    APP_STATE.currentUser.name = 'Piet van Zyl';
+  }
+
+  // Update sidebar menu options to match the newly assigned role
+  updateSidebarMenuOptions();
 
   APP_STATE.activeRoute = route;
   
   // Sync URL parameter for the active route
   try {
     const url = new URL(window.location.href);
-    if (route === 'login') {
-      url.searchParams.delete('route');
-    } else {
-      url.searchParams.set('route', route);
+    url.searchParams.set('route', route);
+    if (urlParamsForRole.has('role')) {
+      url.searchParams.set('role', role);
     }
     const currentParam = new URLSearchParams(window.location.search).get('route');
     if (currentParam !== route) {
@@ -270,15 +289,10 @@ export function switchRoute(route) {
   const header = document.getElementById('app-header');
   const mainLayout = document.getElementById('main-content-layout');
 
-  if (route === 'login') {
-    if (sidebar) sidebar.style.display = 'none';
-    if (header) header.style.display = 'none';
-    if (mainLayout) mainLayout.style.setProperty('margin-left', '0', 'important');
-  } else {
-    if (sidebar) sidebar.style.display = 'flex';
-    if (header) header.style.display = 'flex';
-    if (mainLayout) mainLayout.style.setProperty('margin-left', '');
-  }
+  // Always show sidebar and header since login is bypassed
+  if (sidebar) sidebar.style.display = 'flex';
+  if (header) header.style.display = 'flex';
+  if (mainLayout) mainLayout.style.setProperty('margin-left', '');
   
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.classList.remove('active');
@@ -297,12 +311,8 @@ export function switchRoute(route) {
     renderScreen(route);
   }
 
-  if (route === 'login') {
-    clearAuthSession();
-    APP_STATE.isAuthenticated = false;
-  } else if (APP_STATE.isAuthenticated) {
-    saveAuthSession();
-  }
+  // Keep auth session saved and active
+  saveAuthSession();
 
   return true;
 }

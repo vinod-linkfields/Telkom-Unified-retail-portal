@@ -186,7 +186,7 @@ export const APP_STATE = {
     branch: "PTA-001",
     assignedStores: ["PTA-001", "JHB-002", "DBN-003"]
   },
-  isAuthenticated: false,
+  isAuthenticated: true,
   activeRoute: "login",
   selectedCustomer: null,
   activeCIMInteraction: null,

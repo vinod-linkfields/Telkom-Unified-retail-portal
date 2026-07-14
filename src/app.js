@@ -412,10 +412,10 @@ export function handleLogout() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
   APP_STATE.isCustomerIdentifiedInJourney = false;
-  APP_STATE.isAuthenticated = false;
+  APP_STATE.isAuthenticated = true;
   clearAuthSession();
-  switchRoute('login');
-  showToast("User logged out.", "neutral");
+  switchRoute('agent-dashboard');
+  showToast("Session cleared.", "neutral");
 }
 
 // ==========================================
@@ -485,11 +485,14 @@ export function startNewOrderFlow() {
 // Load local mock database states
 loadStateFromStorage();
 
-// Set navbar and route (using URL query parameter route if authenticated)
+// Force authenticated by default
+APP_STATE.isAuthenticated = true;
+
+// Set navbar and route (using URL query parameter route)
 updateSidebarMenuOptions();
 const urlParams = new URLSearchParams(window.location.search);
-const initialRoute = urlParams.get('route') || (APP_STATE.isAuthenticated ? (APP_STATE.activeRoute || 'agent-dashboard') : 'login');
-switchRoute(APP_STATE.isAuthenticated ? initialRoute : 'login');
+const initialRoute = urlParams.get('route') || APP_STATE.activeRoute || 'agent-dashboard';
+switchRoute(initialRoute);
 
 // Update badge notifications count
 updateNotificationsBadge();
