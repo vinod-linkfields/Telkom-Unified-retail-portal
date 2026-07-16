@@ -1,7 +1,7 @@
 import { APP_STATE, clearAuthSession, saveAuthSession, saveNotifications } from './state.js';
 import { showToast, updateNotificationsBadge } from './utils.js';
 import { renderAgentDashboard, renderManagerDashboard, renderAreaDashboard, renderAdminDashboard } from './dashboards.js';
-import { renderCustomerCreateStep, renderCustomer360 } from './customer.js';
+import { renderCustomerCreateStep, renderCustomer360, renderCustomerSearch } from './customer.js';
 import { renderCatalogue, loadProductsFromJSON } from './catalogue.js';
 import { renderStepper, renderPaymentScreen, renderConfirmationReceipt } from './stepper.js';
 import { renderOrderTracking } from './tracking.js';
@@ -177,10 +177,11 @@ export function renderScreen(route) {
       try { renderAdminDashboard(); } catch(e) { console.error('renderAdminDashboard error:', e); }
       break;
     case "customer-search":
+    case "customer-search-success":
+    case "customer-search-failed":
       try {
-        const searchErrEl = document.getElementById('search-error');
-        if (searchErrEl) searchErrEl.style.display = 'none';
-      } catch(e) { console.warn('customer-search reset error:', e); }
+        renderCustomerSearch(route);
+      } catch(e) { console.error('renderCustomerSearch error:', e); }
       break;
     case "customer-create":
       try {
@@ -316,6 +317,11 @@ export function switchRoute(route) {
     if (route !== 'order-tracking' && route !== 'stock-requests') {
       url.searchParams.delete('tab');
     }
+    // Clean search params if not customer-search routes
+    if (route !== 'customer-search' && route !== 'customer-search-success' && route !== 'customer-search-failed') {
+      url.searchParams.delete('query');
+      url.searchParams.delete('type');
+    }
 
     const currentParam = new URLSearchParams(window.location.search).get('route');
     if (currentParam !== route) {
@@ -336,7 +342,9 @@ export function switchRoute(route) {
   
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.classList.remove('active');
-    if (link.getAttribute('data-route') === route) {
+    const linkRoute = link.getAttribute('data-route');
+    if (linkRoute === route || 
+        ((route === 'customer-search-success' || route === 'customer-search-failed') && linkRoute === 'customer-search')) {
       link.classList.add('active');
     }
   });
@@ -345,7 +353,10 @@ export function switchRoute(route) {
     view.style.display = 'none';
   });
 
-  const targetView = document.getElementById(`view-${route}`);
+  const targetRouteView = (route === 'customer-search-success' || route === 'customer-search-failed') 
+    ? 'customer-search' 
+    : route;
+  const targetView = document.getElementById(`view-${targetRouteView}`);
   if (targetView) {
     targetView.style.display = 'block';
     renderScreen(route);

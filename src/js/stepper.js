@@ -46,27 +46,13 @@ export function isSimOrLteProduct(product) {
 }
 
 export function getActiveStepsForProduct(product) {
-  const steps = [
-    { id: 1, label: "Check Avail" },
-    { id: 2, label: "Identify Cust" },
-    { id: 3, label: "Confirm Details" },
-    { id: 5, label: "Billing & Credit Vetting" },
-    { id: 9, label: "Supporting Docs" },
-    { id: 10, label: "Order Summary & Sign-off" }
+  return [
+    { id: 1, label: "Identify Cust" },
+    { id: 2, label: "Confirm Details" },
+    { id: 3, label: "Billing & Credit Vetting" },
+    { id: 4, label: "Supporting Docs" },
+    { id: 5, label: "Order Summary & Sign-off" }
   ];
-  
-  if (product) {
-    const needsStock  = !!product.deviceSKU;
-    const needsCoverage = requiresCoverageCheck(product);
-
-    if (!needsStock && !needsCoverage) {
-      // Pure SIM / voice / mobile-handset contracts — skip step 1 entirely
-      return steps.filter(s => s.id !== 1);
-    }
-    // Handset with device → stock check (step 1 stays)
-    // LTE/Fibre → coverage check (step 1 stays)
-  }
-  return steps;
 }
 
 export function getStepperStepTitle(stepId, defaultTitle) {
@@ -137,7 +123,7 @@ export function renderStepper() {
 
   const nextBtn = document.getElementById('stepper-next-btn');
   if (nextBtn) {
-    if (APP_STATE.currentStep === 10) {
+    if (APP_STATE.currentStep === 5) {
       nextBtn.innerText = 'Create Contract';
     } else {
       nextBtn.innerText = 'Continue';
@@ -194,26 +180,11 @@ export function renderStepper() {
   const stepBodyWrapper = document.getElementById('stepper-step-body-wrapper');
 
   switch (APP_STATE.currentStep) {
-    case 1: // Step 1 — Stock Check (Handset) OR Coverage Check (LTE/Fibre)
-      if (requiresCoverageCheck(product)) {
-        renderStepperCoverageCheck(stepBodyWrapper);
-      } else if (product.deviceSKU) {
-        renderStepperStockCheck(stepBodyWrapper);
-      } else {
-        stepBodyWrapper.innerHTML = `
-          <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Availability Verification")}</h3>
-          <div style="background-color: var(--success-light); border-left: 4px solid var(--success); padding: 16px; border-radius: var(--radius-md); color: var(--success); font-size: 13px; font-weight: 600;">
-            Verification Skip: SIM-Only contracts do not require device stock allocation. Please proceed.
-          </div>
-        `;
-      }
-      break;
-
-    case 2: // Customer Search & Identification
+    case 1: // Step 1: Customer Search & Identification
       renderStepperCustomerSearch(stepBodyWrapper);
       break;
 
-    case 3: { // Customer Details & Product Specs confirmation
+    case 2: { // Step 2: Customer Details & Product Specs confirmation
       const imgPath = product.id === 'p-dev-1' ? 'Images/samsung_galaxy_s24.png' : (product.id === 'p-dev-2' ? 'Images/iphone_15_pro_max.png' : '');
       const imageHtml = imgPath ? `
         <div style="text-align: center; margin-bottom: 16px; background-color: var(--bg-card); border-radius: var(--radius-md); padding: 12px; height: 120px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border-color);">
@@ -222,7 +193,7 @@ export function renderStepper() {
       ` : '';
 
       stepBodyWrapper.innerHTML = `
-        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(3, "Confirm Customer & Product Details")}</h3>
+        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(2, "Confirm Customer & Product Details")}</h3>
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Verify the customer profile and product details for this order.</p>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
@@ -269,68 +240,15 @@ export function renderStepper() {
       break;
     }
 
-    case 4: // CIM Interaction details
-      stepBodyWrapper.innerHTML = `
-        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(4, "Log Visit Interaction in Amdocs CIM")}</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Capture customer's reason of visit for compliance reporting.</p>
-        
-        <div class="form-group">
-          <label class="form-label">Interaction Reason Type <span class="required">*</span></label>
-          <select id="stepper-cim-type" class="form-control" onchange="updateCIMState()">
-            <option value="New Order" ${APP_STATE.activeCIMInteraction.type === 'New Order' ? 'selected' : ''}>New Product Purchase</option>
-            <option value="Account Query" ${APP_STATE.activeCIMInteraction.type === 'Account Query' ? 'selected' : ''}>Account Upgrade / Renewal</option>
-            <option value="Stock Query" ${APP_STATE.activeCIMInteraction.type === 'Stock Query' ? 'selected' : ''}>Stock Verification</option>
-          </select>
-        </div>
-        
-        <div class="form-group" style="margin-top:16px;">
-          <label class="form-label">Channel Location</label>
-          <input type="text" class="form-control" value="Retail Store Session" disabled>
-        </div>
-        
-        <div class="form-group" style="margin-top:16px;">
-          <label class="form-label">CIM Session Notes <span class="required">*</span></label>
-          <textarea id="stepper-cim-notes" class="form-control" rows="3" placeholder="Enter session notes (minimum 10 characters)..." oninput="updateCIMState()">${APP_STATE.activeCIMInteraction.notes || ''}</textarea>
-          <div class="input-helper">Characters entered: <span id="cim-char-count">0</span>/500 (Min 10)</div>
-          <div id="cim-notes-error" class="input-error-msg" style="display:none;">Notes must contain at least 10 characters before proceeding.</div>
-        </div>
-      `;
-      updateCIMNotesCount();
-      break;
-
-    case 5: // Billing & Credit Vetting
+    case 3: // Step 3: Billing & Credit Vetting
       renderStepperBillingSelection(stepBodyWrapper);
       break;
 
-    case 8: // Customer Consent form (was step 6)
-      stepBodyWrapper.innerHTML = `
-        <h3 style="margin-bottom: 16px;">${getStepperStepTitle(8, "Capture Customer Consent & Sign-Off")}</h3>
-        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Legally required declarations for SA NCA compliance.</p>
-        
-        <div style="background-color: var(--bg-card); border: 1px solid var(--border-color); padding: 20px; border-radius: var(--radius-lg); font-size: 13px; color: var(--text-secondary); max-height: 250px; overflow-y: scroll; margin-bottom: 24px;">
-          <h5 style="color: var(--telkom-blue-dark); margin-bottom: 8px;">NCA Credit & Data Protection Policy</h5>
-          <p style="margin-bottom: 12px;">The customer agrees that Telkom SA SOC Ltd may check credit histories with authorized credit agencies for the purpose of contract evaluation. The customer certifies that all details provided are true and complete.</p>
-          <p style="margin-bottom: 12px;">Telkom SA complies with the Protection of Personal Information Act (POPIA) 4 of 2013. The customer's information is secure and will only be utilized for managing this digital journey.</p>
-          <p>By checking the boxes below, the customer gives explicit sign-off to activate this service.</p>
-        </div>
-
-        <label class="checkbox-group">
-          <input type="checkbox" id="consent-check" ${APP_STATE.cart.consent ? 'checked' : ''} onchange="toggleConsent()">
-          <span class="checkbox-label"><strong>Accept terms and conditions:</strong> Customer acknowledges and accepts terms of the ${product.term}-month contract plan.</span>
-        </label>
-
-        <label class="checkbox-group" style="margin-top:12px;">
-          <input type="checkbox" id="consent-marketing" checked>
-          <span class="checkbox-label">Authorize marketing communications via SMS and Email (Optional).</span>
-        </label>
-      `;
-      break;
-
-    case 9: // Supporting Documents [New]
+    case 4: // Step 4: Supporting Documents
       renderStepperSupportingDocs(stepBodyWrapper);
       break;
 
-    case 10: // Review & Validation Checklist (was step 7)
+    case 5: // Step 5: Review & Validation Checklist
       renderStepperReviewChecklist(stepBodyWrapper);
       break;
   }
@@ -344,7 +262,7 @@ export function renderStepperCustomerSearch(container) {
   
   if (cust) {
     container.innerHTML = `
-      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(2, "Customer Identification")}</h3>
+      <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Customer Identification")}</h3>
       <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Customer session is active. Confirm or change the customer profile for this order.</p>
       
       <div style="background-color: var(--success-light); border: 1px solid var(--success-border); padding: 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -397,7 +315,7 @@ export function renderStepperCustomerSearch(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(2, "Customer Identification")}</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(1, "Customer Identification")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Search for the customer in Clarify CRM to link them to this order.</p>
     
     <div style="display: grid; grid-template-columns: 180px 1fr auto auto; gap: 12px; align-items: flex-end;">
@@ -527,7 +445,7 @@ export function openNewCustomerWizardFromStepper(searchedKey) {
 export function linkCustomerAndReturnToStepper(idVal, type) {
   linkCustomerInStepper(idVal, type);
   APP_STATE.openedCustomerWizardFromStepper = false;
-  APP_STATE.currentStep = 3;
+  APP_STATE.currentStep = 2;
   switchRoute('order-stepper');
   renderStepper();
 }
@@ -681,7 +599,7 @@ export function renderStepperBillingSelection(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(5, "Billing & Credit Vetting")}</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(3, "Billing & Credit Vetting")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Choose whether to bill this postpaid subscription to an existing account or register new Debit Check details, and perform NCR credit vetting.</p>
     
     <div style="display:flex; gap:24px; margin-bottom:20px; background-color: var(--bg-light); padding: 12px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
@@ -1168,7 +1086,7 @@ export function renderStepperSupportingDocs(container) {
   }
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(9, "Supporting Documents")}</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(4, "Supporting Documents")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px;">Upload legally required supporting customer documents to verify identity and banking details.</p>
     
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom:20px; background-color: var(--bg-light); padding:16px; border-radius: var(--radius-md); border:1px solid var(--border-color);">
@@ -1747,7 +1665,7 @@ export function renderStepperReviewChecklist(container) {
   const expenses = financial.expenses ? `R${parseFloat(financial.expenses).toLocaleString()}` : "R7,800";
 
   container.innerHTML = `
-    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(10, "Order Summary & Sign-off")}</h3>
+    <h3 style="margin-bottom: 16px;">${getStepperStepTitle(5, "Order Summary & Sign-off")}</h3>
     <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 24px;">Please review the summary details below, read the contract terms, and provide a manual signature to authorize your Telkom subscription.</p>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px;">
@@ -2024,22 +1942,22 @@ export function selectProductForStepper(prodId) {
 
     // Reset coverage / stock flags based on product type
     if (requiresCoverageCheck(p)) {
-      // LTE / Fibre → requires GIS address check
+      // LTE / Fibre → default to available so it doesn't block (Check Avail step removed)
       if (APP_STATE.checkedCoverage && APP_STATE.checkedCoverage.status === 'Coverage available') {
         APP_STATE.cart.tempCoverageAddress = APP_STATE.checkedCoverage.address;
         APP_STATE.cart.gisStatus = "Coverage available";
         APP_STATE.cart.gisRef = APP_STATE.checkedCoverage.ref;
       } else {
-        APP_STATE.cart.gisStatus = "Not checked";
-        APP_STATE.cart.gisRef = "";
+        APP_STATE.cart.gisStatus = "Coverage available";
+        APP_STATE.cart.gisRef = "GIS-AUTO-101";
       }
-      APP_STATE.cart.stockChecked = true;   // no physical device to allocate
-      APP_STATE.cart.stockStatus = "Skip";
+      APP_STATE.cart.stockChecked = true;
+      APP_STATE.cart.stockStatus = "In Stock";
     } else if (isHandset || p.deviceSKU) {
-      // Physical handset → stock check required
+      // Physical handset → default to in stock (Check Avail step removed)
       APP_STATE.cart.gisStatus = "Skip";
-      APP_STATE.cart.stockChecked = false;
-      APP_STATE.cart.stockStatus = "";
+      APP_STATE.cart.stockChecked = true;
+      APP_STATE.cart.stockStatus = "In Stock";
     } else {
       // Pure SIM / mobile plan → no stock, no GIS
       APP_STATE.cart.gisStatus = "Skip";
@@ -2087,41 +2005,16 @@ export function handleStepperBack() {
 export function handleStepperNext() {
   const step = APP_STATE.currentStep;
 
+  // Validate Step 1: Customer Identification
   if (step === 1) {
-    const prod1 = APP_STATE.cart.product;
-    if (requiresCoverageCheck(prod1)) {
-      // LTE / Fibre — must pass GIS coverage check
-      if (APP_STATE.cart.gisStatus !== 'Coverage available') {
-        showToast("Coverage check required: Please run and pass the GIS coverage check before proceeding.", "warning");
-        return;
-      }
-    } else if (prod1.deviceSKU) {
-      // Handset — must pass stock check
-      if (!APP_STATE.cart.stockChecked || APP_STATE.cart.stockStatus !== 'In Stock') {
-        showToast("Device stock must be locked and verified available to proceed.", "warning");
-        return;
-      }
-    }
-  }
-
-  // Validate Step 2: Customer Identification
-  if (step === 2) {
     if (!APP_STATE.selectedCustomer) {
       showToast("Please search and select a customer profile to link to this order.", "warning");
       return;
     }
   }
 
-  // Validate Step 4: Log CIM
-  if (step === 4) {
-    if (!APP_STATE.activeCIMInteraction || APP_STATE.activeCIMInteraction.notes.trim().length < 10) {
-      document.getElementById('cim-notes-error').style.display = 'block';
-      return;
-    }
-  }
-
-  // Validate Step 5: Billing & Credit Vetting
-  if (step === 5) {
+  // Validate Step 3: Billing & Credit Vetting
+  if (step === 3) {
     saveBillingInputs();
     const bill = APP_STATE.cart.billingSelection;
     if (bill && bill.option === 'new') {
@@ -2160,8 +2053,8 @@ export function handleStepperNext() {
     }
   }
 
-  // Validate Step 9: Supporting Documents
-  if (step === 9) {
+  // Validate Step 4: Supporting Documents
+  if (step === 4) {
     saveDocsOptionInput();
     const sd = APP_STATE.cart.supportingDocs;
     if (sd && sd.option === 'now') {
@@ -2173,8 +2066,8 @@ export function handleStepperNext() {
     }
   }
 
-  // Final Step 10: Submission
-  if (step === 10) {
+  // Final Step 5: Submission
+  if (step === 5) {
     if (!APP_STATE.cart.consent) {
       showToast("Please accept the Terms & Conditions to proceed.", "warning");
       return;
@@ -2890,22 +2783,15 @@ export function cancelToSaveDraft() {
   const currentStep = APP_STATE.currentStep;
 
   // Save current step inputs before building draft object
-  if (currentStep === 4) {
-    const cimTypeEl = document.getElementById('stepper-cim-type');
-    const cimNotesEl = document.getElementById('stepper-cim-notes');
-    if (APP_STATE.activeCIMInteraction) {
-      if (cimTypeEl) APP_STATE.activeCIMInteraction.type = cimTypeEl.value;
-      if (cimNotesEl) APP_STATE.activeCIMInteraction.notes = cimNotesEl.value;
+  if (currentStep === 2) {
+    if (document.getElementById('mobile-sim-type') || document.getElementById('fibre-installation-address')) {
+      updateContractDetailsState();
     }
-  } else if (currentStep === 5) {
+  } else if (currentStep === 3) {
     if (document.getElementById('billing-new-bankname')) {
       saveBillingInputs();
     }
-  } else if (currentStep === 7) {
-    if (document.getElementById('mobile-sim-type')) {
-      updateContractDetailsState();
-    }
-  } else if (currentStep === 9) {
+  } else if (currentStep === 4) {
     if (document.querySelector('input[name="docs-opt"]:checked')) {
       saveDocsOptionInput();
     }

@@ -84,8 +84,87 @@ const MOCK_EMPLOYER_ADDRESSES = [
   { line1: "45 Anton Lembede St", street: "Anton Lembede St", suburb: "Durban Central", city: "Durban", postalCode: "4001" }
 ];
 
+export function renderCustomerSearch(route) {
+  const errorBox = document.getElementById('search-error');
+  if (errorBox) errorBox.style.display = 'none';
+
+  const resultsDiv = document.getElementById('search-results-panel');
+  const resultsTbody = document.getElementById('search-results-tbody');
+
+  if (route === 'customer-search') {
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) searchInput.value = '';
+    return;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryType = urlParams.get('type') || (document.getElementById('search-type') ? document.getElementById('search-type').value : 'id');
+  const queryVal = urlParams.get('query') || '';
+
+  const searchTypeEl = document.getElementById('search-type');
+  const searchInputEl = document.getElementById('search-input');
+  if (searchTypeEl && urlParams.has('type')) searchTypeEl.value = queryType;
+  if (searchInputEl && urlParams.has('query')) searchInputEl.value = queryVal;
+
+  if (!queryVal) {
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    return;
+  }
+
+  let found = null;
+  if (queryType === 'id') {
+    found = MOCK_DB.crm.find(c => c.id === queryVal);
+  } else if (queryType === 'passport') {
+    found = MOCK_DB.crm.find(c => c.passport.toLowerCase() === queryVal.toLowerCase());
+  } else if (queryType === 'account') {
+    found = MOCK_DB.crm.find(c => c.accountNumber.toLowerCase() === queryVal.toLowerCase());
+  } else if (queryType === 'mobile') {
+    found = MOCK_DB.crm.find(c => c.mobile === queryVal);
+  }
+
+  if (route === 'customer-search-success' && found) {
+    if (resultsDiv) resultsDiv.style.display = 'block';
+    if (resultsTbody) {
+      renderPaginatedRows(resultsTbody, [`
+        <tr>
+          <td><strong>${found.name}</strong></td>
+          <td>${found.id ? maskID(found.id) : maskPassport(found.passport)}</td>
+          <td>${found.accountNumber}</td>
+          <td>${found.mobile}</td>
+          <td><span class="badge ${found.status === 'Active' ? 'badge-success' : 'badge-danger'}">${found.status}</span></td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="identifyCustomer('${found.id || found.passport}', '${!!found.id ? 'id' : 'passport'}')">Select Profile</button>
+          </td>
+        </tr>
+      `]);
+    }
+  } else {
+    if (resultsDiv) resultsDiv.style.display = 'block';
+    if (resultsTbody) {
+      renderPaginatedRows(resultsTbody, [], {
+        emptyRow: `
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+            Customer record not found. 
+            <br><br>
+            <button class="btn btn-sm btn-outline" onclick="openNewCustomerWizard()">Add New Customer</button>
+          </td>
+        </tr>
+        `
+      });
+    }
+    if (route === 'customer-search-success' && !found) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('route', 'customer-search-failed');
+      window.history.replaceState({ route: 'customer-search-failed' }, '', url.pathname + url.search + url.hash);
+      APP_STATE.activeRoute = 'customer-search-failed';
+    }
+  }
+}
+
 export function handleCustomerSearch(e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   
   if (!APP_STATE.systemHealth.crm) {
     showToast("Amdocs Clarify CRM is currently offline. Cannot retrieve records.", "danger");
@@ -124,40 +203,15 @@ export function handleCustomerSearch(e) {
     found = MOCK_DB.crm.find(c => c.mobile === queryVal);
   }
 
-  const resultsDiv = document.getElementById('search-results-panel');
-  const resultsTbody = document.getElementById('search-results-tbody');
-  
+  const url = new URL(window.location.href);
+  url.searchParams.set('type', queryType);
+  url.searchParams.set('query', queryVal);
+  window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+
   if (found) {
-    if (resultsDiv) resultsDiv.style.display = 'block';
-    if (resultsTbody) {
-      renderPaginatedRows(resultsTbody, [`
-        <tr>
-          <td><strong>${found.name}</strong></td>
-          <td>${found.id ? maskID(found.id) : maskPassport(found.passport)}</td>
-          <td>${found.accountNumber}</td>
-          <td>${found.mobile}</td>
-          <td><span class="badge ${found.status === 'Active' ? 'badge-success' : 'badge-danger'}">${found.status}</span></td>
-          <td>
-            <button class="btn btn-sm btn-primary" onclick="identifyCustomer('${found.id || found.passport}', '${!!found.id ? 'id' : 'passport'}')">Select Profile</button>
-          </td>
-        </tr>
-      `]);
-    }
+    switchRoute('customer-search-success');
   } else {
-    if (resultsDiv) resultsDiv.style.display = 'block';
-    if (resultsTbody) {
-      renderPaginatedRows(resultsTbody, [], {
-        emptyRow: `
-        <tr>
-          <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
-            Customer record not found. 
-            <br><br>
-            <button class="btn btn-sm btn-outline" onclick="openNewCustomerWizard()">Add New Customer</button>
-          </td>
-        </tr>
-        `
-      });
-    }
+    switchRoute('customer-search-failed');
   }
 }
 
@@ -178,7 +232,7 @@ export function identifyCustomer(identityVal, type) {
       storeId: APP_STATE.currentUser.branch,
       agentId: APP_STATE.currentUser.id,
       timestamp: new Date().toISOString(),
-      notes: ""
+      notes: "Customer initiated new order checkout."
     };
 
     showToast(`CIM Session created for ${cust.name}`, "success");
@@ -1294,7 +1348,7 @@ export function handleCustomerCreateBack() {
       switchRoute('customer-360');
     } else if (APP_STATE.openedCustomerWizardFromStepper) {
       APP_STATE.openedCustomerWizardFromStepper = false;
-      APP_STATE.currentStep = 2;
+      APP_STATE.currentStep = 1;
       switchRoute('order-stepper');
     } else {
       switchRoute('customer-search');
@@ -1476,7 +1530,7 @@ export function submitNewCustomerProfile() {
       storeId: APP_STATE.currentUser.branch,
       agentId: APP_STATE.currentUser.id,
       timestamp: new Date().toISOString(),
-      notes: ""
+      notes: "Customer initiated new order checkout."
     };
     if (APP_STATE.openedCustomerWizardFromStepper) {
       APP_STATE.openedCustomerWizardFromStepper = false;
@@ -1685,6 +1739,7 @@ export function removeCustomerProfileDoc(key) {
 
 // Bind to window for inline HTML onclick handlers
 window.handleCustomerSearch = handleCustomerSearch;
+window.renderCustomerSearch = renderCustomerSearch;
 window.identifyCustomer = identifyCustomer;
 window.closeCustomerSession = closeCustomerSession;
 window.renderCustomer360 = renderCustomer360;

@@ -1141,7 +1141,15 @@ export function resumeDraftOrder(draftId) {
   APP_STATE.activeCIMInteraction = d.activeCIMInteraction;
   APP_STATE.isCustomerIdentifiedInJourney = !!d.selectedCustomer;
   APP_STATE.cart = { ...d.cart };
-  APP_STATE.currentStep = d.step;
+  
+  // Re-map step IDs from previous versions to current 5 steps
+  let loadedStep = d.step;
+  if (loadedStep === 2) loadedStep = 1;
+  else if (loadedStep === 3) loadedStep = 2;
+  else if (loadedStep === 5 || loadedStep === 4) loadedStep = 3;
+  else if (loadedStep === 9 || loadedStep === 8) loadedStep = 4;
+  else if (loadedStep === 10) loadedStep = 5;
+  APP_STATE.currentStep = loadedStep;
 
   showToast("Resumed saved draft session.", "success");
   
