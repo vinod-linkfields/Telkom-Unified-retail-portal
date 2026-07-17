@@ -499,10 +499,128 @@ export function loadStateFromStorage() {
   }
 
   const savedDrafts = localStorage.getItem("telkom_draft_orders");
-  if (savedDrafts) {
+  if (savedDrafts && JSON.parse(savedDrafts).length > 0) {
     APP_STATE.draftOrders = JSON.parse(savedDrafts);
   } else {
-    APP_STATE.draftOrders = [];
+    const c1 = MOCK_DB.crm[0];
+    const c2 = MOCK_DB.crm[2];
+    const c3 = MOCK_DB.crm[1];
+    
+    const p1 = MOCK_DB.products[0];
+    const p2 = MOCK_DB.products[1];
+    const p3 = MOCK_DB.products[2];
+
+    APP_STATE.draftOrders = [
+      {
+        draftId: "DRF-501284",
+        customerName: c1 ? c1.name : "Jan du Toit",
+        customerAccount: c1 ? c1.accountNumber : "TEL-90812739",
+        selectedCustomer: c1 || null,
+        activeCIMInteraction: { id: "INT-1", channel: "Retail Store", status: "Active" },
+        product: p1 ? {
+          id: p1.id,
+          name: p1.name,
+          price: p1.monthlyFee ?? p1.price ?? 0,
+          term: p1.term ?? 24,
+          onceOff: p1.onceOff ?? 99,
+          category: p1.category
+        } : null,
+        cart: {
+          product: p1 ? {
+            id: p1.id,
+            name: p1.name,
+            price: p1.monthlyFee ?? p1.price ?? 0,
+            term: p1.term ?? 24,
+            onceOff: p1.onceOff ?? 99,
+            category: p1.category
+          } : null,
+          contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+          consent: false,
+          gisRef: "",
+          gisStatus: "Not checked",
+          stockChecked: false,
+          stockStatus: "",
+          ricaStatus: ""
+        },
+        step: 2,
+        branch: "PTA-001",
+        agentId: "AGT-101",
+        timestamp: "2026-06-12 14:30"
+      },
+      {
+        draftId: "DRF-902184",
+        customerName: c2 ? c2.name : "Chloe Mercer",
+        customerAccount: c2 ? c2.accountNumber : "TEL-44129857",
+        selectedCustomer: c2 || null,
+        activeCIMInteraction: { id: "INT-2", channel: "Retail Store", status: "Active" },
+        product: p2 ? {
+          id: p2.id,
+          name: p2.name,
+          price: p2.monthlyFee ?? p2.price ?? 0,
+          term: p2.term ?? 24,
+          onceOff: p2.onceOff ?? 99,
+          category: p2.category
+        } : null,
+        cart: {
+          product: p2 ? {
+            id: p2.id,
+            name: p2.name,
+            price: p2.monthlyFee ?? p2.price ?? 0,
+            term: p2.term ?? 24,
+            onceOff: p2.onceOff ?? 99,
+            category: p2.category
+          } : null,
+          contractDetails: { simType: "Physical SIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+          consent: true,
+          gisRef: "",
+          gisStatus: "Not checked",
+          stockChecked: true,
+          stockStatus: "In Stock",
+          ricaStatus: ""
+        },
+        step: 3,
+        branch: "PTA-001",
+        agentId: "AGT-101",
+        timestamp: "2026-06-12 16:15"
+      },
+      {
+        draftId: "DRF-294018",
+        customerName: c3 ? c3.name : "Thabo Mokoena",
+        customerAccount: c3 ? c3.accountNumber : "TEL-55610283",
+        selectedCustomer: c3 || null,
+        activeCIMInteraction: { id: "INT-3", channel: "Retail Store", status: "Active" },
+        product: p3 ? {
+          id: p3.id,
+          name: p3.name,
+          price: p3.monthlyFee ?? p3.price ?? 0,
+          term: p3.term ?? 24,
+          onceOff: p3.onceOff ?? 99,
+          category: p3.category
+        } : null,
+        cart: {
+          product: p3 ? {
+            id: p3.id,
+            name: p3.name,
+            price: p3.monthlyFee ?? p3.price ?? 0,
+            term: p3.term ?? 24,
+            onceOff: p3.onceOff ?? 99,
+            category: p3.category
+          } : null,
+          contractDetails: { simType: "eSIM", numberOption: "New Number", portInNumber: "", installationAddress: "", installationContactName: "", installationContactPhone: "", preferredInstallationDate: "" },
+          consent: true,
+          gisRef: "GIS-89028",
+          gisStatus: "Feasible",
+          stockChecked: true,
+          stockStatus: "In Stock",
+          ricaStatus: ""
+        },
+        step: 4,
+        branch: "PTA-001",
+        agentId: "AGT-101",
+        timestamp: "2026-06-12 17:45"
+      }
+    ];
+    saveDraftOrders();
   }
 
   restoreAuthSession();
