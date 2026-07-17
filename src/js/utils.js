@@ -83,6 +83,15 @@ export function openModal(modalId) {
 export function closeModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) m.style.display = 'none';
+
+  if (modalId === 'order-details-modal') {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('orderRef');
+      url.searchParams.delete('order');
+      window.history.pushState({ route: APP_STATE.activeRoute }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
 }
 
 const tablePaginationState = new Map();

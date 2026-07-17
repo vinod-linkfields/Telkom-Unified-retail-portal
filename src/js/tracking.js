@@ -436,6 +436,15 @@ export function viewOrderDetails(orderRef) {
   const order = APP_STATE.ordersList.find(o => o.orderRef === orderRef);
   if (!order) return;
 
+  // Sync URL parameter for deep-linking
+  if (!window.__BYPASS_ORDER_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('orderRef', orderRef);
+      window.history.pushState({ route: APP_STATE.activeRoute, orderRef: orderRef }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
   // Reset modal tab to 'oms'
   switchModalTab('oms');
 

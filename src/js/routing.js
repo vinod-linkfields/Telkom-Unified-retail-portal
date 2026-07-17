@@ -4,7 +4,7 @@ import { renderAgentDashboard, renderManagerDashboard, renderAreaDashboard, rend
 import { renderCustomerCreateStep, renderCustomer360, renderCustomerSearch } from './customer.js';
 import { renderCatalogue, loadProductsFromJSON } from './catalogue.js';
 import { renderStepper, renderPaymentScreen, renderConfirmationReceipt } from './stepper.js';
-import { renderOrderTracking } from './tracking.js';
+import { renderOrderTracking, viewOrderDetails } from './tracking.js';
 import { switchStockTab } from './stock.js';
 import { renderReports, renderRecordLogs } from './reports.js';
 import { renderCheckCoverageScreen } from './coverage.js';
@@ -228,6 +228,13 @@ export function renderScreen(route) {
         window.__BYPASS_TAB_URL_SYNC__ = true;
         switchTrackingTab(tabVal);
         window.__BYPASS_TAB_URL_SYNC__ = false;
+
+        const orderRef = urlParams.get('orderRef') || urlParams.get('order');
+        if (orderRef) {
+          window.__BYPASS_ORDER_URL_SYNC__ = true;
+          viewOrderDetails(orderRef);
+          window.__BYPASS_ORDER_URL_SYNC__ = false;
+        }
       } catch(e) { console.error('renderOrderTracking error:', e); }
       break;
     case "stock-requests":
@@ -316,6 +323,10 @@ export function switchRoute(route) {
     }
     if (route !== 'order-tracking' && route !== 'stock-requests') {
       url.searchParams.delete('tab');
+    }
+    if (route !== 'order-tracking') {
+      url.searchParams.delete('orderRef');
+      url.searchParams.delete('order');
     }
     // Clean search params if not customer-search routes
     if (route !== 'customer-search' && route !== 'customer-search-success' && route !== 'customer-search-failed') {

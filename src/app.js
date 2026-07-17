@@ -523,6 +523,18 @@ window.addEventListener('popstate', (event) => {
       if (APP_STATE.activeTrackingTab !== tabVal) {
         switchTrackingTab(tabVal);
       }
+      const orderRef = params.get('orderRef') || params.get('order');
+      if (orderRef) {
+        if (window.viewOrderDetails) {
+          window.__BYPASS_ORDER_URL_SYNC__ = true;
+          window.viewOrderDetails(orderRef);
+          window.__BYPASS_ORDER_URL_SYNC__ = false;
+        }
+      } else {
+        if (window.closeModal) {
+          window.closeModal('order-details-modal');
+        }
+      }
     } else if (route === 'stock-requests') {
       const tabVal = params.get('tab') || 'inventory';
       switchStockTab(tabVal);
