@@ -85,6 +85,13 @@ export function renderCheckCoverageScreen() {
         <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 0;">Address is outside the Telkom ${cov.type} coverage zone. Fixed-wireless or fibre services are currently unavailable at this address.</p>
       </div>
     `;
+  } else if (status === 'Error') {
+    resultHtml = `
+      <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; border-radius: var(--radius-md); margin-top: 20px;">
+        <div style="font-size: 14px; font-weight: 700; color: #b91c1c; margin-bottom: 4px;">⚠️ GIS QUERY ERROR</div>
+        <p style="font-size: 13px; color: #991b1b; margin-bottom: 0;">Failed to establish connection with Clarify GIS database. Service lookup timed out after 5000ms. (Reference code: GIS-ERR-503)</p>
+      </div>
+    `;
   } else {
     resultHtml = `
       <div style="background-color: var(--bg-light); border-left: 4px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); margin-top: 20px;">
@@ -126,8 +133,8 @@ export function renderCheckCoverageScreen() {
         <h4 style="color: var(--telkom-blue-dark); font-weight: 700; margin-bottom: 16px;">Interactive Map View</h4>
         
         <div id="standalone-gis-map" style="width: 100%; flex: 1; min-height: 320px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: #e0ecef; position: relative; overflow: hidden; box-shadow: var(--shadow-sm);">
-          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 12px;">
-            <span>⏳ Standby - Waiting to query coordinates...</span>
+          <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: ${status === 'Error' ? '#b91c1c' : 'var(--text-secondary)'}; font-size: 12px; font-weight: ${status === 'Error' ? '600' : 'normal'};">
+            <span>${status === 'Error' ? '❌ GIS Map Service Unreachable' : '⏳ Standby - Waiting to query coordinates...'}</span>
           </div>
         </div>
         <div style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px;">Interactive mapping utilizing Telkom GIS Geolocation circles.</div>
@@ -136,7 +143,7 @@ export function renderCheckCoverageScreen() {
   `;
 
   // Draw Leaflet Map
-  if (status !== 'Not checked') {
+  if (status !== 'Not checked' && status !== 'Error') {
     setTimeout(() => {
       const mapEl = document.getElementById('standalone-gis-map');
       if (!mapEl) return;
@@ -218,6 +225,34 @@ export function checkStandaloneCoverage() {
 
   if (!addr) {
     showToast("Please enter an address to query.", "warning");
+    return;
+  }
+
+  // UAT Outage Check
+  if (APP_STATE.systemHealth && APP_STATE.systemHealth.gis === false) {
+    APP_STATE.checkedCoverage = {
+      address: addr,
+      status: "Error",
+      ref: "",
+      type: type,
+      coords: ""
+    };
+    showToast("GIS lookup failed: System Outage simulated.", "danger");
+    renderCheckCoverageScreen();
+    return;
+  }
+
+  // Error Address Keyword Trigger
+  if (addr.toLowerCase().includes('error') || addr.toLowerCase().includes('fail') || addr.toLowerCase().includes('outage')) {
+    APP_STATE.checkedCoverage = {
+      address: addr,
+      status: "Error",
+      ref: "",
+      type: type,
+      coords: ""
+    };
+    showToast("GIS lookup failed: Simulated lookup error.", "danger");
+    renderCheckCoverageScreen();
     return;
   }
 
