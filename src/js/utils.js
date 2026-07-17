@@ -78,18 +78,33 @@ export function maskPassport(passport) {
 export function openModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) m.style.display = 'flex';
+
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modal', modalId);
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: modalId }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
 }
 
 export function closeModal(modalId) {
   const m = document.getElementById(modalId);
   if (m) m.style.display = 'none';
 
-  if (modalId === 'order-details-modal') {
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
     try {
       const url = new URL(window.location.href);
-      url.searchParams.delete('orderRef');
-      url.searchParams.delete('order');
-      window.history.pushState({ route: APP_STATE.activeRoute }, '', url.pathname + url.search + url.hash);
+      if (url.searchParams.get('modal') === modalId) {
+        url.searchParams.delete('modal');
+        url.searchParams.delete('orderRef');
+        url.searchParams.delete('order');
+        url.searchParams.delete('requestId');
+        url.searchParams.delete('request');
+        url.searchParams.delete('productId');
+        url.searchParams.delete('product');
+        window.history.pushState({ route: APP_STATE.activeRoute }, '', url.pathname + url.search + url.hash);
+      }
     } catch(e) {}
   }
 }

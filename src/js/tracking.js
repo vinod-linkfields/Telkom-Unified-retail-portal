@@ -440,8 +440,9 @@ export function viewOrderDetails(orderRef) {
   if (!window.__BYPASS_ORDER_URL_SYNC__) {
     try {
       const url = new URL(window.location.href);
+      url.searchParams.set('modal', 'order-details-modal');
       url.searchParams.set('orderRef', orderRef);
-      window.history.pushState({ route: APP_STATE.activeRoute, orderRef: orderRef }, '', url.pathname + url.search + url.hash);
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: 'order-details-modal', orderRef: orderRef }, '', url.pathname + url.search + url.hash);
     } catch(e) {}
   }
 
@@ -807,7 +808,9 @@ export function viewOrderDetails(orderRef) {
     `;
   }
 
+  window.__BYPASS_MODAL_URL_SYNC__ = true;
   openModal('order-details-modal');
+  window.__BYPASS_MODAL_URL_SYNC__ = false;
 }
 
 export function downloadOrderReceipt(orderRef) {

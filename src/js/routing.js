@@ -1,11 +1,11 @@
 import { APP_STATE, clearAuthSession, saveAuthSession, saveNotifications } from './state.js';
 import { showToast, updateNotificationsBadge } from './utils.js';
-import { renderAgentDashboard, renderManagerDashboard, renderAreaDashboard, renderAdminDashboard } from './dashboards.js';
-import { renderCustomerCreateStep, renderCustomer360, renderCustomerSearch } from './customer.js';
+import { renderAgentDashboard, renderManagerDashboard, renderAreaDashboard, renderAdminDashboard, showProductDetails } from './dashboards.js';
+import { renderCustomerCreateStep, renderCustomer360, renderCustomerSearch, openCreateCustomerModal } from './customer.js';
 import { renderCatalogue, loadProductsFromJSON } from './catalogue.js';
 import { renderStepper, renderPaymentScreen, renderConfirmationReceipt } from './stepper.js';
 import { renderOrderTracking, viewOrderDetails } from './tracking.js';
-import { switchStockTab } from './stock.js';
+import { switchStockTab, viewStockRequestDetails, openApprovalModal } from './stock.js';
 import { renderReports, renderRecordLogs } from './reports.js';
 import { renderCheckCoverageScreen } from './coverage.js';
 
@@ -266,6 +266,11 @@ export function switchRoute(route) {
   // Always force authentication since login is disabled
   APP_STATE.isAuthenticated = true;
 
+  // Close any open modals on route transition
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.style.display = 'none';
+  });
+
   if (route === 'login') {
     if (APP_STATE.currentUser.role === 'manager') route = 'manager-dashboard';
     else if (APP_STATE.currentUser.role === 'area_manager') route = 'area-dashboard';
@@ -328,10 +333,30 @@ export function switchRoute(route) {
       url.searchParams.delete('orderRef');
       url.searchParams.delete('order');
     }
-    // Clean search params if not customer-search routes
-    if (route !== 'customer-search' && route !== 'customer-search-success' && route !== 'customer-search-failed') {
-      url.searchParams.delete('query');
-      url.searchParams.delete('type');
+    if (route !== 'stock-requests' && route !== 'manager-dashboard') {
+      url.searchParams.delete('requestId');
+      url.searchParams.delete('request');
+    }
+    if (route !== 'catalogue' && route !== 'dashboards') {
+      url.searchParams.delete('productId');
+      url.searchParams.delete('product');
+      url.searchParams.delete('sku');
+    }
+    if (route !== 'reports' && route !== 'record-logs') {
+      url.searchParams.delete('category');
+      url.searchParams.delete('store');
+      url.searchParams.delete('startDate');
+      url.searchParams.delete('endDate');
+      url.searchParams.delete('search');
+    }
+
+    // Clean modal parameter if switching main screens
+    const modalParam = url.searchParams.get('modal');
+    if (modalParam) {
+      const currentRouteInUrl = new URLSearchParams(window.location.search).get('route');
+      if (currentRouteInUrl && currentRouteInUrl !== route) {
+        url.searchParams.delete('modal');
+      }
     }
 
     const currentParam = new URLSearchParams(window.location.search).get('route');
@@ -371,6 +396,57 @@ export function switchRoute(route) {
   if (targetView) {
     targetView.style.display = 'block';
     renderScreen(route);
+
+    // Sync deep-linked modal if specified in URL
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const modalVal = urlParams.get('modal');
+      if (modalVal) {
+        window.__BYPASS_MODAL_URL_SYNC__ = true;
+        if (modalVal === 'order-details-modal') {
+          const orderRef = urlParams.get('orderRef') || urlParams.get('order');
+          if (orderRef && window.viewOrderDetails) {
+            window.__BYPASS_ORDER_URL_SYNC__ = true;
+            window.viewOrderDetails(orderRef);
+            window.__BYPASS_ORDER_URL_SYNC__ = false;
+          }
+        } else if (modalVal === 'stock-request-details-modal') {
+          const reqId = urlParams.get('requestId') || urlParams.get('request');
+          if (reqId && window.viewStockRequestDetails) {
+            window.viewStockRequestDetails(reqId);
+          }
+        } else if (modalVal === 'approval-modal') {
+          const reqId = urlParams.get('requestId') || urlParams.get('request');
+          if (reqId && window.openApprovalModal) {
+            window.openApprovalModal(reqId);
+          }
+        } else if (modalVal === 'product-details-modal') {
+          const prodId = urlParams.get('productId') || urlParams.get('product');
+          if (prodId && window.showProductDetails) {
+            window.showProductDetails(prodId);
+          }
+        } else if (modalVal === 'stock-request-modal') {
+          const sku = urlParams.get('sku');
+          const product = urlParams.get('product');
+          if (window.initiateStockRequest) {
+            window.initiateStockRequest(sku, product);
+          } else {
+            openModal(modalVal);
+          }
+        } else if (modalVal === 'customer-create-modal') {
+          if (window.openCreateCustomerModal) {
+            window.openCreateCustomerModal();
+          } else {
+            openModal(modalVal);
+          }
+        } else {
+          openModal(modalVal);
+        }
+        window.__BYPASS_MODAL_URL_SYNC__ = false;
+      }
+    } catch(e) {
+      console.error('Deep-linked modal trigger error:', e);
+    }
   }
 
   // Keep auth session saved and active

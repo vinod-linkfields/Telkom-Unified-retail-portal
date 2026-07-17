@@ -476,8 +476,19 @@ export function showProductDetails(productId) {
     console.warn("Element product-details-modal-cta not found!");
   }
   
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modal', 'product-details-modal');
+      url.searchParams.set('productId', productId);
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: 'product-details-modal', productId: productId }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
   console.log("Opening product details modal...");
+  window.__BYPASS_MODAL_URL_SYNC__ = true;
   openModal('product-details-modal');
+  window.__BYPASS_MODAL_URL_SYNC__ = false;
 }
 
 // Bind to window for UAT toggle handlers and inline HTML dashboard updates

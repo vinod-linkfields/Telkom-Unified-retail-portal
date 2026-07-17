@@ -4,6 +4,22 @@ import { downloadOrderReceipt } from './tracking.js';
 
 
 export function handleReportFilterChange() {
+  if (!window.__BYPASS_REPORTS_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      const category = document.getElementById('report-filter-category').value;
+      const store = document.getElementById('report-filter-store').value;
+      const start = document.getElementById('report-filter-start-date').value;
+      const end = document.getElementById('report-filter-end-date').value;
+
+      if (category) url.searchParams.set('category', category);
+      if (store) url.searchParams.set('store', store);
+      if (start) url.searchParams.set('startDate', start);
+      if (end) url.searchParams.set('endDate', end);
+
+      window.history.pushState({ route: APP_STATE.activeRoute }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
   renderReports();
 }
 
@@ -306,6 +322,20 @@ export function renderReports() {
     storeSelect.disabled = false;
     if (storeSelectGroup) storeSelectGroup.style.opacity = '1';
   }
+
+  // Initialize filter inputs from URL parameters if present
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlCategory = params.get('category');
+    const urlStore = params.get('store');
+    const urlStartDate = params.get('startDate');
+    const urlEndDate = params.get('endDate');
+    
+    if (urlCategory) document.getElementById('report-filter-category').value = urlCategory;
+    if (urlStore && role !== 'manager') storeSelect.value = urlStore;
+    if (urlStartDate) document.getElementById('report-filter-start-date').value = urlStartDate;
+    if (urlEndDate) document.getElementById('report-filter-end-date').value = urlEndDate;
+  } catch(e) {}
 
   const category = document.getElementById('report-filter-category').value;
   const storeFilterVal = storeSelect.value;
@@ -1406,6 +1436,24 @@ window.toggleSelectAllExportFormats = toggleSelectAllExportFormats;
 window.triggerReportDownload = triggerReportDownload;
 
 export function handleLogFilterChange() {
+  if (!window.__BYPASS_REPORTS_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      const category = document.getElementById('log-filter-category').value;
+      const store = document.getElementById('log-filter-store').value;
+      const start = document.getElementById('log-filter-start-date').value;
+      const end = document.getElementById('log-filter-end-date').value;
+      const search = document.getElementById('log-search-input') ? document.getElementById('log-search-input').value : '';
+
+      if (category) url.searchParams.set('category', category);
+      if (store) url.searchParams.set('store', store);
+      if (start) url.searchParams.set('startDate', start);
+      if (end) url.searchParams.set('endDate', end);
+      if (search) url.searchParams.set('search', search);
+
+      window.history.pushState({ route: APP_STATE.activeRoute }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
   renderRecordLogs();
 }
 
@@ -1483,6 +1531,22 @@ export function renderRecordLogs() {
     storeSelect.disabled = false;
     if (storeSelectGroup) storeSelectGroup.style.opacity = '1';
   }
+
+  // Initialize filter inputs from URL parameters if present
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlCategory = params.get('category');
+    const urlStore = params.get('store');
+    const urlStartDate = params.get('startDate');
+    const urlEndDate = params.get('endDate');
+    const urlSearch = params.get('search');
+    
+    if (urlCategory) document.getElementById('log-filter-category').value = urlCategory;
+    if (urlStore && role !== 'manager') storeSelect.value = urlStore;
+    if (urlStartDate) document.getElementById('log-filter-start-date').value = urlStartDate;
+    if (urlEndDate) document.getElementById('log-filter-end-date').value = urlEndDate;
+    if (urlSearch && document.getElementById('log-search-input')) document.getElementById('log-search-input').value = urlSearch;
+  } catch(e) {}
 
   const category = document.getElementById('log-filter-category').value;
   const filtered = getFilteredLogsData();

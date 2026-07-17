@@ -78,7 +78,19 @@ export function initiateStockRequest(sku, productName) {
   document.getElementById('stock-req-priority').value = "Urgent";
   document.getElementById('stock-req-notes').value = "";
 
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modal', 'stock-request-modal');
+      if (sku) url.searchParams.set('sku', sku);
+      if (productName) url.searchParams.set('product', productName);
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: 'stock-request-modal', sku, product: productName }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
+  window.__BYPASS_MODAL_URL_SYNC__ = true;
   openModal('stock-request-modal');
+  window.__BYPASS_MODAL_URL_SYNC__ = false;
 }
 
 export function handleStockRequestSubmit(e) {
@@ -151,7 +163,18 @@ export function openApprovalModal(reqId) {
   decSelect.value = "Approve";
   toggleDeclineReasonArea();
 
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modal', 'approval-modal');
+      url.searchParams.set('requestId', reqId);
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: 'approval-modal', requestId: reqId }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
+  window.__BYPASS_MODAL_URL_SYNC__ = true;
   openModal('approval-modal');
+  window.__BYPASS_MODAL_URL_SYNC__ = false;
 }
 
 export function toggleDeclineReasonArea() {
@@ -263,7 +286,18 @@ export function viewStockRequestDetails(reqId) {
     approvalSection.style.display = 'none';
   }
 
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modal', 'stock-request-details-modal');
+      url.searchParams.set('requestId', reqId);
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: 'stock-request-details-modal', requestId: reqId }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
+  window.__BYPASS_MODAL_URL_SYNC__ = true;
   openModal('stock-request-details-modal');
+  window.__BYPASS_MODAL_URL_SYNC__ = false;
 }
 
 export function renderStoreInventoryTab() {

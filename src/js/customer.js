@@ -1767,7 +1767,17 @@ window.proceedToCatalogueForCustomer = proceedToCatalogueForCustomer;
 
 // CRM customer update/save actions
 export function openCreateCustomerModal() {
+  if (!window.__BYPASS_MODAL_URL_SYNC__) {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('modal', 'customer-create-modal');
+      window.history.pushState({ route: APP_STATE.activeRoute, modal: 'customer-create-modal' }, '', url.pathname + url.search + url.hash);
+    } catch(e) {}
+  }
+
+  window.__BYPASS_MODAL_URL_SYNC__ = true;
   openModal('customer-create-modal');
+  window.__BYPASS_MODAL_URL_SYNC__ = false;
 }
 window.openCreateCustomerModal = openCreateCustomerModal;
 
