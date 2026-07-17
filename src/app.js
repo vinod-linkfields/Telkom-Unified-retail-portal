@@ -402,11 +402,10 @@ export function handleLogout() {
   APP_STATE.selectedCustomer = null;
   APP_STATE.activeCIMInteraction = null;
   APP_STATE.isCustomerIdentifiedInJourney = false;
-  APP_STATE.isAuthenticated = true;
+  APP_STATE.isAuthenticated = false;
   clearAuthSession();
-  const landing = APP_STATE.currentUser.role === 'manager' ? 'manager-dashboard' : (APP_STATE.currentUser.role === 'area_manager' ? 'area-dashboard' : (APP_STATE.currentUser.role === 'admin' ? 'admin-dashboard' : 'agent-dashboard'));
-  switchRoute(landing);
-  showToast("Session cleared.", "neutral");
+  switchRoute('login');
+  showToast("Logged out successfully.", "neutral");
 }
 
 // ==========================================
@@ -475,9 +474,6 @@ export function startNewOrderFlow() {
 
 // Load local mock database states
 loadStateFromStorage();
-
-// Force authenticated by default to bypass login screen
-APP_STATE.isAuthenticated = true;
 
 // Set navbar and route (using URL query parameter route)
 updateSidebarMenuOptions();

@@ -284,15 +284,20 @@ export function renderScreen(route) {
 }
 
 export function switchRoute(route) {
-  // Always force authentication since login is disabled
-  APP_STATE.isAuthenticated = true;
+  // Check authentication
+  if (!APP_STATE.isAuthenticated) {
+    route = 'login';
+  }
 
   // Close any open modals on route transition
   document.querySelectorAll('.modal-overlay').forEach(m => {
     m.style.display = 'none';
   });
 
-  if (route === 'login' || route === 'manager-dashboard' || route === 'area-dashboard' || route === 'admin-dashboard') {
+  if (route === 'manager-dashboard' || route === 'area-dashboard' || route === 'admin-dashboard') {
+    route = 'agent-dashboard';
+  }
+  if (route === 'login' && APP_STATE.isAuthenticated) {
     route = 'agent-dashboard';
   }
 
@@ -362,10 +367,15 @@ export function switchRoute(route) {
   const header = document.getElementById('app-header');
   const mainLayout = document.getElementById('main-content-layout');
 
-  // Always show sidebar and header since login is bypassed
-  if (sidebar) sidebar.style.display = 'flex';
-  if (header) header.style.display = 'flex';
-  if (mainLayout) mainLayout.style.setProperty('margin-left', '');
+  if (route === 'login') {
+    if (sidebar) sidebar.style.display = 'none';
+    if (header) header.style.display = 'none';
+    if (mainLayout) mainLayout.style.setProperty('margin-left', '0');
+  } else {
+    if (sidebar) sidebar.style.display = 'flex';
+    if (header) header.style.display = 'flex';
+    if (mainLayout) mainLayout.style.setProperty('margin-left', '');
+  }
   
   document.querySelectorAll('.sidebar-link').forEach(link => {
     link.classList.remove('active');
