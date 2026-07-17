@@ -2,7 +2,7 @@ import { APP_STATE, clearAuthSession, saveAuthSession, saveNotifications } from 
 import { showToast, updateNotificationsBadge } from './utils.js';
 import { renderAgentDashboard, renderManagerDashboard, renderAreaDashboard, renderAdminDashboard, showProductDetails } from './dashboards.js';
 import { renderCustomerCreateStep, renderCustomer360, renderCustomerSearch, openCreateCustomerModal } from './customer.js';
-import { renderCatalogue, loadProductsFromJSON } from './catalogue.js';
+import { renderCatalogue, loadProductsFromJSON, findProductById } from './catalogue.js';
 import { renderStepper, renderPaymentScreen, renderConfirmationReceipt } from './stepper.js';
 import { renderOrderTracking, viewOrderDetails } from './tracking.js';
 import { switchStockTab, viewStockRequestDetails, openApprovalModal } from './stock.js';
@@ -208,11 +208,32 @@ export function renderScreen(route) {
     case "order-stepper":
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const stepVal = urlParams.get('step');
-        if (stepVal) {
-          APP_STATE.currentStep = parseInt(stepVal);
+        const stepVal = urlParams.get('step') || '1';
+        const prodId = urlParams.get('productId');
+        const prodNone = urlParams.get('product') === 'none';
+
+        if (prodNone) {
+          APP_STATE.cart.product = null;
+        } else if (prodId) {
+          const p = findProductById(prodId);
+          if (p) {
+            APP_STATE.cart.product = {
+              id: p.id,
+              name: p.name,
+              price: p.monthlyFee ?? p.price ?? 0,
+              term: p.term ?? 24,
+              onceOff: p.onceOff ?? 99,
+              category: p.category,
+              deviceInfo: p.device,
+              selectedColor: p.colors ? p.colors[0] : ''
+            };
+          }
         }
+
+        window.__BYPASS_STEP_URL_SYNC__ = true;
+        APP_STATE.currentStep = parseInt(stepVal);
         renderStepper();
+        window.__BYPASS_STEP_URL_SYNC__ = false;
       } catch(e) { console.error('renderStepper error:', e); }
       break;
     case "payment":
@@ -337,7 +358,7 @@ export function switchRoute(route) {
       url.searchParams.delete('requestId');
       url.searchParams.delete('request');
     }
-    if (route !== 'catalogue' && route !== 'dashboards') {
+    if (route !== 'catalogue' && route !== 'dashboards' && route !== 'order-stepper') {
       url.searchParams.delete('productId');
       url.searchParams.delete('product');
       url.searchParams.delete('sku');

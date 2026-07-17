@@ -99,6 +99,18 @@ export function renderStepper() {
     if (cancelBtn) {
       cancelBtn.style.display = 'none';
     }
+
+    // Sync URL parameter for no product selected state
+    if (!window.__BYPASS_STEP_URL_SYNC__) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set('step', '1');
+        url.searchParams.delete('productId');
+        url.searchParams.set('product', 'none');
+        window.history.pushState({ route: 'order-stepper', step: 1 }, '', url.pathname + url.search + url.hash);
+      } catch(e) {}
+    }
+
     stepContainer.innerHTML = `<div style="padding: 40px; text-align: center; color: var(--text-secondary); font-size: 15px;">No product selected. Please select a product from the catalogue first.</div>`;
     return;
   }
@@ -109,11 +121,13 @@ export function renderStepper() {
     APP_STATE.currentStep = steps[0].id;
   }
 
-  // Sync URL parameter for step
+  // Sync URL parameter for step and product
   if (!window.__BYPASS_STEP_URL_SYNC__) {
     try {
       const url = new URL(window.location.href);
       url.searchParams.set('step', APP_STATE.currentStep);
+      url.searchParams.set('productId', product.id);
+      url.searchParams.delete('product');
       window.history.pushState({ route: 'order-stepper', step: APP_STATE.currentStep }, '', url.pathname + url.search + url.hash);
     } catch(e) {}
   }

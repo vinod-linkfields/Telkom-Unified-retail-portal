@@ -558,6 +558,32 @@ window.addEventListener('popstate', (event) => {
 
     if (route === 'order-stepper' || route === 'customer-create') {
       const stepVal = params.get('step');
+
+      if (route === 'order-stepper') {
+        const prodId = params.get('productId');
+        const prodNone = params.get('product') === 'none';
+
+        if (prodNone) {
+          APP_STATE.cart.product = null;
+        } else if (prodId) {
+          if (window.findProductById) {
+            const p = window.findProductById(prodId);
+            if (p) {
+              APP_STATE.cart.product = {
+                id: p.id,
+                name: p.name,
+                price: p.monthlyFee ?? p.price ?? 0,
+                term: p.term ?? 24,
+                onceOff: p.onceOff ?? 99,
+                category: p.category,
+                deviceInfo: p.device,
+                selectedColor: p.colors ? p.colors[0] : ''
+              };
+            }
+          }
+        }
+      }
+
       if (stepVal) {
         const stepNum = parseInt(stepVal);
         if (route === 'order-stepper' && APP_STATE.currentStep !== stepNum) {
@@ -567,6 +593,8 @@ window.addEventListener('popstate', (event) => {
           APP_STATE.customerCreateStep = stepNum;
           renderCustomerCreateStep(stepNum);
         }
+      } else if (route === 'order-stepper') {
+        renderStepper();
       }
     } else if (route === 'order-tracking') {
       const tabVal = params.get('tab') || 'submitted';
