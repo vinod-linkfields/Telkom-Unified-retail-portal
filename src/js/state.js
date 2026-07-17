@@ -172,10 +172,7 @@ export const DEVICE_CATALOGUE = {
 export const AUTH_STORAGE_KEY = "telkom_auth_session";
 
 export const DEMO_LOGIN_CREDENTIALS = {
-  "AGT-101": { password: "password", name: "Piet van Zyl", role: "agent", branch: "PTA-001" },
-  "MGR-002": { password: "password", name: "Store Manager", role: "manager", branch: "PTA-001" },
-  "AM-909": { password: "password", name: "Area Director", role: "area_manager", branch: "PTA-001" },
-  "ADMIN-001": { password: "password", name: "IT Operations", role: "admin", branch: "PTA-001" }
+  "AGT-101": { password: "password", name: "Piet van Zyl", role: "agent", branch: "PTA-001" }
 };
 
 export const APP_STATE = {

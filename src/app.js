@@ -366,16 +366,6 @@ export function doLogin() {
 
   let derivedRole = 'agent';
   let name = 'Agent User';
-  if (idInput.startsWith('MGR') || idInput.toLowerCase().includes('mgr')) {
-    derivedRole = 'manager';
-    name = 'Store Manager';
-  } else if (idInput.startsWith('AM') || idInput.toLowerCase().includes('am')) {
-    derivedRole = 'area_manager';
-    name = 'Area Director';
-  } else if (idInput.startsWith('IT') || idInput.toLowerCase().includes('it') || idInput.startsWith('ADM')) {
-    derivedRole = 'admin';
-    name = 'IT Operations';
-  }
 
   APP_STATE.currentUser.id = idInput;
   APP_STATE.currentUser.name = demoCredential.name || name;

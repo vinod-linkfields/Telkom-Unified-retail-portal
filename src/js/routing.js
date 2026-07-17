@@ -292,45 +292,15 @@ export function switchRoute(route) {
     m.style.display = 'none';
   });
 
-  if (route === 'login') {
-    if (APP_STATE.currentUser.role === 'manager') route = 'manager-dashboard';
-    else if (APP_STATE.currentUser.role === 'area_manager') route = 'area-dashboard';
-    else if (APP_STATE.currentUser.role === 'admin') route = 'admin-dashboard';
-    else route = 'agent-dashboard';
+  if (route === 'login' || route === 'manager-dashboard' || route === 'area-dashboard' || route === 'admin-dashboard') {
+    route = 'agent-dashboard';
   }
 
-  // Determine role: check URL query parameter 'role' first, otherwise check current state role, otherwise default by route
-  const urlParamsForRole = new URLSearchParams(window.location.search);
-  let role = urlParamsForRole.get('role') || APP_STATE.currentUser.role;
-  
-  if (!role || role === 'guest') {
-    if (route === 'manager-dashboard' || route === 'reports' || route === 'record-logs') {
-      role = 'manager';
-    } else if (route === 'area-dashboard') {
-      role = 'area_manager';
-    } else if (route === 'admin-dashboard') {
-      role = 'admin';
-    } else {
-      role = 'agent';
-    }
-  }
-
-  APP_STATE.currentUser.role = role;
-  
-  // Set default name and ID based on role
-  if (role === 'manager') {
-    APP_STATE.currentUser.name = 'Store Manager';
-    APP_STATE.currentUser.id = 'MGR-101';
-  } else if (role === 'area_manager') {
-    APP_STATE.currentUser.name = 'Area Director';
-    APP_STATE.currentUser.id = 'AM-909';
-  } else if (role === 'admin') {
-    APP_STATE.currentUser.name = 'IT Operations';
-    APP_STATE.currentUser.id = 'IT-808';
-  } else {
-    APP_STATE.currentUser.name = 'Piet van Zyl';
-    APP_STATE.currentUser.id = 'AGT-101';
-  }
+  // Enforce agent role only
+  let role = 'agent';
+  APP_STATE.currentUser.role = 'agent';
+  APP_STATE.currentUser.name = 'Piet van Zyl';
+  APP_STATE.currentUser.id = 'AGT-101';
 
   // Update sidebar menu options to match the newly assigned role
   updateSidebarMenuOptions();
